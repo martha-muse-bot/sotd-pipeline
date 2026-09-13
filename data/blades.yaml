@@ -924,6 +924,10 @@ DE:
       patterns:
         - willy'?s
   Wizamet:
+    Polsilver:
+      patterns:
+        - wizamet.*polsilver
+        - polsilver.*wizamet
     Super Iridium:
       patterns:
         - wizamet

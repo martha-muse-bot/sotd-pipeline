@@ -2225,6 +2225,10 @@ known_knot_based_brushes:
       fiber: Synthetic
       patterns:
         - \bst-?2\b
+    ST-3:
+      fiber: Synthetic
+      patterns:
+        - \bst-?3\b
   Rad Dinosaur Creations:
     knot_size_mm: 26
     Black Boarty:

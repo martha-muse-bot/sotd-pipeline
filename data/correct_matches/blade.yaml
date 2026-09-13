@@ -28,6 +28,7 @@ AC:
     - feather - artist club professional
     - feather - professional
     - feather - professional ac
+    - feather ac
     - feather ac mild
     - feather ac pro
     - feather ac professional
@@ -55,6 +56,7 @@ AC:
     - feather - artist club professional super
     - feather - super professional
     - feather pro super
+    - feather pro super (unknown shaves.. but probably on its last ones, hehehe)
     - feather professional super
     - feather professional super (ac)
     - feather professional super (last use)
@@ -68,6 +70,7 @@ AC:
     - feather - proguard
     - feather ac pro guard
     - feather ac proguard
+    - feather ac proguard single edge
     - feather artist club pro guard
     - feather artist club pro-guard
     - feather artist club pro-guard (se)
@@ -654,6 +657,7 @@ DE:
     - feather hi-stainless
     - feather hi-stainless - 1st 2 pass shave
     - feather hi-stainless - 2nd shave with it
+    - feather hi-stainless - 3rd 2 pass shave
     - feather hi-stainless - 3rd shave with it
     - feather hi-stainless - 4th shave with it
     - feather hi-stainless - 5th and final shave with it
@@ -816,6 +820,7 @@ DE:
     - gillette platinum (going on week 2!)
     - gillette platinum (too many)
     - gillette platinum - 2nd 2 pass shave
+    - gillette platinum - 3rd 2 pass shave
     - gillette platinum - 3rd shave
     - gillette platinum - 4th and final 2 pass shave with this blade
     - gillette platinum - 4th shave
@@ -930,6 +935,7 @@ DE:
     - gillette winner black
     - gillette winner platinum
     - gillette winner special platinum
+    - gillette winner special platinum- 1st 2 pass shave
     - winner black
     - winner by gillette special platinum
     - winner platinum
@@ -1207,6 +1213,7 @@ DE:
     - personna - platinum super stainless
     - personna - super
     - personna red ss
+    - personna stainless
     - personna super
     - personna super blue
     - personna super stainless
@@ -1249,8 +1256,6 @@ DE:
     - polsilver- super iridium
     - polsiver si
     - voskhod polsilver super iridium (vintage stock)
-    - wizamet - polsilver
-    - wizamet polsilver
   QShave:
     Titanium:
     - q-shave
@@ -1582,6 +1587,7 @@ DE:
     - voskhod - teflon coated
     - voskhod ss
     - voskhod super stainless
+    - voskhod teflon
     - voskhod teflon coated
     - voskhod, teflon coated
   Walgreens:
@@ -1628,6 +1634,9 @@ DE:
     - willy's premium
     - willys
   Wizamet:
+    Polsilver:
+    - wizamet - polsilver
+    - wizamet polsilver
     Super Iridium:
     - super iridium
     - wizament
@@ -1914,6 +1923,7 @@ Injector:
     - schick 'chick' injector
     - schick - chinese schick plus
     - schick - injector
+    - 'schick cn #2'
     - schick injector
     - schick injector (se)
     - schick injector (very old)

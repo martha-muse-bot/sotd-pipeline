@@ -1,4 +1,6 @@
 345 Soap Co.:
+  1879 Prospector:
+  - 345 soap co. - 1879 prospector
   Cairn:
   - 345 co. - cairn
   - 345 soap co. - cairn
@@ -60,6 +62,8 @@ Abbate Y La Mantia:
   - abbate y la mantia - garibaldi
   - abbate y la mantia - garibaldi soap
   - abbate y la mantia - garribaldi
+  Hadad:
+  - abbate y la mantia - hadad
   Isacco:
   - abbate y la mantia - isacco
   - abbate y la mantia - isacco soap
@@ -142,6 +146,7 @@ Adopted Acres:
   - adopted acressoap co. - rookie card
   Roots of Hope:
   - adopted acres - roots of hope
+  - adopted acres soap company - roots of hope
   Royal Bloom:
   - adopted acres "royal bloom"
   - adopted acres "royal bloom" - ohio
@@ -1226,6 +1231,7 @@ Barrister and Mann:
   - barrister and mann - seville (old base)
   - barrister and mann - seville - shaving soap, omnibus base
   - barrister and mann - seville in reserve
+  - barrister and mann - seville reserve
   - barrister and mann - seville soap
   - barrister and mann seville
   - barrister and mann seville (excelsior)
@@ -1915,6 +1921,7 @@ CBL Soaps:
   - cbl soaps - russian tea
 Cella:
   All'Olio Di Mandorla:
+  - all olio di mandorla
   - cella - all'olio di mandorla
   - cella - crema de barba all olio di mandorla classical
   Almond Shaving Cream:
@@ -2020,6 +2027,7 @@ Chicago Grooming Co.:
   Bonaire:
   - chicago grooming - bonaire
   - chicago grooming co - bonaire
+  - chicago grooming co. - bonaire
   - oleo - bonaire
   - oleo soapworks - bonaire
   Canaan:
@@ -2038,6 +2046,9 @@ Chicago Grooming Co.:
   - chicago grooming - discordia
   - chicago grooming co - discordia
   - chicago grooming co. - discordia
+  Dr. Flanders:
+  - chicago grooming co - dr. flanders
+  - chicago grooming co. - dr. flanders
   El Caballero:
   - chicago grooming co. - el caballero
   Excursion:
@@ -2073,12 +2084,14 @@ Chicago Grooming Co.:
   - chicago grooming co. - no. 11 (cream soap)
   - 'chicago grooming co. - no. 11 (maison margiela replica : at the barber''s dupe)'
   - chicago grooming co. - no. 11 soap
+  - chicago grooming co. no. 11
   - chicago grooming company - no. 11
   - oleo - no. 11
   Polar:
   - chicago grooming co. - polar
   - oleo soapworks - polar
   Polar Vortex:
+  - chicago grooming co - polar vortex
   - chicago grooming co. - polar vortex
   - chicago grooming co. - polar vortex (brushless cream)
   - chicago grooming co. - polar vortex - brushless creme
@@ -2093,6 +2106,7 @@ Chicago Grooming Co.:
   - chicago grooming co. - rougére
   Sandalwood:
   - cgco brushless cream sandalwood
+  - chicago grooming co - sandal brushless
   - chicago grooming co. - sandalwood (brushless cream)
   - chicago grooming co. - sandalwood (shave cream, brushless)
   - chicago grooming co. - sandalwood - brushless creme
@@ -3098,6 +3112,7 @@ Grooming Dept:
   - grooming dept - le tabac
   Lemon Bay:
   - grooming dept - lemon bay donkey milk soap
+  - grooming dept - lemon bay soap
   - groomingdept - lemon bay soap
   Maleki:
   - grooming dept - maleki
@@ -3184,6 +3199,8 @@ Hearth and Altar:
   Captivating Coconut Lime (Calypso):
   - hearth and altar - captivating coconut lime
   - hearth and alter - captivating coconut lime
+  Forged Oud:
+  - hearth and altar - forged oud
   High Olympus Fougère:
   - hearth & altar high olympus fougère
   - hearth and altar - high olympus fougere (fka zeus)
@@ -3268,6 +3285,7 @@ Henri et Victoria:
   - henri et victoria - la poire francaise
   - henri et victoria - la poire française
   - henri et victoria - la poire française 🍐
+  - henri et victoria la poire francaise
   Lime:
   - henri et victoria - lime
   - henri et victoria lime
@@ -4488,6 +4506,7 @@ Officina Artigiana:
 Ogallala:
   Bay Rum:
   - ogalalla bay rum toiletry co. - bay rum
+  - ogallala - bay rum
   - ogallala bay rum - bay rum
   - ogallala bay rum and sweet orange
   NWSC 2018:
@@ -4507,6 +4526,7 @@ Old Spice:
   - old spice - shaving creme
   - old spice canned
   - old spice original
+  - old spice original lather
   - shulton - old spice
   - sulton old spice
   Fresh Lime:
@@ -5065,6 +5085,7 @@ Southern Witchcrafts:
 Spearhead Shaving Company:
   Bergamot & Sandalwood:
   - spearhead shaving company - bergamot & sandalwood
+  - spearhead shaving experimental bergamot and sandalwood
   Experimental Lavender Vanilla:
   - spearhead shaving company - experimental 20.1e lavender vanilla
   - spearhead shaving company - experimental lavender vanilla
@@ -5896,6 +5917,7 @@ Stirling Soap Co.:
   - stirling soaps saguaro blossom
   Sample Mashup:
   - stirling sample mash up
+  - stirling sample mash up (spice/scarn/b leather/exec man)
   - stirling sample mash up - arkansas
   - stirling soap sample mash up
   - stirling varenbury (combined varen and glastonbury 1oz samples)
@@ -5916,6 +5938,7 @@ Stirling Soap Co.:
   - stirling soap co. - satsuma
   SB-129:
   - stirling - sb-129
+  - stirling soap co. - sb-129
   - stirling soap co. - sb-129 (inspired by azzaro chrome)
   Scarn:
   - stirling - scarn
@@ -6120,6 +6143,8 @@ Storybook Soapworks:
   - chatillon lux/storybook soapworks - west egg
   - storybook soapworks - west egg
 Strike Gold Shave:
+  9/11 25th Anniversary Tunnels to Towers (with Shave Dad):
+  - shavedad/strikegoldshave - 9/11 25th anniversary (beau de jour)
   Bees Knees:
   - strike gold shave - bee's knees soap
   Carter:
@@ -6325,6 +6350,9 @@ Summer Break Soaps:
   - summer break soaps - wood shop
   - summer break soaps - woodshop
   - summer break soaps wood shop
+Swamp Shave & Soap Company:
+  Testarossa:
+  - swamp shave & soap co. - testarossa
 Sweet Comb Chicago:
   Classic Shaving Soap:
   - sweet comb chicago - original
@@ -6411,6 +6439,8 @@ Talent Soap Factory:
   - talent soap factory - digital dude's
   Dusty Mauve:
   - talent soap factory dusty mauve
+  Eros:
+  - talent soap factory - eros
   Fantasy Donut:
   - talent factory - fantasy donut
   - talent soap factory - fantasy donut
@@ -6476,6 +6506,8 @@ Talent Soap Factory:
   - talent soap factory - sage
   Save the Earth:
   - talent soap factory - save the earth
+  Short Fuse:
+  - talent soap factory - short fuse
   Shrinking Violets:
   - talent soap factory - shrinking violets
   - talent soap factory - shrinking violets (mentholated)
@@ -6534,6 +6566,7 @@ Talent Soap Factory:
   Wallflower:
   - talent soap factory - wallflower
   - talent soap factory - wallflower soap
+  - tsf - wallflower
   Where the Wild Things Were:
   - talent soap factory - where the wild things were
   Wild Flowers:
@@ -6552,6 +6585,8 @@ Tallow + Steel:
   - tallow and steel - himalaya
   Kyoto:
   - tallow and steel - kyoto
+  Maya:
+  - t+s maya
   Morning Coffee in the Canadian Wilderness:
   - t&s - morning coffee in the canadian wilderness
   Rainforest:
@@ -7286,6 +7321,7 @@ Zingari Man:
   - zingari man - gent
   The Highlander:
   - zingari man - the highlander
+  - zingari man - the highlander - shaving soap, sego base
   - zingari man the highlander
   The Magician:
   - zingari - the magician

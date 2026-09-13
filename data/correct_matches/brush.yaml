@@ -37,6 +37,7 @@ Alpha:
   - alpha brush & shaving co. 28mm
   - alpha brush & shaving company classic red shaving brush 28mm
   - alpha bulldog ti
+  - alpha bully boy oumo g5
   - alpha classic red
   - alpha classic royal blue
   - alpha g synth 28mm in aluminium handle
@@ -990,6 +991,7 @@ Chisel & Hound:
   - chisel & hound old gold v30 fanchurian badger
   - chisel & hound w/ 26mm v30 fanchurian
   v31:
+  - chisel & hound - carob (6092cc) - 26mm v31 fanchurian
   - chisel & hound arctic pearl v31 fanchurian badger
   - chisel & hound fellowes v31 fanchurian badger
   v5:
@@ -1479,6 +1481,7 @@ DS Cosmetics:
   - ds cosmetics carrot handle w/ 26mm 2-band badger + synthetic mixed bulb knot $mistura
   - dscosmetic - galaxy - 24mm boar/badger mix $mistura
   Synthetic:
+  - ds cosmetic 26mm synthetic
   - ds cosmetic coffee swirl 26mm g7
   - ds cosmetic coffee swirl g7 26mm
   - ds cosmetic jade tuxedo 24mm
@@ -1489,6 +1492,7 @@ DS Cosmetics:
   - ds cosmetic kensurfs limited edition tuxedo 24mm
   - ds cosmetic purple cashmere 26mm fan
   - ds cosmetic red swirl tuxedo 26mm
+  - ds cosmetics - blue galaxy g7
   - ds cosmetics - gypsophila - 26mm faux horse synthetic
   - ds cosmetics - synthetic
   - ds cosmetics blue galaxy g7
@@ -1950,6 +1954,7 @@ Leavitt & Pierce:
 Lentfer Custom Woodworks:
   Synthetic:
   - lentfer custom woodworks
+  - lentfer custom woodworks - red and black synth
   - lentfer custom woodworks red and black synth
 Leonidam:
   Badger:
@@ -2385,6 +2390,7 @@ Omega:
   - omega b6206
   Badger:
   - omega 23mm pure badger
+  - omega 23mm pure badger knot
   - omega 24 mm badger
   - omega 24 mm pure badger
   - omega 24mm badger for 1st pass
@@ -2439,6 +2445,7 @@ Omega:
   - omega 99018 blue handle synthetic
   - omega hi black synthetic
   - omega hi-brush
+  - omega hi-brush 0146711
   - omega hi-brush synthetic
   - omega hi-brush, 01462006, 25mm synth
   - omega hi-brush, 0146306, 25mm synth
@@ -2604,6 +2611,7 @@ Oumo:
   - oumo - two band badger
   - oumo compass bonfire 27mm emperor-2
   - oumo destiny glaze 轻盈
+  - oumo element, universe
   - oumo emperor e-4 silvertip badger
   - oumo glaze 轻盈 destiny
   - oumo o4 venus shd badger brush 26mm
@@ -2649,6 +2657,8 @@ Oumo:
   - oumo synthetic st-2
   - oumo synthetic st-2 25mm bulb
   - oumo warhammer universe st-2
+  ST-3:
+  - oumo st3
   Synthetic:
   - oumo classic new gen synthetic 24mm
   - oumo mother lode synthetic
@@ -2698,6 +2708,7 @@ Paladin:
   - paladin falstaff
   - paladin falstaff ivory
   - paladin micarta handle + h01 knot
+  - paladin p26mm graphite lotus badger
   - paladin samurai
   - paladin samurai butterscotch 28mm
   - paladin samurai with bulb badger knot
@@ -2759,6 +2770,7 @@ Peerless:
   - vintage peerless boar - black/green handle
 Peneuf:
   Badger:
+  - peneuf - blue falcon badger
   - peneuf - blue falcon badger brush
 Perfecto:
   Badger:
@@ -2878,6 +2890,7 @@ Rad Dinosaur Creations:
     rex three-band silvertip knot
   Manchuridon:
   - rad dinosaur creations "trench line" - manchuridon two band 26mm badger
+  - rad dinosaur creations - "cupcake, destroyer of worlds" 26mm manchuridon
   - rad dinosaur creations - 26mm manchuridon "cupcake, destroyer of worlds"
   - rad dinosaur creations - chathogany - manchuridon badger
   - rad dinosaur creations - chathogany manchuridon badger
@@ -2886,6 +2899,7 @@ Rad Dinosaur Creations:
   - rad dinosaur creations - spalted bruise - 26mm manchuridon two band badger knot
   - rad dinosaur creations - unicorn - 26mm rad dino manchuridon
   - rad dinosaur creations 26mm manchuridon "cupcake, destroyer of worlds"
+  - rad dinosaur creations canyon / manchuridon badger
   - rad dinosaur creations chathogany manchuridon badger
   - rad dinosaur creations custom 26mm manchuridon
   - rad dinosaur creations nebuloyalty - munchuridon badger
@@ -3584,6 +3598,7 @@ Star/Kambro:
   - star/kambro - boar
 Stirling:
   2-Band Synthetic:
+  - 'brush: stirling 24mm synthetic'
   - stirling - 2 band 24mm synthetic
   - stirling - 2 band synthetic
   - stirling - 2-band synthetic - 24mm
@@ -3930,6 +3945,8 @@ Turn-N-Shave:
   - turn 'n shave 26mm quartermoon fan synthetic
   - turn n' shave quarter moon
   - turn-n-shave quarter moon
+  Shoat:
+  - turn-n-shave 28mm shoat upside down
   Synthetic:
   - 26mm timberwolf in turn-n-shave handle
   Tip (Badger):
@@ -4509,6 +4526,7 @@ Zenith:
   - zenith 506u
   506U XSE:
   - zenith 506u xse
+  - zenith 506u xse - unbleached boar with olive wood handle
   - zenith 506u xse unbleached boar
   - zenith unbleached 28mm boar in olive wood handle
   - zenith unbleached 506u xse 27mm
@@ -4532,12 +4550,10 @@ Zenith:
   - zenith - unbleached bristle 509bc xse
   80 XSE:
   - boar zenith 80 xse 27mm
-  80B XSE:
   - boar zenith 80b
-  - zenith 80b
-  80N XSE:
   - boar zenith 80n
   - boar zenith 80n 27mm
+  - zenith 80b
   - zenith 80n xse - unbleached boar
   A28 XSE:
   - zenith- a28 xse 28mm boar unbleached

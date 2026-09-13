@@ -2923,6 +2923,10 @@ The Cajun Blade:
     patterns:
       - acr1
       - cajun.*blade
+  CSR1:
+    format: Shavette (AC)
+    patterns:
+      - cajun.*blade.*csr1
   The Cottonmouth:
     format: AC
     patterns:

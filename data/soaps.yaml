@@ -2,6 +2,9 @@
   patterns:
   - '345(?: soaps?)?(?: co.?)?'
   scents:
+    1879 Prospector:
+      patterns:
+      - 1879 prospector
     Cairn:
       patterns:
       - 345.*cairn
@@ -102,6 +105,9 @@ Abbate Y La Mantia:
       patterns:
       - abbate.*gar+ibaldi
       wsdb_slug: abbate-y-la-mantia-garibaldi-soap
+    Hadad:
+      patterns:
+      - abbate.*hadad
     Isacco:
       patterns:
       - abbate.*isac+o
@@ -2052,6 +2058,7 @@ Cella:
       format: Cream
       patterns:
       - \bcella\b.*mandorla
+      - all.*olio.*mandorla
     Aloe Vera:
       patterns:
       - \bcella\b.*(?:aloe|bio|green|blue)
@@ -2118,6 +2125,9 @@ Chicago Grooming Co.:
     Discordia:
       patterns:
       - (chicago|cg).*discordia
+    Dr. Flanders:
+      patterns:
+      - dr.? flander
     El Caballero:
       patterns:
       - (chicago|cg).*el caballero
@@ -2173,6 +2183,7 @@ Chicago Grooming Co.:
       patterns:
       - chicago.*sandalwood
       - cgco.*sandalwood
+      - chicago.*sandal.*brushless
       wsdb_slug: chicago-grooming-co-sandalwood-soap
     Sandy Cheeks:
       patterns:
@@ -3939,6 +3950,9 @@ Hearth and Altar:
       patterns:
       - captivating.*coconut
       - hearth.*calypso
+    Forged Oud:
+      patterns:
+      - hearth.*forged oud
     Thorned Rose And Marmalade (Hera):
       patterns:
       - thorned.*rose.*marmalade
@@ -7494,6 +7508,9 @@ Strike Gold Shave:
   patterns:
   - strike ?gold( shaves?)?
   scents:
+    9/11 25th Anniversary Tunnels to Towers (with Shave Dad):
+      patterns:
+      - (strike ?gold|shave ?dad).*9/11
     Bees Knees:
       patterns:
       - strike.*bee.*knee
@@ -7723,6 +7740,13 @@ Summer Break Soaps:
       - summer break( soaps)?.*wood ?shop
       - ^\W*sbs\b.*wood ?shop
       wsdb_slug: summer-break-soaps-woodshop-soap
+Swamp Shave & Soap Company:
+  patterns:
+  - swamp shave & soap co(\.(mpany)?)?
+  scents:
+    Testarossa:
+      patterns:
+      - swamp.*testarossa
 Sweet Comb Chicago:
   patterns:
   - sweet comb chicago
@@ -7867,6 +7891,9 @@ Talent Soap Factory:
       patterns:
       - fantasy do(ugh)?nut
       wsdb_slug: talent-soap-factory-fantasy-donut-soap
+    Eros:
+      patterns:
+      - (talent|tsf).*eros
     Fizz:
       patterns:
       - talent soap factory.*fizz
@@ -7943,6 +7970,9 @@ Talent Soap Factory:
       patterns:
       - save the earth
       wsdb_slug: talent-soap-factory-save-the-earth-soap
+    Short Fuse:
+      patterns:
+      - (talent|tsf).*short fuse
     Shrinking Violets:
       patterns:
       - shrinking violet
@@ -8033,6 +8063,9 @@ Tallow + Steel:
       patterns:
       - tallow.*kyoto
       wsdb_slug: tallow-steel-kyoto-soap
+    Maya:
+      patterns:
+      - (tallow|t[&\+]s).*maya
     Morning Coffee in the Canadian Wilderness:
       patterns:
       - morning.*coffee.*candadian
