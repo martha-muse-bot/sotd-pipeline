@@ -2,9 +2,10 @@
 
 Answers the questions agents and shell debugging need about ``data/community/``
 without loading whole month files into context:
-thread listings, one thread with its reconstructed comment tree, bounded
-body slices for chosen post or comment ids ("body reads"), and
-keyword/author search across a bounded month window.
+thread listings, one thread with its reconstructed comment tree (top-level
+and tail views), bounded body slices for chosen post or comment ids
+("body reads"), keyword/author search across a bounded month window, and
+a census of deleted/removed/authorless records.
 
 Month/window arguments are always explicit — this structurally enforces the
 "never see future months" rule (same mechanism as --end on history queries).
@@ -150,7 +151,7 @@ def cmd_threads(
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="community_query",
-        description="Query data/community JSON files (meta, thread listings, thread trees, search).",
+        description="Query data/community JSON files (meta, thread listings, thread trees, search, gaps).",
     )
     parser.add_argument("--data-dir", default=default_data_dir(), help="Artifact root directory")
     parser.add_argument("--json", action="store_true", help="Emit JSON instead of aligned text")
@@ -179,7 +180,14 @@ def build_parser() -> argparse.ArgumentParser:
     thread = sub.add_parser("thread", help="One thread with its reconstructed comment tree")
     thread.add_argument("--month", required=True, help="Month (YYYY-MM)")
     thread.add_argument("--id", required=True, help="Thread ID (with or without t3_ prefix)")
-    thread.add_argument("--max-comments", type=int, default=50, help="Max comments rendered")
+    thread.add_argument(
+        "--top-level",
+        action="store_true",
+        help="Render only top-level comments, each with its direct-reply count",
+    )
+    slice_group = thread.add_mutually_exclusive_group()
+    slice_group.add_argument("--max-comments", type=int, default=50, help="Max comments rendered")
+    slice_group.add_argument("--tail", type=int, help="Render the last N comments by time")
 
     bodies = sub.add_parser("bodies", help="Bounded body slices for chosen post or comment ids")
     bodies.add_argument("--month", required=True, help="Month (YYYY-MM)")
@@ -201,6 +209,9 @@ def build_parser() -> argparse.ArgumentParser:
     search.add_argument("--query", required=True, help="Case-insensitive substring")
     search.add_argument("--author", help="Exact author name (case-insensitive)")
     search.add_argument("--top", type=int, default=20, help="Max results (default 20)")
+
+    gaps = sub.add_parser("gaps", help="Census of deleted/removed/authorless posts and comments")
+    gaps.add_argument("--month", required=True, help="Month (YYYY-MM)")
 
     return parser
 
@@ -244,7 +255,16 @@ def main(argv: Sequence[str] | None = None) -> int:
                     )
                 )
             elif args.command == "thread":
-                print(cmd_thread(doc, args.id, max_comments=args.max_comments, as_json=args.json))
+                print(
+                    cmd_thread(
+                        doc,
+                        args.id,
+                        max_comments=args.max_comments,
+                        as_json=args.json,
+                        top_level=args.top_level,
+                        tail=args.tail,
+                    )
+                )
             elif args.command == "schema":
                 print(cmd_schema(doc, as_json=args.json))
             elif args.command == "bodies":
@@ -252,6 +272,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 if not ids:
                     raise QueryError("No ids given (--ids is comma-separated)")
                 print(cmd_bodies(doc, ids, max_chars=args.max_chars, as_json=args.json))
+            elif args.command == "gaps":
+                print(cmd_gaps(doc, as_json=args.json))
             else:
                 raise QueryError(f"Unknown command: {args.command}")
         return 0
@@ -264,7 +286,17 @@ def _flatten_body(body: str) -> str:
     return " / ".join(line.strip() for line in (body or "").splitlines() if line.strip())
 
 
-def cmd_thread(doc: dict, thread_id: str, *, max_comments: int = 50, as_json: bool = False) -> str:
+def cmd_thread(
+    doc: dict,
+    thread_id: str,
+    *,
+    max_comments: int = 50,
+    as_json: bool = False,
+    top_level: bool = False,
+    tail: int | None = None,
+) -> str:
+    if tail is not None and tail < 1:
+        raise QueryError("--tail must be a positive integer")
     pid = thread_id.removeprefix("t3_")
     posts = {p["id"]: p for p in doc["data"].get("posts", [])}
     post = posts.get(pid)
@@ -273,9 +305,25 @@ def cmd_thread(doc: dict, thread_id: str, *, max_comments: int = 50, as_json: bo
     comments = [c for c in doc["data"].get("comments", []) if c["thread_id"] == pid]
     comments.sort(key=lambda c: c["created_utc"])
 
+    # --top-level narrows the pool to direct replies to the post; --tail selects
+    # the last N of the pool by time instead of the first --max-comments.
+    pool = comments
+    direct_replies: Counter | None = None
+    if top_level:
+        pool = [c for c in comments if c["parent_id"].startswith("t3_")]
+        direct_replies = Counter(
+            c["parent_id"].removeprefix("t1_")
+            for c in comments
+            if not c["parent_id"].startswith("t3_")
+        )
+    selected = pool[-tail:] if tail is not None else pool[:max_comments]
+
     if as_json:
-        payload = {"post": post, "comments": comments[:max_comments]}
-        if len(comments) > max_comments:
+        payload_comments = selected
+        if direct_replies is not None:
+            payload_comments = [{**c, "direct_replies": direct_replies[c["id"]]} for c in selected]
+        payload = {"post": post, "comments": payload_comments}
+        if len(pool) > len(selected):
             payload["truncated"] = True
         return json.dumps(payload, indent=2)
 
@@ -291,32 +339,144 @@ def cmd_thread(doc: dict, thread_id: str, *, max_comments: int = 50, as_json: bo
         lines.append(post["selftext"])
     lines.append(f"--- {len(comments)} comments ---")
 
-    children: dict = {}
-    for c in comments:
-        # Key replies by bare parent id (Reddit stores t1_<id>) so the tree can be
-        # walked by bare comment id; top-level t3_<pid> parents match the walk seed.
-        children.setdefault(c["parent_id"].removeprefix("t1_"), []).append(c)
-
-    rendered = 0
-    truncated = False
-
-    def walk(parent: str, depth: int) -> None:
-        nonlocal rendered, truncated
-        for c in sorted(children.get(parent, []), key=lambda x: x["created_utc"]):
-            if rendered >= max_comments:
-                truncated = True
-                return
+    if top_level or tail is not None:
+        for c in selected:
             body = _flatten_body(c["body"])[:200]
             op = " (OP)" if c.get("is_submitter") else ""
-            lines.append(
-                f"{'  ' * depth}[{c['id']}] u/{c['author']} " f"{c['created_utc'][:10]}{op}: {body}"
-            )
-            rendered += 1
-            walk(c["id"], depth + 1)
+            line = f"[{c['id']}] u/{c['author']} {c['created_utc'][:10]}{op}: {body}"
+            if direct_replies is not None:
+                line += f" (+{direct_replies[c['id']]} replies)"
+            lines.append(line)
+    else:
+        children: dict = {}
+        for c in comments:
+            # Key replies by bare parent id (Reddit stores t1_<id>) so the tree can be
+            # walked by bare comment id; top-level t3_<pid> parents match the walk seed.
+            children.setdefault(c["parent_id"].removeprefix("t1_"), []).append(c)
 
-    walk(f"t3_{pid}", 0)
-    if truncated:
-        lines.append(f"(comments after the first {max_comments} not shown)")
+        rendered = 0
+
+        def walk(parent: str, depth: int) -> None:
+            nonlocal rendered
+            for c in sorted(children.get(parent, []), key=lambda x: x["created_utc"]):
+                if rendered >= max_comments:
+                    return
+                body = _flatten_body(c["body"])[:200]
+                op = " (OP)" if c.get("is_submitter") else ""
+                lines.append(
+                    f"{'  ' * depth}[{c['id']}] u/{c['author']} "
+                    f"{c['created_utc'][:10]}{op}: {body}"
+                )
+                rendered += 1
+                walk(c["id"], depth + 1)
+
+        walk(f"t3_{pid}", 0)
+
+    if len(pool) > len(selected):
+        if tail is None:
+            lines.append(f"(comments after the first {len(selected)} not shown)")
+        else:
+            lines.append(f"(last {len(selected)} of {len(pool)} comments)")
+    if top_level:
+        lines.append(f"(top-level only: {len(pool)} of {len(comments)} comments)")
+    return "\n".join(lines)
+
+
+_AUTHOR_MARKERS = {None, "", "[deleted]", "[removed]"}
+_CONTENT_MARKERS = ("[deleted]", "[removed]")
+
+
+def _plural(count: int, noun: str) -> str:
+    """Count + noun with correct plurality (1 gapped post, 3 gapped comments)."""
+    return f"{count} {noun}{'s' if count != 1 else ''}"
+
+
+def _gap_reasons(record: dict, content_key: str) -> list:
+    """Return why a post/comment is gapped — [] when it is healthy.
+
+    An author gap is a null/blank/``[deleted]``/``[removed]`` author; a content
+    gap is a ``[deleted]``/``[removed]`` body — empty bodies are legitimate
+    and never count.
+    """
+    reasons = []
+    if record.get("author") in _AUTHOR_MARKERS:
+        reasons.append("author missing")
+    value = record.get(content_key)
+    if value == "[deleted]":
+        reasons.append(f"{content_key} deleted")
+    elif value == "[removed]":
+        reasons.append(f"{content_key} removed")
+    return reasons
+
+
+def cmd_gaps(doc: dict, *, as_json: bool = False) -> str:
+    """Census of deleted/removed/authorless posts and comments, with ids and titles."""
+    posts = doc["data"].get("posts", [])
+    comments = doc["data"].get("comments", [])
+    gapped_posts = [(p, reasons) for p in posts if (reasons := _gap_reasons(p, "selftext"))]
+    gapped_comments = [(c, reasons) for c in comments if (reasons := _gap_reasons(c, "body"))]
+    month = doc["meta"].get("month")
+
+    if as_json:
+        return json.dumps(
+            {
+                "month": month,
+                "post_count": len(posts),
+                "comment_count": len(comments),
+                "gapped_posts": len(gapped_posts),
+                "gapped_comments": len(gapped_comments),
+                "posts": [
+                    {
+                        "id": p["id"],
+                        "title": p.get("title"),
+                        "author": p.get("author"),
+                        "selftext": p.get("selftext"),
+                        "reasons": reasons,
+                    }
+                    for p, reasons in gapped_posts
+                ],
+                "comments": [
+                    {
+                        "id": c["id"],
+                        "thread_id": c.get("thread_id"),
+                        "thread_title": c.get("thread_title"),
+                        "author": c.get("author"),
+                        "body": c.get("body"),
+                        "reasons": reasons,
+                    }
+                    for c, reasons in gapped_comments
+                ],
+            },
+            indent=2,
+        )
+
+    lines = [
+        f"{month}  gaps: {_plural(len(gapped_posts), 'gapped post')}, "
+        f"{_plural(len(gapped_comments), 'gapped comment')} "
+        f"(of {_plural(len(posts), 'post')} / {_plural(len(comments), 'comment')})"
+    ]
+    if not gapped_posts and not gapped_comments:
+        lines.append("no deleted, removed, or authorless records")
+        return "\n".join(lines)
+    if gapped_posts:
+        lines.append("posts:")
+        for p, _reasons in gapped_posts:
+            parts = [f"t3_{p['id']}", f"author={p.get('author')}"]
+            if p.get("selftext") in _CONTENT_MARKERS:
+                parts.append(f"selftext={p.get('selftext')}")
+            parts.append(str(p.get("title")))
+            lines.append("  " + "  ".join(parts))
+    if gapped_comments:
+        lines.append("comments:")
+        for c, _reasons in gapped_comments:
+            parts = [
+                f"t1_{c['id']}",
+                f"in t3_{c.get('thread_id')} (\"{c.get('thread_title')}\")",
+                f"author={c.get('author')}",
+            ]
+            if c.get("body") in _CONTENT_MARKERS:
+                parts.append(f"body={c.get('body')}")
+            lines.append("  " + "  ".join(parts))
     return "\n".join(lines)
 
 

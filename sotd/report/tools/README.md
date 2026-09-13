@@ -13,16 +13,17 @@ below).
 ## aggregate_query
 
 Point queries over `data/aggregated/` (monthly + annual): meta block, top tables
-per category, rank history for one item, the sort-key registry behind every
-rendered rank, dict-shaped metric blocks, and cross-month meta comparisons —
-plus a `schema` subcommand so nobody has to probe the JSON for valid categories
-or field names.
+per category, rank history for one item, row counts under field conditions, the
+sort-key registry behind every rendered rank, dict-shaped metric blocks, and
+cross-month meta comparisons — plus a `schema` subcommand so nobody has to probe
+the JSON for valid categories or field names.
 
 ```bash
 .venv/bin/python -m sotd.report.tools.aggregate_query meta --month 2026-08
 .venv/bin/python -m sotd.report.tools.aggregate_query schema --month 2026-08
 .venv/bin/python -m sotd.report.tools.aggregate_query top --month 2026-08 --category razors --top 10 --min-shaves 5
 .venv/bin/python -m sotd.report.tools.aggregate_query top --month 2026-08 --category user_soap_brand_scent_diversity --sort hhi --min-shaves 5
+.venv/bin/python -m sotd.report.tools.aggregate_query count --month 2026-08 --category users --where "missed_days=0" --where "shaves>=31"
 .venv/bin/python -m sotd.report.tools.aggregate_query history --category razors --name "Blackland Blackbird" --last 6 --end 2026-08
 .venv/bin/python -m sotd.report.tools.aggregate_query history --category razors --name "Schick Injector" --name "Merkur 37C" --last 3 --end 2026-08
 .venv/bin/python -m sotd.report.tools.aggregate_query ranking
@@ -33,6 +34,16 @@ or field names.
 Always pass `--end <report month>` to history — months after the report month are
 already aggregated on disk, and a bare `--last N` silently returns them. Repeat
 `--name` for a side-by-side rank matrix (one row per month, one column per item).
+
+**Row counts.** `count` answers "how many rows …" without pulling the whole
+table: repeatable `--where` conditions are AND-ed — `FIELD=VALUE`,
+`FIELD>=VALUE`, `FIELD<=VALUE`, `FIELD>VALUE`, `FIELD<VALUE`. Numeric values
+compare numerically; strings match case-insensitively on `=` only; rows missing
+the field (or carrying the wrong type) simply don't match. Unknown fields fail
+loudly with the category's field list. Quote each `--where` argument
+(`--where "shaves>=31"`) — unquoted `>=` is a zsh expansion error. The
+perfect-attendance probe (`missed_days=0` + `shaves>=31`) and the 100%-HHI club
+size (`hhi=1.0`, optionally `shaves>=31`) are one-liners now.
 
 **Key fields.** Each category's rows are matched and rendered by their natural
 identity field, derived from the rows themselves: `name` for razors/blades/
@@ -87,24 +98,37 @@ cross-month meta inventory table — the June-anomaly query in one line:
 
 Queries over `data/community/` month files (all posts + full comment trees):
 `meta`, `threads` (filterable/sortable listings), `thread` (one thread + its
-reconstructed comment tree), `bodies` (bounded body slices for chosen post or
-comment ids — "body reads"), `search` (keyword/author across a bounded window),
-and `schema` (meta keys, counts, post/comment record keys).
+reconstructed comment tree, with `--top-level` and `--tail N` slice views),
+`bodies` (bounded body slices for chosen post or comment ids — "body reads"),
+`search` (keyword/author across a bounded window), `gaps` (census of
+deleted/removed/authorless records), and `schema` (meta keys, counts,
+post/comment record keys).
 
 ```bash
 .venv/bin/python -m sotd.report.tools.community_query meta --month 2026-08
 .venv/bin/python -m sotd.report.tools.community_query schema --month 2026-08
 .venv/bin/python -m sotd.report.tools.community_query threads --month 2026-08 --filter non-sotd --sort comments --top 20
 .venv/bin/python -m sotd.report.tools.community_query thread --month 2026-08 --id t3_1sbgn5g --max-comments 50
+.venv/bin/python -m sotd.report.tools.community_query thread --month 2026-08 --id t3_1sbgn5g --top-level
+.venv/bin/python -m sotd.report.tools.community_query thread --month 2026-08 --id t3_1sbgn5g --tail 10
 .venv/bin/python -m sotd.report.tools.community_query bodies --month 2026-08 --ids t3_id1,t3_id2 --max-chars 1000
 .venv/bin/python -m sotd.report.tools.community_query bodies --month 2026-08 --id t1_ovchl1k,t1_ovhanvs --max-chars 1200
 .venv/bin/python -m sotd.report.tools.community_query search --months 2026-03:2026-04 --query "group buy"
+.venv/bin/python -m sotd.report.tools.community_query gaps --month 2026-08
 ```
 
 Ids in `bodies`/`thread` accept the `t3_`/`t1_` prefix or the bare id (`--id` is
 an alias for `--ids`); unknown ids are listed in the output rather than failing
 the whole call (all-unknown exits 1). Comment bodies carry thread context
 (`in t3_<thread>: <title>`).
+
+**Thread slices and gaps.** `--top-level` renders only direct replies to the
+post, each with its direct-reply count (`(+N replies)`) — the shape of a busy
+fixture without a full drill. `--tail N` renders the last N comments by time
+instead of the first `--max-comments` (the two slice flags are mutually
+exclusive; `--top-level` composes with either view). `gaps` lists
+deleted/removed/authorless posts and comments with their ids and thread titles
+— the Open-questions census in one call.
 
 Record shape (also shown by `schema`): `{"meta": {...}, "data": {"posts": [...],
 "comments": [...]}}` — posts carry `id/title/selftext/author/created_utc/...`

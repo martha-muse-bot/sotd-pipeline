@@ -2,8 +2,9 @@
 
 Answers the deterministic questions the observations-drafter agent (and shell
 debugging) need without loading whole 500-700 KB JSON files: month meta,
-top-N rows of a category, and rank history for a single item across months
-or years. All numbers come from ``data/aggregated/`` — the machine truth.
+top-N rows of a category, rank history for a single item across months
+or years, and row counts under field conditions. All numbers come from
+``data/aggregated/`` — the machine truth.
 
 Monthly files (``data/aggregated/YYYY-MM.json``) wrap categories in a
 ``data`` key with a ``meta`` block; annual files
@@ -143,7 +144,7 @@ def build_parser() -> argparse.ArgumentParser:
     """Build the aggregate_query argument parser."""
     parser = argparse.ArgumentParser(
         prog="aggregate_query",
-        description="Query data/aggregated JSON files (meta, top-N, rank history).",
+        description="Query data/aggregated JSON files (meta, top-N, rank history, counts).",
     )
     parser.add_argument("--data-dir", default=default_data_dir(), help="Artifact root directory")
     parser.add_argument("--json", action="store_true", help="Emit JSON instead of aligned text")
@@ -173,6 +174,23 @@ def build_parser() -> argparse.ArgumentParser:
         help=(
             "Re-sort as the Most Boring Shaver view (hhi desc, shaves desc, competition "
             "ranks recomputed); the category must carry an hhi field"
+        ),
+    )
+
+    count = sub.add_parser(
+        "count", help="Count rows in a category, optionally matching field conditions"
+    )
+    _add_period_args(count)
+    count.add_argument("--category", required=True, help="Category key (e.g. razors, soaps)")
+    count.add_argument(
+        "--where",
+        action="append",
+        default=None,
+        metavar="FIELD=VALUE",
+        help=(
+            "Row condition (repeatable, AND-ed): FIELD=VALUE, FIELD>=VALUE, "
+            "FIELD<=VALUE, FIELD>VALUE, or FIELD<VALUE. Numeric values compare "
+            "numerically; strings match case-insensitively on = only"
         ),
     )
 
@@ -501,6 +519,89 @@ def _query_metrics_range(args: argparse.Namespace, data_dir: Path) -> dict[str, 
     return {"rows": rows, "skipped": skipped}
 
 
+# Two-character operators must be checked before their one-character prefixes.
+_WHERE_OPERATORS = (">=", "<=", ">", "<", "=")
+
+
+def _parse_where(spec: str, fields: set[str]) -> tuple[str, str, int | float | str]:
+    """Parse one --where condition into (field, operator, value); raise QueryError
+    on missing operators, unknown fields, or comparisons on non-numeric values."""
+    for op in _WHERE_OPERATORS:
+        if op in spec:
+            field, raw = spec.split(op, 1)
+            break
+    else:
+        raise QueryError(
+            f'invalid --where "{spec}"; expected FIELD=VALUE, FIELD>=VALUE, '
+            "FIELD<=VALUE, FIELD>VALUE, or FIELD<VALUE"
+        )
+    field, raw = field.strip(), raw.strip()
+    if not field or not raw:
+        raise QueryError(f'invalid --where "{spec}"; field and value must both be non-empty')
+    if field not in fields:
+        raise QueryError(
+            f"unknown field {field!r} in --where; fields: {', '.join(sorted(fields)) or '(none)'}"
+        )
+    try:
+        value: int | float | str = int(raw)
+    except ValueError:
+        try:
+            value = float(raw)
+        except ValueError:
+            value = raw
+            if op != "=":
+                raise QueryError(
+                    f'invalid --where "{spec}"; comparison operators need a numeric value'
+                ) from None
+    return field, op, value
+
+
+def _row_matches(entry: dict[str, Any], field: str, op: str, value: int | float | str) -> bool:
+    """Return whether one row satisfies one --where condition.
+
+    Rows missing the field, or carrying a value of the wrong type, simply do
+    not match — unlike the tolerant _entry_int/_entry_float readers, a missing
+    value must never compare equal to zero.
+    """
+    actual = entry.get(field)
+    if isinstance(value, (int, float)):
+        if not isinstance(actual, (int, float)) or isinstance(actual, bool):
+            return False
+        if op == "=":
+            return actual == value
+        if op == ">=":
+            return actual >= value
+        if op == "<=":
+            return actual <= value
+        if op == ">":
+            return actual > value
+        return actual < value
+    return isinstance(actual, str) and actual.casefold() == value.casefold()
+
+
+def query_count(args: argparse.Namespace) -> dict[str, Any]:
+    """Return row counts for a category, optionally restricted by --where conditions."""
+    data_dir = Path(args.data_dir)
+    path, _ = _resolve_period(args, data_dir)
+    doc = _load(path)
+    entries = _category_list(doc, args.category)
+    fields = {field for entry in entries for field in entry}
+    conditions = [_parse_where(spec, fields) for spec in (args.where or [])]
+    matched = [
+        entry
+        for entry in entries
+        if all(_row_matches(entry, field, op, value) for field, op, value in conditions)
+    ]
+    return {
+        "file": str(path),
+        "period": args.month or args.year,
+        "category": args.category,
+        "where": [f"{field}{op}{value}" for field, op, value in conditions],
+        "count": len(matched),
+        "total": len(entries),
+    }
+
+
 def _entry_int(entry: dict[str, Any], key: str) -> int:
     """Return an entry's integer field, tolerating missing or non-int values."""
     value = entry.get(key, 0)
@@ -672,6 +773,14 @@ def _render_top(entries: list[dict[str, Any]], category: str) -> str:
     return f"{header_line}\n{body}" if table else "(no rows)"
 
 
+def _render_count(result: dict[str, Any]) -> str:
+    """Render a count result as one summary line."""
+    line = f"{result['period']}  {result['category']}: {result['count']} of {result['total']} rows"
+    if result["where"]:
+        line += f" match ({', '.join(result['where'])})"
+    return line
+
+
 def _matrix_cell(entry: dict[str, Any]) -> str:
     """Render one matrix cell: #rank shaves/users plus any extra numeric fields."""
     parts = [f"#{entry.get('rank')}"]
@@ -722,6 +831,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         elif args.command == "ranking":
             result = query_ranking(args)
             output = json.dumps(result, indent=2) if args.json else _render_ranking(result)
+        elif args.command == "count":
+            result = query_count(args)
+            output = json.dumps(result, indent=2) if args.json else _render_count(result)
         elif args.command == "metrics":
             result = query_metrics(args)
             if args.json:

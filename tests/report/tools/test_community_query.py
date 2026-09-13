@@ -326,6 +326,409 @@ class TestThread:
         assert doc["truncated"] is True
 
 
+@pytest.fixture
+def busy_dir(tmp_path):
+    """A month with one thread: three top-level comments and one reply to the second."""
+    comm = tmp_path / "community"
+    comm.mkdir()
+    posts = [
+        {
+            "id": "busy",
+            "title": "Contest thread",
+            "selftext": "rules",
+            "author": "host",
+            "created_utc": "2026-07-01T00:00:00Z",
+            "score": 5,
+            "num_comments": 4,
+            "flair": None,
+            "url": "u",
+            "locked": False,
+            "stickied": False,
+            "in_pipeline": False,
+        }
+    ]
+    base = {
+        "thread_id": "busy",
+        "thread_title": "Contest thread",
+        "score": 1,
+        "is_submitter": False,
+    }
+    comments = [
+        {
+            **base,
+            "id": "p1",
+            "parent_id": "t3_busy",
+            "author": "a1",
+            "created_utc": "2026-07-01T01:00:00Z",
+            "body": "first entry",
+        },
+        {
+            **base,
+            "id": "p2",
+            "parent_id": "t3_busy",
+            "author": "a2",
+            "created_utc": "2026-07-01T02:00:00Z",
+            "body": "second entry",
+        },
+        {
+            **base,
+            "id": "p3",
+            "parent_id": "t3_busy",
+            "author": "a3",
+            "created_utc": "2026-07-01T03:00:00Z",
+            "body": "third entry",
+        },
+        {
+            **base,
+            "id": "r1",
+            "parent_id": "t1_p2",
+            "author": "a1",
+            "created_utc": "2026-07-01T04:00:00Z",
+            "body": "a reply",
+        },
+    ]
+    make_community_file(comm / "2026-07.json", "2026-07", posts, comments)
+    return tmp_path
+
+
+class TestThreadTopLevel:
+    """thread --top-level: only top-level comments, each with its direct-reply count."""
+
+    def test_top_level_renders_only_top_level_comments(self, data_dir, capsys):
+        # disc: c4 is top-level; c5 and c6 are replies to it
+        code, out, _ = run(
+            capsys,
+            [
+                "--data-dir",
+                str(data_dir),
+                "thread",
+                "--month",
+                "2026-08",
+                "--id",
+                "disc",
+                "--top-level",
+            ],
+        )
+        assert code == 0
+        assert "[c4]" in out
+        assert "[c5]" not in out
+        assert "[c6]" not in out
+        assert "top-level only: 1 of 3 comments" in out
+
+    def test_top_level_shows_direct_reply_counts(self, data_dir, capsys):
+        code, out, _ = run(
+            capsys,
+            [
+                "--data-dir",
+                str(data_dir),
+                "thread",
+                "--month",
+                "2026-08",
+                "--id",
+                "disc",
+                "--top-level",
+            ],
+        )
+        assert code == 0
+        assert "(+2 replies)" in out
+
+    def test_top_level_respects_max_comments(self, busy_dir, capsys):
+        code, out, _ = run(
+            capsys,
+            [
+                "--data-dir",
+                str(busy_dir),
+                "thread",
+                "--month",
+                "2026-07",
+                "--id",
+                "busy",
+                "--top-level",
+                "--max-comments",
+                "2",
+            ],
+        )
+        assert code == 0
+        assert "[p1]" in out and "[p2]" in out
+        assert "[p3]" not in out
+        assert "not shown" in out
+
+    def test_top_level_tail_selects_last_top_level_comments(self, busy_dir, capsys):
+        code, out, _ = run(
+            capsys,
+            [
+                "--data-dir",
+                str(busy_dir),
+                "thread",
+                "--month",
+                "2026-07",
+                "--id",
+                "busy",
+                "--top-level",
+                "--tail",
+                "2",
+            ],
+        )
+        assert code == 0
+        assert "[p2]" in out and "[p3]" in out
+        assert "[p1]" not in out
+        assert "[r1]" not in out
+
+    def test_top_level_json_carries_direct_replies(self, data_dir, capsys):
+        code, out, _ = run(
+            capsys,
+            [
+                "--data-dir",
+                str(data_dir),
+                "--json",
+                "thread",
+                "--month",
+                "2026-08",
+                "--id",
+                "disc",
+                "--top-level",
+            ],
+        )
+        assert code == 0
+        doc = json.loads(out)
+        assert len(doc["comments"]) == 1
+        assert doc["comments"][0]["id"] == "c4"
+        assert doc["comments"][0]["direct_replies"] == 2
+
+
+class TestThreadTail:
+    """thread --tail N: the last N comments by time instead of the first --max-comments."""
+
+    def test_tail_renders_last_comments_chronologically(self, data_dir, capsys):
+        # disc comments in time order: c4 (11:00), c5 (12:00), c6 (13:00)
+        code, out, _ = run(
+            capsys,
+            [
+                "--data-dir",
+                str(data_dir),
+                "thread",
+                "--month",
+                "2026-08",
+                "--id",
+                "disc",
+                "--tail",
+                "2",
+            ],
+        )
+        assert code == 0
+        assert "[c5]" in out and "[c6]" in out
+        assert "[c4]" not in out
+        assert out.index("[c5]") < out.index("[c6]")
+        assert "(last 2 of 3 comments)" in out
+
+    def test_tail_beyond_count_renders_all(self, data_dir, capsys):
+        code, out, _ = run(
+            capsys,
+            [
+                "--data-dir",
+                str(data_dir),
+                "thread",
+                "--month",
+                "2026-08",
+                "--id",
+                "disc",
+                "--tail",
+                "99",
+            ],
+        )
+        assert code == 0
+        assert "[c4]" in out and "[c5]" in out and "[c6]" in out
+        assert "(last" not in out
+
+    def test_tail_json(self, data_dir, capsys):
+        code, out, _ = run(
+            capsys,
+            [
+                "--data-dir",
+                str(data_dir),
+                "--json",
+                "thread",
+                "--month",
+                "2026-08",
+                "--id",
+                "disc",
+                "--tail",
+                "2",
+            ],
+        )
+        assert code == 0
+        doc = json.loads(out)
+        assert [c["id"] for c in doc["comments"]] == ["c5", "c6"]
+        # the tail slice is partial (c4 omitted) and says so, like max-comments slices
+        assert doc["truncated"] is True
+
+    def test_tail_must_be_positive(self, data_dir, capsys):
+        code, _, err = run(
+            capsys,
+            [
+                "--data-dir",
+                str(data_dir),
+                "thread",
+                "--month",
+                "2026-08",
+                "--id",
+                "disc",
+                "--tail",
+                "0",
+            ],
+        )
+        assert code == 1
+        assert "positive integer" in err
+
+    def test_tail_rejects_max_comments(self, data_dir):
+        # both slice selectors at once is meaningless -> argparse usage error
+        with pytest.raises(SystemExit) as exc:
+            main(
+                [
+                    "--data-dir",
+                    str(data_dir),
+                    "thread",
+                    "--month",
+                    "2026-08",
+                    "--id",
+                    "disc",
+                    "--tail",
+                    "2",
+                    "--max-comments",
+                    "10",
+                ]
+            )
+        assert exc.value.code == 2
+
+
+@pytest.fixture
+def gappy_dir(tmp_path):
+    """A month with one deleted post and three gapped comments among healthy records."""
+    comm = tmp_path / "community"
+    comm.mkdir()
+    post_base = {
+        "created_utc": "2026-06-01T00:00:00Z",
+        "score": 1,
+        "num_comments": 0,
+        "flair": None,
+        "url": "u",
+        "locked": False,
+        "stickied": False,
+        "in_pipeline": False,
+    }
+    posts = [
+        {
+            **post_base,
+            "id": "ok",
+            "title": "Discussion thread",
+            "selftext": "rules",
+            "author": "mod",
+        },
+        {
+            **post_base,
+            "id": "dead",
+            "title": "Gone thread",
+            "selftext": "[removed]",
+            "author": "[deleted]",
+        },
+    ]
+    comment_base = {
+        "thread_id": "ok",
+        "thread_title": "Discussion thread",
+        "created_utc": "2026-06-01T01:00:00Z",
+        "score": 1,
+        "is_submitter": False,
+    }
+    comments = [
+        {
+            **comment_base,
+            "id": "delc",
+            "parent_id": "t3_ok",
+            "author": "[deleted]",
+            "body": "[deleted]",
+        },
+        {**comment_base, "id": "modc", "parent_id": "t3_ok", "author": "mod", "body": "[removed]"},
+        {
+            **comment_base,
+            "id": "orphanc",
+            "parent_id": "t3_ok",
+            "author": None,
+            "body": "some content",
+        },
+        {
+            **comment_base,
+            "id": "healthyc",
+            "parent_id": "t3_ok",
+            "author": "user",
+            "body": "all good",
+        },
+    ]
+    make_community_file(comm / "2026-06.json", "2026-06", posts, comments)
+    return tmp_path
+
+
+class TestGaps:
+    """gaps: census of deleted/removed/authorless posts and comments with ids."""
+
+    def test_no_gaps_reports_clean(self, data_dir, capsys):
+        code, out, _ = run(capsys, ["--data-dir", str(data_dir), "gaps", "--month", "2026-08"])
+        assert code == 0
+        assert "0 gapped posts, 0 gapped comments" in out
+        assert "no deleted, removed, or authorless records" in out
+
+    def test_lists_gapped_records_with_context(self, gappy_dir, capsys):
+        code, out, _ = run(capsys, ["--data-dir", str(gappy_dir), "gaps", "--month", "2026-06"])
+        assert code == 0
+        assert "1 gapped post, 3 gapped comments" in out
+        # the deleted post
+        assert "t3_dead" in out
+        assert "Gone thread" in out
+        assert "author=[deleted]" in out
+        assert "selftext=[removed]" in out
+        # the three gapped comments: author-deleted, body-removed, authorless
+        assert "t1_delc" in out
+        assert "t1_modc" in out
+        assert "t1_orphanc" in out
+        assert "author=None" in out
+        assert "body=[removed]" in out
+        # comments carry thread context
+        assert 'in t3_ok ("Discussion thread")' in out
+        # healthy records are not listed
+        assert "t1_healthyc" not in out
+
+    def test_healthy_post_not_listed(self, gappy_dir, capsys):
+        # the healthy thread "ok" appears only as comment context, never as a gapped post
+        code, out, _ = run(capsys, ["--data-dir", str(gappy_dir), "gaps", "--month", "2026-06"])
+        assert code == 0
+        posts_section = out.split("posts:", 1)[1].split("comments:", 1)[0]
+        assert "t3_dead" in posts_section
+        assert "t3_ok" not in posts_section
+
+    def test_json(self, gappy_dir, capsys):
+        code, out, _ = run(
+            capsys, ["--data-dir", str(gappy_dir), "--json", "gaps", "--month", "2026-06"]
+        )
+        assert code == 0
+        doc = json.loads(out)
+        assert doc["month"] == "2026-06"
+        assert doc["post_count"] == 2
+        assert doc["comment_count"] == 4
+        assert doc["gapped_posts"] == 1
+        assert doc["gapped_comments"] == 3
+        assert doc["posts"][0]["id"] == "dead"
+        assert "author missing" in doc["posts"][0]["reasons"]
+        assert "selftext removed" in doc["posts"][0]["reasons"]
+        assert [c["id"] for c in doc["comments"]] == ["delc", "modc", "orphanc"]
+        assert doc["comments"][0]["reasons"] == ["author missing", "body deleted"]
+        assert doc["comments"][1]["reasons"] == ["body removed"]
+        assert doc["comments"][2]["reasons"] == ["author missing"]
+
+    def test_missing_month_exits_1(self, capsys):
+        code, _, err = run(capsys, ["--data-dir", "/nonexistent", "gaps", "--month", "2025-01"])
+        assert code == 1
+        assert "No community file" in err
+
+
 class TestBodies:
     def test_renders_bounded_bodies_for_chosen_ids(self, data_dir, capsys):
         code, out, _ = run(

@@ -75,6 +75,14 @@ instead of guessing. One month per run.
    — one call prints provenance-prefixed, sliced bodies for the chosen post or
    comment ids (t3_/t1_ prefix optional, 3–6 ids). Mark these "body read" — they
    are not drilled and don't count against the drill budget.
+
+   Two `thread` slice flags cut the cost of peeking at a busy thread without a
+   drill: `--top-level` renders only direct replies to the post, each with its
+   direct-reply count (`(+N replies)`) — the shape of an anomalous fixture at a
+   glance — and `--tail N` renders the last N comments by time, for late
+   answers a drill's first screen never reaches (a PIF winner buried past
+   comment 50). Both compose: `--top-level --tail 5` is the last five
+   top-level comments.
 7. **Author follow-ups** (optional, ≤ 4): `threads --month {month} --author X
    --top 15` and `search --months {month}:{month} --author X --query <word> --top
    15` for contest organizers or users the map makes notable. Feeds User happenings.
@@ -131,7 +139,9 @@ _Source: `data/community/YYYY-MM.json` (extracted_at <ts>) · summarized <date> 
 <who did what — contests run/won, milestones, visible drama; u/ handles + ids>
 
 ## Open questions / author-only gaps
-<[removed]/[deleted] bodies, null authors, unclear references, threads not drilled>
+<census via `community_query gaps --month {month}` — [removed]/[deleted] bodies
+ and null/authorless records with ids and thread titles, verbatim from the
+ census output; plus unclear references, threads not drilled>
 
 ## Threads drilled
 <id · title · max-comments used>

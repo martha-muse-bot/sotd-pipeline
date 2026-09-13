@@ -1090,3 +1090,244 @@ class TestMetrics:
         with pytest.raises(SystemExit) as exc:
             main(["metrics", "--month", "2026-01", "--months", "2026-01:2026-02"])
         assert exc.value.code == 2
+
+
+@pytest.fixture
+def users_month(tmp_path):
+    """A month with six user rows spanning missed_days/shaves values."""
+    agg = tmp_path / "aggregated"
+    agg.mkdir()
+    users = [
+        {"rank": 1, "user": "bob", "shaves": 40, "missed_days": 0},
+        {"rank": 2, "user": "alice", "shaves": 31, "missed_days": 0},
+        {"rank": 3, "user": "dave", "shaves": 31, "missed_days": 2},
+        {"rank": 4, "user": "carol", "shaves": 28, "missed_days": 1},
+        {"rank": 5, "user": "erin", "shaves": 20, "missed_days": 0},
+        {"rank": 6, "user": "frank", "shaves": 10, "missed_days": 3},
+    ]
+    make_month_file(agg / "2026-04.json", "2026-04", razors=[], soaps=[], extra={"users": users})
+    return tmp_path
+
+
+class TestCount:
+    """count: rows in a category matching AND-ed --where field conditions."""
+
+    def test_count_where_equality_and_threshold(self, users_month, capsys):
+        # the perfect-attendance probe: missed_days=0 AND shaves>=31 -> bob, alice
+        code, out, _ = run(
+            capsys,
+            [
+                "--data-dir",
+                str(users_month),
+                "count",
+                "--month",
+                "2026-04",
+                "--category",
+                "users",
+                "--where",
+                "missed_days=0",
+                "--where",
+                "shaves>=31",
+            ],
+        )
+        assert code == 0
+        assert "2 of 6 rows match" in out
+        assert "missed_days=0" in out
+        assert "shaves>=31" in out
+
+    def test_count_numeric_equality(self, users_month, capsys):
+        # shaves=31 -> alice, dave
+        code, out, _ = run(
+            capsys,
+            [
+                "--data-dir",
+                str(users_month),
+                "count",
+                "--month",
+                "2026-04",
+                "--category",
+                "users",
+                "--where",
+                "shaves=31",
+            ],
+        )
+        assert code == 0
+        assert "2 of 6 rows match" in out
+
+    def test_count_inequality(self, users_month, capsys):
+        # missed_days>=1 -> carol, dave, frank
+        code, out, _ = run(
+            capsys,
+            [
+                "--data-dir",
+                str(users_month),
+                "count",
+                "--month",
+                "2026-04",
+                "--category",
+                "users",
+                "--where",
+                "missed_days>=1",
+            ],
+        )
+        assert code == 0
+        assert "3 of 6 rows match" in out
+
+    def test_count_string_equality_is_case_insensitive(self, data_dir, capsys):
+        # both highest_use_count_per_blade rows carry format=DE
+        code, out, _ = run(
+            capsys,
+            [
+                "--data-dir",
+                str(data_dir),
+                "count",
+                "--month",
+                "2026-01",
+                "--category",
+                "highest_use_count_per_blade",
+                "--where",
+                "format=de",
+            ],
+        )
+        assert code == 0
+        assert "2 of 2 rows match" in out
+
+    def test_count_float_equality(self, data_dir, capsys):
+        # pair_a and pair_b share hhi=0.8 in the 2026-01 diversity rows
+        code, out, _ = run(
+            capsys,
+            [
+                "--data-dir",
+                str(data_dir),
+                "count",
+                "--month",
+                "2026-01",
+                "--category",
+                "user_soap_brand_scent_diversity",
+                "--where",
+                "hhi=0.8",
+            ],
+        )
+        assert code == 0
+        assert "2 of 6 rows match" in out
+
+    def test_count_no_where_counts_all_rows(self, data_dir, capsys):
+        code, out, _ = run(
+            capsys,
+            ["--data-dir", str(data_dir), "count", "--month", "2026-01", "--category", "razors"],
+        )
+        assert code == 0
+        assert "2 of 2 rows" in out
+        assert "match" not in out
+
+    def test_count_annual(self, data_dir, capsys):
+        code, out, _ = run(
+            capsys, ["--data-dir", str(data_dir), "count", "--year", "2025", "--category", "razors"]
+        )
+        assert code == 0
+        assert "1 of 1 rows" in out
+
+    def test_count_json(self, users_month, capsys):
+        code, out, _ = run(
+            capsys,
+            [
+                "--json",
+                "--data-dir",
+                str(users_month),
+                "count",
+                "--month",
+                "2026-04",
+                "--category",
+                "users",
+                "--where",
+                "missed_days=0",
+                "--where",
+                "shaves>=31",
+            ],
+        )
+        assert code == 0
+        doc = json.loads(out)
+        assert doc["period"] == "2026-04"
+        assert doc["category"] == "users"
+        assert doc["where"] == ["missed_days=0", "shaves>=31"]
+        assert doc["count"] == 2
+        assert doc["total"] == 6
+
+    def test_count_unknown_field_lists_valid_fields(self, data_dir, capsys):
+        code, _, err = run(
+            capsys,
+            [
+                "--data-dir",
+                str(data_dir),
+                "count",
+                "--month",
+                "2026-01",
+                "--category",
+                "users",
+                "--where",
+                "missed_day=0",
+            ],
+        )
+        assert code == 1
+        assert "unknown field" in err
+        assert "missed_days" in err
+
+    def test_count_invalid_where_syntax(self, data_dir, capsys):
+        code, _, err = run(
+            capsys,
+            [
+                "--data-dir",
+                str(data_dir),
+                "count",
+                "--month",
+                "2026-01",
+                "--category",
+                "users",
+                "--where",
+                "missed_days",
+            ],
+        )
+        assert code == 1
+        assert "invalid --where" in err
+
+    def test_count_comparison_with_string_value_errors(self, data_dir, capsys):
+        code, _, err = run(
+            capsys,
+            [
+                "--data-dir",
+                str(data_dir),
+                "count",
+                "--month",
+                "2026-01",
+                "--category",
+                "highest_use_count_per_blade",
+                "--where",
+                "format>=DE",
+            ],
+        )
+        assert code == 1
+        assert "numeric" in err
+
+    def test_count_unknown_category(self, data_dir, capsys):
+        code, _, err = run(
+            capsys,
+            ["--data-dir", str(data_dir), "count", "--month", "2026-01", "--category", "wands"],
+        )
+        assert code == 1
+        assert "unknown category" in err
+
+    def test_count_non_list_category(self, data_dir, capsys):
+        code, _, err = run(
+            capsys,
+            [
+                "--data-dir",
+                str(data_dir),
+                "count",
+                "--month",
+                "2026-01",
+                "--category",
+                "sample_usage_metrics",
+            ],
+        )
+        assert code == 1
+        assert "not a ranked list" in err
