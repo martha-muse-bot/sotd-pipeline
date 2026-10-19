@@ -51,6 +51,12 @@ class TestExtractFiber:
         assert extract_fiber("badger boar hybrid") == "Mixed Badger/Boar"
         assert extract_fiber("fusion brush") == "Mixed Badger/Boar"
 
+    def test_handle_hybrid_is_not_mixed_fiber(self):
+        """Handle material 'Hybrid' must not classify as Mixed Badger/Boar."""
+        assert extract_fiber("Virginia Cheng - Silvertip Badger Dogwood Hybrid 26mm") == "Badger"
+        assert extract_fiber("Dogwood Handcrafts Hybrid / Maggard Boar") == "Boar"
+        assert extract_fiber("Dogwood Hybrid") is None
+
     def test_synthetic_patterns(self):
         """Test synthetic fiber patterns."""
         assert extract_fiber("synthetic") == "Synthetic"

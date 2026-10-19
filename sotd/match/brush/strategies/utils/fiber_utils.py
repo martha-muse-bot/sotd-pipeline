@@ -9,8 +9,9 @@ _FIBER_PATTERNS = {
     # Specific fiber types with detailed patterns
     "Mixed Boar/Horse": r"(boar/horse|horse/boar)",
     # Specific fiber types with detailed patterns
+    # "hybrid" alone is usually a handle (Dogwood Hybrid), not a fiber blend.
     "Mixed Badger/Boar": (
-        r"^(?!.*badger[ -]dyed).*(mix|mixed|mi[sx]tura?|badg.*boar|boar.*badg|(?:badg|boar).*hybrid|hybrid.*(?:badg|boar)|fusion|"
+        r"^(?!.*badger[ -]dyed).*(mix|mixed|mi[sx]tura?|badg.*boar|boar.*badg|fusion|"
         r"badger.*cased|tasso et setola|bristle (?:&|and) badger|badger (?:&|and) bristle)"
     ),
     "Synthetic": (

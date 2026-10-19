@@ -15,7 +15,7 @@ class FiberProcessor:
                 r"\bt[23]\b|kong|hi\s*brush|ak47|g5[abc]|stf|quartermoon|fibre|"
                 r"\bmig\b|synthetic badger|motherlode|nylon|plissoft|tuxedo)"
             ),
-            "Mixed Badger/Boar": r"(mix|mixed|mi[sx]tura?|badg.*boar|boar.*badg|hybrid|fusion)",
+            "Mixed Badger/Boar": r"(mix|mixed|mi[sx]tura?|badg.*boar|boar.*badg|fusion)",
             "Boar": r"\b(boar|shoat)\b",
             "Badger": (
                 r"(hmw|high.*mo|(2|3|two|three)\s*band|shd|badger|silvertip|super|"
