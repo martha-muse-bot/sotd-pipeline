@@ -383,6 +383,14 @@ class SaveSplitResponse(BaseModel):
     system_reasoning: Optional[str] = Field(None, description="System reasoning")
 
 
+class DeleteSplitResponse(BaseModel):
+    """Response model for deleting a brush split override."""
+
+    success: bool = Field(..., description="Whether the delete operation was successful")
+    message: str = Field(..., description="Human-readable message")
+    deleted: bool = Field(..., description="Whether an entry was removed (False if already absent)")
+
+
 class LoadResponse(BaseModel):
     """Response model for loading brush splits."""
 
@@ -812,6 +820,33 @@ class BrushSplitValidator:
     def get_all_validated_splits(self) -> List[BrushSplit]:
         """Get all validated splits as a list."""
         return list(self.validated_splits.values())
+
+    def delete_validated_split(self, original: str) -> tuple[bool, bool]:
+        """Remove a brush split override so default automated parsing applies.
+
+        Removes both manual handle/knot splits and should_not_split entries.
+
+        Args:
+            original: Original brush string key to remove
+
+        Returns:
+            Tuple of (success, deleted) where deleted is True if an entry was removed
+        """
+        self.validated_splits.clear()
+        self.load_validated_splits()
+
+        key_to_remove = None
+        for key in self.validated_splits:
+            if key.lower() == original.lower():
+                key_to_remove = key
+                break
+
+        if key_to_remove is None:
+            return True, False
+
+        del self.validated_splits[key_to_remove]
+        success = self.save_validated_splits(list(self.validated_splits.values()))
+        return success, True
 
 
 # Global validator instance
@@ -1317,6 +1352,44 @@ async def save_single_split(data: SaveSplitRequest):
         logger.error(f"Unexpected error saving brush split: {e}")
         raise HTTPException(
             status_code=500, detail="An unexpected error occurred while saving the brush split"
+        )
+
+
+@router.delete(
+    "/split",
+    response_model=DeleteSplitResponse,
+    summary="Delete a brush split override (revert to automatic)",
+)
+async def delete_split(original: str = Query(..., description="Original brush string to remove")):
+    """Remove a brush split override from YAML.
+
+    Deletes both manual handle/knot splits and should_not_split entries so the
+    matcher falls back to default automated parsing. Idempotent if already gone.
+    """
+    try:
+        if not original or not original.strip():
+            raise HTTPException(status_code=400, detail="Original field cannot be empty")
+
+        success, deleted = validator.delete_validated_split(original.strip())
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to delete brush split")
+
+        if deleted:
+            message = f"Removed brush split override: {original.strip()}"
+        else:
+            message = f"No brush split override found for: {original.strip()}"
+
+        return DeleteSplitResponse(success=True, message=message, deleted=deleted)
+
+    except HTTPException:
+        raise
+    except (FileNotFoundError, DataCorruptionError, ProcessingError) as e:
+        logger.error(f"Failed to delete brush split: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to delete brush split: {str(e)}")
+    except Exception as e:
+        logger.error(f"Unexpected error deleting brush split: {e}")
+        raise HTTPException(
+            status_code=500, detail="An unexpected error occurred while deleting the brush split"
         )
 
 

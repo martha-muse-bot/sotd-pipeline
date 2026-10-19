@@ -488,6 +488,24 @@ export const saveBrushSplit = async (
   }
 };
 
+export interface DeleteBrushSplitResponse {
+  success: boolean;
+  message: string;
+  deleted: boolean;
+}
+
+export const deleteBrushSplit = async (original: string): Promise<DeleteBrushSplitResponse> => {
+  try {
+    const response = await api.delete('/brushes/splits/split', {
+      params: { original },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to delete brush split:', error);
+    throw error;
+  }
+};
+
 export const saveBrushSplits = async (
   brushSplits: BrushSplit[]
 ): Promise<SaveBrushSplitsResponse> => {

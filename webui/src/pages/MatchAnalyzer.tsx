@@ -19,6 +19,7 @@ import {
   updateFilteredEntries,
   handleApiError,
   saveBrushSplit,
+  deleteBrushSplit,
   loadYamlBrushSplits,
   getSoapGroupByMatched,
   GroupByMatchedResult,
@@ -597,6 +598,32 @@ const MatchAnalyzer: React.FC = () => {
     } catch (error) {
       console.error('Failed to save brush split:', error);
       setError(handleApiError(error));
+    } finally {
+      setSavingBrushSplit(false);
+    }
+  };
+
+  const handleBrushSplitDelete = async (original: string) => {
+    try {
+      setSavingBrushSplit(true);
+
+      const response = await deleteBrushSplit(original);
+
+      if (response.success) {
+        handleBrushSplitClose();
+        await loadYamlBrushSplitsData();
+
+        if (selectedMonths.length > 0) {
+          await handleAnalyze();
+        }
+      } else {
+        setError(`Failed to remove brush split override: ${response.message}`);
+        throw new Error(response.message);
+      }
+    } catch (error) {
+      console.error('Failed to delete brush split:', error);
+      setError(handleApiError(error));
+      throw error;
     } finally {
       setSavingBrushSplit(false);
     }
@@ -2509,6 +2536,11 @@ const MatchAnalyzer: React.FC = () => {
           original={selectedBrushItem.original}
           existingSplit={existingBrushSplit}
           onSave={handleBrushSplitSave}
+          onDelete={
+            yamlBrushSplits.some(s => s.original === selectedBrushItem.original)
+              ? handleBrushSplitDelete
+              : undefined
+          }
         />
       )}
 

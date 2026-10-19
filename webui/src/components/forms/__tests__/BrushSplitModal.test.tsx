@@ -4,8 +4,9 @@ import userEvent from '@testing-library/user-event';
 import BrushSplitModal from '../BrushSplitModal';
 import { BrushSplit } from '@/types/brushSplit';
 
-// Mock the onSave function
+// Mock the onSave / onDelete functions
 const mockOnSave = jest.fn();
+const mockOnDelete = jest.fn();
 const mockOnClose = jest.fn();
 
 const defaultProps = {
@@ -13,6 +14,7 @@ const defaultProps = {
   onClose: mockOnClose,
   original: 'Declaration Grooming B2 Badger',
   onSave: mockOnSave,
+  onDelete: mockOnDelete,
 };
 
 describe('BrushSplitModal', () => {
@@ -225,5 +227,62 @@ describe('BrushSplitModal', () => {
 
     expect(screen.getByTestId('loading-spinner')).toBeInTheDocument();
     expect(saveButton).toBeDisabled();
+  });
+
+  describe('Revert to automatic', () => {
+    const existingSplit: BrushSplit = {
+      original: 'Declaration Grooming B2 Badger',
+      handle: 'Declaration Grooming',
+      knot: 'B2 Badger',
+      corrected: true,
+      validated_at: '2025-01-27T14:30:00Z',
+      should_not_split: false,
+      occurrences: [],
+    };
+
+    it('hides Revert to automatic when creating a new split', () => {
+      render(<BrushSplitModal {...defaultProps} />);
+
+      expect(screen.queryByText('Revert to automatic')).not.toBeInTheDocument();
+    });
+
+    it('shows Revert to automatic when editing an existing split', () => {
+      render(<BrushSplitModal {...defaultProps} existingSplit={existingSplit} />);
+
+      expect(screen.getByText('Revert to automatic')).toBeInTheDocument();
+    });
+
+    it('calls onDelete when Revert to automatic is confirmed', async () => {
+      const user = userEvent.setup();
+      const confirmSpy = jest.spyOn(window, 'confirm').mockReturnValue(true);
+      mockOnDelete.mockResolvedValueOnce(undefined);
+
+      render(<BrushSplitModal {...defaultProps} existingSplit={existingSplit} />);
+
+      await act(async () => {
+        await user.click(screen.getByText('Revert to automatic'));
+      });
+
+      await waitFor(() => {
+        expect(confirmSpy).toHaveBeenCalled();
+        expect(mockOnDelete).toHaveBeenCalledWith('Declaration Grooming B2 Badger');
+      });
+
+      confirmSpy.mockRestore();
+    });
+
+    it('does not call onDelete when confirmation is cancelled', async () => {
+      const user = userEvent.setup();
+      const confirmSpy = jest.spyOn(window, 'confirm').mockReturnValue(false);
+
+      render(<BrushSplitModal {...defaultProps} existingSplit={existingSplit} />);
+
+      await act(async () => {
+        await user.click(screen.getByText('Revert to automatic'));
+      });
+
+      expect(mockOnDelete).not.toHaveBeenCalled();
+      confirmSpy.mockRestore();
+    });
   });
 });

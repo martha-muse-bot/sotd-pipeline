@@ -12,6 +12,8 @@ export interface BrushSplitModalProps {
   original: string;
   existingSplit?: BrushSplit;
   onSave: (split: BrushSplit) => Promise<void>;
+  /** Remove override from YAML so default automated parsing applies. */
+  onDelete?: (original: string) => Promise<void>;
 }
 
 export interface BrushSplitValidationResult {
@@ -27,11 +29,13 @@ export const BrushSplitModal: React.FC<BrushSplitModalProps> = ({
   original,
   existingSplit,
   onSave,
+  onDelete,
 }) => {
   const [handle, setHandle] = useState<string>('');
   const [knot, setKnot] = useState<string>('');
   const [shouldNotSplit, setShouldNotSplit] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
+  const [deleting, setDeleting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [validation, setValidation] = useState<BrushSplitValidationResult | null>(null);
 
@@ -196,6 +200,34 @@ export const BrushSplitModal: React.FC<BrushSplitModalProps> = ({
     }
   };
 
+  const handleRevertToAutomatic = async () => {
+    if (!onDelete || !existingSplit) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      'Remove this override and revert to automatic splitting?\n\n' +
+        'This deletes the entry from brush_splits.yaml (manual split or Don\'t Split).'
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    setDeleting(true);
+    setError(null);
+
+    try {
+      await onDelete(original);
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to remove brush split override');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const busy = loading || deleting;
+
   // Get confidence badge color
   const getConfidenceColor = (confidence: string) => {
     switch (confidence) {
@@ -348,6 +380,9 @@ export const BrushSplitModal: React.FC<BrushSplitModalProps> = ({
                   <strong>Tips:</strong>
                   <ul className='list-disc list-inside mt-2 space-y-1'>
                     <li>Use "Don't Split" for brushes that shouldn't be separated</li>
+                    <li>
+                      Use "Revert to automatic" to remove an override and restore default parsing
+                    </li>
                     <li>Look for delimiters like "w/", "with", "/", or "-"</li>
                     <li>Check for fiber indicators (badger, boar, synthetic)</li>
                     <li>Ensure both components are meaningful and complete</li>
@@ -359,16 +394,34 @@ export const BrushSplitModal: React.FC<BrushSplitModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className='flex items-center justify-end gap-3 p-4 border-t border-gray-200'>
-          <Button type='button' variant='outline' onClick={onClose} disabled={loading}>
-            Cancel
-          </Button>
-          <Button type='submit' disabled={loading || !validation?.isValid} onClick={handleSubmit}>
-            {loading && (
-              <Loader2 className='mr-2 h-4 w-4 animate-spin' data-testid='loading-spinner' />
+        <div className='flex items-center justify-between gap-3 p-4 border-t border-gray-200'>
+          <div>
+            {existingSplit && onDelete && (
+              <Button
+                type='button'
+                variant='outline'
+                onClick={handleRevertToAutomatic}
+                disabled={busy}
+                className='text-red-700 border-red-200 hover:bg-red-50'
+              >
+                {deleting && (
+                  <Loader2 className='mr-2 h-4 w-4 animate-spin' data-testid='delete-spinner' />
+                )}
+                Revert to automatic
+              </Button>
             )}
-            {existingSplit ? 'Update Split' : 'Save Split'}
-          </Button>
+          </div>
+          <div className='flex items-center gap-3'>
+            <Button type='button' variant='outline' onClick={onClose} disabled={busy}>
+              Cancel
+            </Button>
+            <Button type='submit' disabled={busy || !validation?.isValid} onClick={handleSubmit}>
+              {loading && (
+                <Loader2 className='mr-2 h-4 w-4 animate-spin' data-testid='loading-spinner' />
+              )}
+              {existingSplit ? 'Update Split' : 'Save Split'}
+            </Button>
+          </div>
         </div>
       </div>
     </div>

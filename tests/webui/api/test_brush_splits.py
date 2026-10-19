@@ -1149,6 +1149,113 @@ class TestSaveSplitEndpoint:
         assert "Original field cannot be empty" in data["detail"]
 
 
+class TestDeleteSplitEndpoint:
+    """Test deleting a brush split override (revert to automatic)."""
+
+    def test_delete_manual_split_removes_entry(self, client, tmp_path):
+        """Deleting a manual split removes it from YAML so default parsing applies."""
+        yaml_file = tmp_path / "brush_splits.yaml"
+        existing_data = {
+            "Virginia Cheng - Silvertip Badger Dogwood Hybrid 26mm": {
+                "handle": "Dogwood Hybrid",
+                "knot": "Virginia Cheng Silvertip Badger 26mm",
+                "validated_at": "2025-01-27T14:30:00Z",
+                "corrected": True,
+                "should_not_split": False,
+                "occurrences": [],
+            },
+            "Other Brush": {
+                "handle": "Other Handle",
+                "knot": "Other Knot",
+                "validated_at": "2025-01-27T14:30:00Z",
+                "corrected": False,
+                "should_not_split": False,
+                "occurrences": [],
+            },
+        }
+        yaml_file.write_text(yaml.dump(existing_data))
+
+        with patch("webui.api.brush_splits.validator.yaml_path", yaml_file):
+            from webui.api.brush_splits import validator as brush_validator
+
+            brush_validator.validated_splits.clear()
+
+            response = client.delete(
+                "/api/brushes/splits/split",
+                params={
+                    "original": "Virginia Cheng - Silvertip Badger Dogwood Hybrid 26mm",
+                },
+            )
+
+            assert response.status_code == 200
+            data = response.json()
+            assert data["success"] is True
+            assert data["deleted"] is True
+
+            remaining = yaml.safe_load(yaml_file.read_text())
+            assert "Virginia Cheng - Silvertip Badger Dogwood Hybrid 26mm" not in remaining
+            assert "Other Brush" in remaining
+
+    def test_delete_dont_split_removes_entry(self, client, tmp_path):
+        """Deleting a don't-split override also removes the YAML entry."""
+        yaml_file = tmp_path / "brush_splits.yaml"
+        existing_data = {
+            "Single Component Brush": {
+                "should_not_split": True,
+                "validated_at": "2025-01-27T14:30:00Z",
+                "corrected": True,
+                "occurrences": [],
+            },
+        }
+        yaml_file.write_text(yaml.dump(existing_data))
+
+        with patch("webui.api.brush_splits.validator.yaml_path", yaml_file):
+            from webui.api.brush_splits import validator as brush_validator
+
+            brush_validator.validated_splits.clear()
+
+            response = client.delete(
+                "/api/brushes/splits/split",
+                params={"original": "Single Component Brush"},
+            )
+
+            assert response.status_code == 200
+            data = response.json()
+            assert data["success"] is True
+            assert data["deleted"] is True
+
+            remaining = yaml.safe_load(yaml_file.read_text()) or {}
+            assert "Single Component Brush" not in remaining
+
+    def test_delete_missing_entry_is_idempotent(self, client, tmp_path):
+        """Deleting an entry that is already gone still succeeds."""
+        yaml_file = tmp_path / "brush_splits.yaml"
+        yaml_file.write_text(yaml.dump({"Keep Me": {"handle": "H", "knot": "K"}}))
+
+        with patch("webui.api.brush_splits.validator.yaml_path", yaml_file):
+            from webui.api.brush_splits import validator as brush_validator
+
+            brush_validator.validated_splits.clear()
+
+            response = client.delete(
+                "/api/brushes/splits/split",
+                params={"original": "Not In File"},
+            )
+
+            assert response.status_code == 200
+            data = response.json()
+            assert data["success"] is True
+            assert data["deleted"] is False
+
+            remaining = yaml.safe_load(yaml_file.read_text())
+            assert "Keep Me" in remaining
+
+    def test_delete_requires_original(self, client):
+        """Empty original is rejected."""
+        response = client.delete("/api/brushes/splits/split", params={"original": ""})
+        assert response.status_code == 400
+
+
 def create_test_split(original: str):
     """Helper function to create test brush splits."""
     return BrushSplit(original=original, handle=original, knot=original)

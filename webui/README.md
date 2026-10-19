@@ -264,6 +264,8 @@ The backend provides a standardized REST API with the following endpoint structu
 - `GET /api/brushes/splits/load` - Load brush splits
 - `GET /api/brushes/splits/validate` - Validate brush splits
 - `POST /api/brushes/splits/save` - Save brush splits
+- `POST /api/brushes/splits/save-split` - Save a single brush split correction
+- `DELETE /api/brushes/splits/split` - Remove a brush split override (revert to automatic parsing)
 - `GET /api/brushes/splits/yaml` - Get YAML brush splits
 - `GET /api/brushes/validation/months` - Get validation months
 - `GET /api/brushes/validation/data/{month}/{system}` - Get validation data
