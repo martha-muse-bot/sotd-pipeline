@@ -270,6 +270,23 @@ class TestBrushMatchingAPIIntegration:
                 "source_text" in response.enrichedData
             ), "Source text field should be present in response"
 
+    async def test_input_parsing_fiber_and_knot_size(self):
+        """Parsed fiber/size come from input text, independent of catalog match."""
+        request = BrushAnalysisRequest(brushString="Omega 26mm Boar")
+        response = await analyze_brush(request)
+
+        assert response.inputParsing is not None
+        assert response.inputParsing.fiber == "Boar"
+        assert response.inputParsing.knot_size_mm == 26.0
+
+    async def test_input_parsing_stiff_bristle_without_size(self):
+        """Stiff bristle parses as Boar; no size when none is present in the string."""
+        request = BrushAnalysisRequest(brushString="unknown - stiff bristle brush")
+        response = await analyze_brush(request)
+
+        assert response.inputParsing.fiber == "Boar"
+        assert response.inputParsing.knot_size_mm is None
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

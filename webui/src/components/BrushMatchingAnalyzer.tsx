@@ -1,10 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Loader2, Search, Trophy, Target, Hash, Info, Split, Component } from 'lucide-react';
+
+export interface BrushMatchingAnalyzerProps {
+  /** Prefill / analyze this string (takes precedence over ?brush=). */
+  initialBrushString?: string;
+  /** When true (or when a brush source is present and unset), auto-run analysis once. */
+  autoAnalyze?: boolean;
+}
 
 interface BrushMatchResult {
   strategy: string;
@@ -68,10 +76,24 @@ interface BrushMatchResult {
   };
 }
 
+interface InputParsing {
+  fiber?: string | null;
+  knot_size_mm?: number | null;
+}
+
 interface BrushAnalysisResponse {
   results: BrushMatchResult[];
   winner: BrushMatchResult;
   enrichedData?: any;
+  inputParsing?: InputParsing;
+}
+
+function matchedFiberFromWinner(winner: BrushMatchResult): string | null {
+  const data = winner.matchedData;
+  if (!data) return null;
+  if (data.fiber) return data.fiber;
+  if (data.knot?.fiber) return data.knot.fiber;
+  return null;
 }
 
 // Reusable component for displaying score breakdowns
@@ -350,52 +372,85 @@ function ComponentDetailsDisplay({
   );
 }
 
-export function BrushMatchingAnalyzer() {
-  const [brushString, setBrushString] = useState('');
+export function BrushMatchingAnalyzer({
+  initialBrushString,
+  autoAnalyze,
+}: BrushMatchingAnalyzerProps = {}) {
+  const [searchParams] = useSearchParams();
+  const brushFromQuery = searchParams.get('brush')?.trim() ?? '';
+  const sourceBrush = useMemo(
+    () => (initialBrushString?.trim() || brushFromQuery || '').trim(),
+    [initialBrushString, brushFromQuery]
+  );
+  const shouldAutoAnalyze = autoAnalyze ?? Boolean(sourceBrush);
+
+  const [brushString, setBrushString] = useState(sourceBrush);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [results, setResults] = useState<BrushAnalysisResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [bypassCorrectMatches, setBypassCorrectMatches] = useState(false);
+  const autoRanForRef = useRef<string | null>(null);
 
-  const analyzeBrush = async () => {
-    if (!brushString.trim()) return;
-
-    setIsAnalyzing(true);
-    setError(null);
-    setResults(null);
-
-    try {
-      // Use the API service for cache-busting and consistent error handling
-      const response = await fetch(`/api/brushes/matching/analyze?_t=${Date.now()}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0',
-        },
-        body: JSON.stringify({
-          brushString: brushString.trim(),
-          bypass_correct_matches: bypassCorrectMatches,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Analysis failed: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      setResults(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Analysis failed');
-    } finally {
-      setIsAnalyzing(false);
+  useEffect(() => {
+    if (sourceBrush) {
+      setBrushString(sourceBrush);
     }
-  };
+  }, [sourceBrush]);
+
+  const analyzeBrush = useCallback(
+    async (value?: string) => {
+      const target = (value ?? brushString).trim();
+      if (!target) return;
+
+      setIsAnalyzing(true);
+      setError(null);
+      setResults(null);
+
+      try {
+        // Use the API service for cache-busting and consistent error handling
+        const response = await fetch(`/api/brushes/matching/analyze?_t=${Date.now()}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            Pragma: 'no-cache',
+            Expires: '0',
+          },
+          body: JSON.stringify({
+            brushString: target,
+            bypass_correct_matches: bypassCorrectMatches,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Analysis failed: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        setResults(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Analysis failed');
+      } finally {
+        setIsAnalyzing(false);
+      }
+    },
+    [brushString, bypassCorrectMatches]
+  );
+
+  useEffect(() => {
+    if (!shouldAutoAnalyze || !sourceBrush) {
+      return;
+    }
+    if (autoRanForRef.current === sourceBrush) {
+      return;
+    }
+    autoRanForRef.current = sourceBrush;
+    void analyzeBrush(sourceBrush);
+  }, [shouldAutoAnalyze, sourceBrush, analyzeBrush]);
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
-      analyzeBrush();
+      void analyzeBrush();
     }
   };
 
@@ -440,7 +495,7 @@ export function BrushMatchingAnalyzer() {
                 className='flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
               />
               <button
-                onClick={analyzeBrush}
+                onClick={() => void analyzeBrush()}
                 disabled={isAnalyzing || !brushString.trim()}
                 className='px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed'
               >
@@ -474,6 +529,52 @@ export function BrushMatchingAnalyzer() {
           {/* Results Display */}
           {results && (
             <div className='space-y-6'>
+              {/* Parsed from input (fiber / knot size from text parsers) */}
+              {results.inputParsing && (
+                <Card className='border-blue-200 bg-blue-50'>
+                  <CardHeader className='pb-2'>
+                    <CardTitle className='flex items-center gap-2 text-blue-800 text-base'>
+                      <Info className='w-4 h-4' />
+                      Parsed from input
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className='grid grid-cols-2 gap-4 text-sm'>
+                      <div>
+                        <p className='text-gray-600'>Fiber</p>
+                        <p className='font-semibold' data-testid='input-parsing-fiber'>
+                          {results.inputParsing.fiber ?? 'none'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className='text-gray-600'>Knot size</p>
+                        <p className='font-semibold' data-testid='input-parsing-knot-size'>
+                          {results.inputParsing.knot_size_mm != null
+                            ? `${results.inputParsing.knot_size_mm}mm`
+                            : 'none'}
+                        </p>
+                      </div>
+                    </div>
+                    {(() => {
+                      const parsed = results.inputParsing.fiber ?? null;
+                      const matched = matchedFiberFromWinner(results.winner);
+                      if (parsed && matched && parsed !== matched) {
+                        return (
+                          <p
+                            className='mt-3 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded p-2'
+                            data-testid='input-parsing-fiber-mismatch'
+                          >
+                            Parsed fiber ({parsed}) differs from matched fiber ({matched}). Catalog
+                            or strategy default may be overriding the input text.
+                          </p>
+                        );
+                      }
+                      return null;
+                    })()}
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Winner Section */}
               <Card className='border-green-200 bg-green-50'>
                 <CardHeader>

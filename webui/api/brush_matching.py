@@ -34,10 +34,18 @@ class BrushMatchResult(BaseModel):
     splitInformation: Optional[Dict[str, Any]] = None
 
 
+class InputParsing(BaseModel):
+    """Fiber and knot size parsed from the raw input string (not catalog defaults)."""
+
+    fiber: Optional[str] = None
+    knot_size_mm: Optional[float] = None
+
+
 class BrushAnalysisResponse(BaseModel):
     results: List[BrushMatchResult]
     winner: BrushMatchResult
     enrichedData: Dict[str, Any] = {}
+    inputParsing: InputParsing = InputParsing()
 
 
 def _get_modifier_description(modifier_name: str, modifier_value: float, brush_string: str) -> str:
@@ -674,8 +682,20 @@ async def analyze_brush(request: BrushAnalysisRequest) -> BrushAnalysisResponse:
         # Get enriched data
         enriched_data = analysis_result.get("enriched_data", {})
 
+        # Parse fiber / knot size from the raw input (independent of catalog match)
+        from sotd.match.brush.strategies.utils.fiber_utils import match_fiber
+        from sotd.match.brush.strategies.utils.knot_size_utils import parse_knot_size
+
+        input_parsing = InputParsing(
+            fiber=match_fiber(request.brushString),
+            knot_size_mm=parse_knot_size(request.brushString),
+        )
+
         return BrushAnalysisResponse(
-            results=formatted_results, winner=winner, enrichedData=enriched_data
+            results=formatted_results,
+            winner=winner,
+            enrichedData=enriched_data,
+            inputParsing=input_parsing,
         )
 
     except Exception as e:

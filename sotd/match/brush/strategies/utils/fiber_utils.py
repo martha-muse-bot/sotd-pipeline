@@ -23,7 +23,7 @@ _FIBER_PATTERNS = {
     # General fiber types (checked last)
     "Boar": (
         r"\b(board?|shoat|badger[- ]dyed.*boar|pig ?hair)\b|"
-        r"(?:pure|bleached|unbleached|boar)\s+bristles?"
+        r"(?:pure|bleached|unbleached|boar|stiff|vintage|finest)\s+bristles?"
     ),
     "Badger": (
         r"(hmw|high.*mo|(2|3|two|three)[\s-]*band|shd|badger|silver ?tip|super|"
