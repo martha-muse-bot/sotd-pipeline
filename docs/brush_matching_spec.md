@@ -14,6 +14,10 @@ This ensures that reporting, aggregation, and user-facing output are correct for
 
 ---
 
+## Catalog pattern hygiene: Bristle Brushwerks vs fiber “bristle”
+
+“Bristle” in SOTD text usually means **boar fiber** (e.g. Omega/Zenith “pure/bleached/unbleached bristle”), not the maker **Bristle Brushwerks**. Handle and knot catalog patterns for Bristle Brushwerks must require a Werks/Works form (`bristle.*brush ?w[eo]rks?`), matching `brushes.yaml` — never bare `bristle.*brush`. Qualified fiber phrases (`pure|bleached|unbleached|boar` + `bristle`) map to Boar in `fiber_utils.match_fiber`.
+
 ## Goal
 
 Match and normalize shaving brush metadata from the `brush` field extracted during the extraction phase using a sophisticated strategy pattern with intelligent handle/knot separation.

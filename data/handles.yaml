@@ -56,8 +56,12 @@ artisan_handles:
   Bristle Brushwerks:
     Unspecified:
       patterns:
-      - huck
-      - ^(?!.*horse bristle).*bristle.*brush
+      - \bhuck
+      - bristle.*brush ?w[eo]rks?
+  Brothers Bristle:
+    Unspecified:
+      patterns:
+        - brothers?\s+bristles?
   Brushcraft:
     Unspecified:
       patterns:

@@ -1,0 +1,223 @@
+# Plan: Bristle Brushwerks False-Positive Cleanup
+
+> **Status:** COMPLETE (2026-10-19)  
+> **Date:** 2026-10-19  
+> **Category:** bugs  
+> **Investigation:** matched brush data 2020-01 → present (~1,399 “bristle” mentions)
+>
+> **Session notes:** User approved plan + YAML + fiber_utils in this pass; added Brothers
+> Bristle handle entry themselves. Tightened `handles.yaml` / `knots.yaml` /
+> `handles_new_structure.yaml` to `bristle.*brush ?w[eo]rks?`. Extended
+> `fiber_utils` Boar with qualified bristle phrases. Added Bruskwerks typo to
+> correct_matches. Rematch of FP months → 0 BBW false positives; 110 true BBW
+> still present in sample. Brothers Bristle now splits to handle=Brothers Bristle
+> + knot=AP Shave Co/Tuxedo.
+
+**Goal:** Stop fiber-language “bristle … brush” strings from matching as Bristle Brushwerks (handle/knot), keep real BBW matches, and leave a regression net so this does not come back.
+
+**Architecture:** Root cause is catalog regex overreach in `handles.yaml` / `knots.yaml` (and the unused twin in `handles_new_structure.yaml`). Align those patterns with the safer `brushes.yaml` pattern, add unit regression tests for the FP corpus, fix leftover edge strings via `correct_matches` where needed, then rematch a sample of months to confirm.
+
+**Tech stack:** YAML catalogs, pytest matcher tests, `python run.py match --force`
+
+**Spec:** Findings from 2026-10-19 investigation (this plan embeds them).
+
+---
+
+## Problem summary
+
+| Signal | Count (2020+) |
+|--------|----------------|
+| Clear BBW (Brushwerks/Brushworks/Werks in text) | ~645 mentions / ~84 unique — matched correctly |
+| Fiber / other “bristle” | ~731 mentions / ~116 unique — mostly correct |
+| **False positives** (matched BBW, no brand name) | **22 mentions / 12 unique** |
+
+**Nobody writes bare “Bristle” for the maker.** Brand hits always include Brushwerks / Brush Werks / Brushworks / Brush Works (rarely Bruskwerks). Fiber hits use boar / pure / bleached / unbleached / Zenith “XL/Bristle”.
+
+### Root cause
+
+```yaml
+# handles.yaml + knots.yaml (BAD)
+- ^(?!.*horse bristle).*bristle.*brush
+
+# brushes.yaml (GOOD)
+- bristle.*brush ?w[eo]rks?
+```
+
+The bad pattern matches any string containing “bristle” then later “brush” (except “horse bristle”), so Omega/Semogue/Zenith fiber phrases become BBW handles/knots.
+
+`fiber_utils.py` does **not** map bare “bristle” → Boar (only `bristle & badger` / `badger & bristle` → Mixed). No change required there for this bug; optional follow-up below.
+
+---
+
+## False-positive corpus (must clear)
+
+All currently match BBW via handle/knot strategies:
+
+1. `Annie boar bristle brush`
+2. `boar bristle brush, soaked for 15 minutes in warm/hot water`
+3. `Boar bristle brush, soaked in warm water`
+4. `Omega Pure Boar Bristle 10049 Shaving Brush`
+5. `Semogue 1460 Natural Boar Bristle Shaving Brush`
+6. `Semogue 2000 Beech Wood Handle Pure Boar Bristle Shaving Brush`
+7. `Semogue Boar Bristle Brush (28 mm knot)`
+8. `Some Omega boar-bristle brush and an unidentified synthetic, PIF'd by u/scarpux`
+9. `100% Silvertip Badger Bristle Shaving Brush-Chrome Handle with 3-Band-Silvertip Badger Hair Bristles (thanks to u/GroundbreakingRole )`
+10. `Zenith 508A XL Bristle (B35) (2022 r/ws brush)`
+11. `Zenith 508A XL/Bristle (B35) (2022 r/ws brush)` (11 mentions across 2023-02..2023-04)
+12. `unknown - stiff bristle brush` (2026-10)
+
+### Related non-FP cleanup (same pass)
+
+| String | Issue | Intended fix |
+|--------|--------|--------------|
+| `Bristle Bruskwerks B9B` | Typo; missed BBW, matched Declaration B9B only | Add to correct_matches as BBW handle + Declaration B9B knot (or brush split) |
+| `Vintage Bristle, brand unknown` | Ambiguous; Generic/Synthetic | Leave unmatched or Generic/Unknown — **do not** map to BBW |
+| `Brothers Bristle Aluminum / …` | Different maker | Already non-BBW; no change unless we want a Brothers Bristle handle entry (out of scope) |
+| Ryobi soft bristle | Already in `intentionally_unmatched.yaml` | No change |
+
+---
+
+## Target pattern (single source of truth)
+
+Replace BBW handle/knot patterns with the brushes catalog form, keep `\bhuck` (Hucklaration) as a separate handle cue:
+
+```yaml
+Bristle Brushwerks:
+  Unspecified:   # handles
+    patterns:
+      - \bhuck
+      - bristle.*brush ?w[eo]rks?
+# knots.yaml — same brand patterns, drop the horse-bristle negative lookbehind
+```
+
+Optional tightening (only if rematch shows misses):
+
+```yaml
+- bristle\s*brush\s*[vw]?[eo]?rks?   # Werks / Works / Werks typo space variants
+- bristlebrushwerks                   # concatenated
+```
+
+Prefer one shared pattern aligned with `brushes.yaml` first; add aliases only if needed after rematch.
+
+**Files to update (YAML — requires explicit user permission at execute time):**
+
+- `data/handles.yaml` — Bristle Brushwerks patterns
+- `data/knots.yaml` — Bristle Brushwerks patterns
+- `data/handles_new_structure.yaml` — same (currently `bristle.*brush`; keep in sync or delete if unused)
+- `data/correct_matches/{brush,handle,knot}.yaml` — only for residual FPs / Bruskwerks typo after pattern fix
+- `data/brushes.yaml` — only if we unify pattern spelling; behavior already correct
+
+**Files to update (code/tests — no YAML permission needed):**
+
+- New or existing matcher tests under `tests/match/` (brush / handle / knot)
+- Optionally `sotd/match/brush/strategies/utils/fiber_utils.py` (follow-up only)
+
+---
+
+## Success criteria
+
+1. **Zero** of the 12 FP strings match as Bristle Brushwerks (handle, knot, or complete brush).
+2. All previously correct BBW strings (Brushwerks/Brushworks/Werks) still match BBW.
+3. `\bhuck` / Hucklaration BBW handles still match.
+4. Unit tests encode FP + true-positive fixtures and pass under `make test` (or targeted pytest).
+5. Rematch of at least: `2021-06`, `2021-07`, `2022-03`, `2022-04`, `2023-02`, `2023-03`, `2023-12`, `2026-10` with `--force` shows no BBW FPs for the corpus.
+6. Spot-check recent BBW-heavy months (`2020-06`, `2021-12`, `2024-06`) still show BBW matches.
+
+---
+
+## Testing requirements
+
+### Unit tests (required)
+
+Add a focused test module, e.g. `tests/match/test_bristle_brushwerks_disambiguation.py`:
+
+- **True positives** (must match BBW brand/handle):  
+  `Bristle Brushwerks 28mm SHD`, `bristle brushworks b9b`, `Bristle Brush Werks Maggard 26mm…`, `bristlebrushwerks bay laruel…`, Hucklaration variants with BBW.
+- **False positives** (must **not** match BBW as brand/handle/knot): full FP corpus list above.
+- **Fiber peers that contain both words but already match correctly** (must stay non-BBW):  
+  `Omega 20106 Boar Bristle Shaving Brush`, `Freddy - Beauty Green Boar Bristle Shave Brush`, unbranded bristle & badger.
+
+Mock catalogs with the **proposed** patterns (or load real catalogs in an integration-style unit test — prefer real catalogs if existing brush matcher fixtures do that).
+
+### Integration tests (required)
+
+- Script or pytest that loads real catalogs + correct_matches and asserts the FP list never returns `brand` / `handle.brand` / `knot.brand` == `Bristle Brushwerks`.
+- Rematch months listed in success criteria; assert no regression on a small golden list of known-good BBW originals from `correct_matches`.
+
+### E2E (optional)
+
+- Not required; matcher + rematch is enough.
+
+### Coverage
+
+- Critical path: handle matcher + knot matcher + full brush matcher strategies that consume those catalogs.
+- Edge: horse bristle strings must still **not** become BBW (already excluded historically; new pattern excludes them naturally).
+
+---
+
+## Implementation tasks
+
+### Task 1 — Regression tests first (TDD)
+
+- [x] Add `tests/match/test_bristle_brushwerks_disambiguation.py` with TP + FP fixtures (tests fail on current catalogs).
+- [x] Run: `source .venv/bin/activate && PYTHONPATH=. pytest tests/match/test_bristle_brushwerks_disambiguation.py -v` — expect FP cases to fail (they currently match BBW).
+- [ ] Commit: `test(match): add Bristle Brushwerks vs fiber bristle regression fixtures` (deferred — user did not request commit)
+
+### Task 2 — Tighten catalog patterns (YAML permission required)
+
+- [x] Get user OK to edit YAML.
+- [x] Update `data/handles.yaml` Bristle Brushwerks patterns → `bristle.*brush ?w[eo]rks?` (keep `\bhuck`).
+- [x] Update `data/knots.yaml` the same way.
+- [x] Update `data/handles_new_structure.yaml` if still used; otherwise note in plan as dead sync.
+- [x] Re-run Task 1 tests — FPs should pass; confirm TPs still pass.
+- [ ] Commit: `fix(match): tighten Bristle Brushwerks handle/knot patterns` (deferred)
+
+### Task 3 — Residual correct_matches (YAML permission required)
+
+Only for strings that still mis-resolve after Task 2:
+
+- [x] `Bristle Bruskwerks B9B` → handle BBW + knot Declaration B9B (or equivalent existing split shape).
+- [x] Zenith `508A XL/Bristle (B35) (2022 r/ws brush)` variants → Zenith / MOAR BOAR (or Boar) complete brush if still wrong. (fixed by pattern alone → Zenith/B35)
+- [x] Generic soaked “boar bristle brush…” → Generic/Boar or unmatched — **never** BBW.
+- [x] `unknown - stiff bristle brush` → unmatched or Generic — **never** BBW.
+- [x] Re-run disambiguation tests + any correct_matches integration tests.
+- [ ] Commit: `fix(data): correct residual bristle fiber vs BBW matches` (deferred)
+
+### Task 4 — Rematch verification
+
+- [x] `python run.py match --month 2023-02 --force` (and other months in success criteria).
+- [x] Re-scan with a one-off check: any matched BBW where original lacks Brushwerks/Brushworks/Werks/huck → must be empty (except intentional correct_matches). **Result: 0 FPs / 110 true BBW in sample months.**
+- [x] Document scan command in this plan’s notes when done.
+
+### Task 5 — Quality gate + docs
+
+- [x] Targeted pyright + ruff clean on changed files; 55 related tests pass. (Repo-wide `make typecheck` still has pre-existing unrelated errors.)
+- [x] Short note in `docs/brush_matching_spec.md`: BBW handle/knot patterns must require Werks/Works.
+- [x] Mark this plan COMPLETE and move to `plans/completed/bugs/2026-10-19/`.
+
+---
+
+## Out of scope / follow-ups
+
+1. **`fiber_utils` “pure/unbleached/bleached bristle” → Boar** — improves knot scoring; not required to kill BBW FPs. Separate small plan if desired.
+2. **Catalog entry for Brothers Bristle** — one 2020 mention; skip unless we see more.
+3. **Mass rematch of all months 2020–present** — valuable after Task 4 sample passes; can be a follow-on pipeline run, not a blocker for the pattern fix.
+4. **Changing `brushes.yaml` pattern** — already correct; only touch if unifying aliases (Bruskwerks) there too.
+
+---
+
+## Suggested execution order
+
+```
+Tests (red) → YAML pattern fix (green) → residual correct_matches → rematch sample months → quality gate → complete plan
+```
+
+**Do not** broaden patterns again with `bristle.*brush`. If a true BBW string is missed, add a Werks/Works/concatenated alias or a correct_matches entry.
+
+---
+
+## Approval needed before execute
+
+1. Proceed with this plan as written?  
+2. Permission to edit YAML (`handles.yaml`, `knots.yaml`, optionally `handles_new_structure.yaml`, `correct_matches/*`)?  
+3. Include optional `fiber_utils` “pure bristle” → Boar in this pass, or leave as follow-up?

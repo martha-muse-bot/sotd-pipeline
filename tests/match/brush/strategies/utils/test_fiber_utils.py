@@ -29,3 +29,28 @@ from sotd.match.brush.strategies.utils.fiber_utils import match_fiber
 )
 def test_match_fiber_hybrid_handle_vs_true_mix(text: str, expected: str | None) -> None:
     assert match_fiber(text) == expected
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        # European / catalog "bristle" = boar when qualified
+        ("Omega Pure Bristle 10065", "Boar"),
+        ("Omega 10049 - 100% Boar Bristle - RED", "Boar"),
+        ("Zenith - Unbleached Bristle 509BC XSE", "Boar"),
+        ("Zenith - Bleached Bristle - 26mm x 60mm Boar Knot", "Boar"),
+        ("Century Pure Bristle 18mm", "Boar"),
+        ("Semogue 1460 Natural Boar Bristle Shaving Brush", "Boar"),
+        # Bare stiff bristle without boar/pure/bleach cue
+        ("unknown - stiff bristle brush", None),
+    ],
+)
+def test_match_fiber_bristle_as_boar_when_qualified(text: str, expected: str | None) -> None:
+    assert match_fiber(text) == expected
+
+
+def test_match_fiber_bristle_brushwerks_brand_is_not_boar() -> None:
+    """Brand name 'Bristle Brushwerks' must not map to Boar via bare 'bristle'."""
+    assert match_fiber("Bristle Brushwerks Amber Hucklaration B3") != "Boar"
+    # SHD correctly yields Badger; still must not be Boar from 'bristle'
+    assert match_fiber("Bristle Brushwerks 28mm SHD") == "Badger"

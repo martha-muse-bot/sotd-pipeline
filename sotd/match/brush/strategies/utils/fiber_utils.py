@@ -21,7 +21,10 @@ _FIBER_PATTERNS = {
         r"\bmig\b|synthetic badger|mother ?(lode|load)|\bg\d\b|\bt4\b)"
     ),
     # General fiber types (checked last)
-    "Boar": r"\b(board?|shoat|badger[- ]dyed.*boar|pig ?hair)\b",
+    "Boar": (
+        r"\b(board?|shoat|badger[- ]dyed.*boar|pig ?hair)\b|"
+        r"(?:pure|bleached|unbleached|boar)\s+bristles?"
+    ),
     "Badger": (
         r"(hmw|high.*mo|(2|3|two|three)[\s-]*band|shd|badger|silver ?tip|super|"
         r"gelo|gelous|gelousy|finest|best|ultralux|[fm]anchuri[ao]n|\blod\b)"

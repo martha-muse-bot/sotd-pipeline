@@ -870,7 +870,7 @@ other_knots:
   Bristle Brushwerks:
     default: Badger
     patterns:
-      - ^(?!.*horse bristle).*bristle.*brush
+      - bristle.*brush ?w[eo]rks?
   Brushcraft:
     default: Synthetic
     patterns:

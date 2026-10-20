@@ -36,7 +36,7 @@ artisan_handles:
     Unspecified:
       patterns:
       - huck
-      - bristle.*brush
+      - bristle.*brush ?w[eo]rks?
   Brushcraft:
     Unspecified:
       patterns:
