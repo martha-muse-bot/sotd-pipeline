@@ -253,3 +253,35 @@ class TestSoapSampleEnricher:
         assert result["sample_number"] is None
         assert result["total_samples"] is None
         assert result["extraction_remainder"] == ""
+
+    def test_enrich_unknown_blind_date_forces_sample(self):
+        """Lather Games Blind Date swaps map to Unknown/Blind Date with no (sample) marker."""
+        field_data = {
+            "original": "Snooting - Blind Date",
+            "normalized": "Snooting - Blind Date",
+            "matched": {"brand": "Unknown", "scent": "Blind Date"},
+        }
+        result = self.enricher.enrich(field_data, "")
+        assert result["sample_type"] == "sample"
+        assert result["sample_number"] is None
+        assert result["total_samples"] is None
+
+    def test_enrich_unknown_blind_date_case_insensitive(self):
+        """Blind Date special-case is case-insensitive on matched brand/scent."""
+        field_data = {
+            "original": "u/priusaurus - blind date",
+            "normalized": "u/priusaurus - blind date",
+            "matched": {"brand": "unknown", "scent": "blind date"},
+        }
+        result = self.enricher.enrich(field_data, "")
+        assert result["sample_type"] == "sample"
+
+    def test_enrich_unknown_other_scent_not_forced(self):
+        """Other Unknown scents are not forced to sample without text markers."""
+        field_data = {
+            "original": "Unknown - Something Else",
+            "normalized": "Unknown - Something Else",
+            "matched": {"brand": "Unknown", "scent": "Something Else"},
+        }
+        result = self.enricher.enrich(field_data, "")
+        assert result["sample_type"] is None

@@ -8,14 +8,17 @@ from .enricher import BaseEnricher
 class SoapSampleEnricher(BaseEnricher):
     """Enricher for extracting soap sample information from user comments.
 
-    Extracts sample information from patterns like:
+    Extracts sample/smush information from patterns like:
     - "Summer Break Soaps - Steady (sample)" -> sample_type: "sample"
     - "Summer Break Soaps - Steady - soap (sample -- thanks!!)" -> sample_type: "sample"
     - "Summer Break Soaps - Steady (sample 3 of 10)" -> sample_type: "sample",
       sample_number: 3, total_samples: 10
+    - "a smush from u/Someone" -> sample_type: "sample"
+    - "Mystery Smush Croap" -> sample_type: "sample"
 
     Uses the normalization-difference approach to avoid confusion between product names
     and sample indicators by leveraging the already-done normalization work.
+    Smush/samp collapse to sample_type "sample" (report copy says "samples or smushes").
     """
 
     @property
@@ -46,6 +49,19 @@ class SoapSampleEnricher(BaseEnricher):
         sample_number = result[1] if result else None
         total_samples = result[2] if result else None
         extraction_remainder = result[3] if result else None
+
+        # Lather Games "Blind Date" swaps credit a username (or joke label) instead of a
+        # real soap brand. Those strings are mapped via correct_matches to catalog
+        # Unknown / Blind Date. The original text has no "(sample)" / "smush" marker, so
+        # the normalization-difference path above leaves sample_type unset — force it
+        # here so sample aggregators still count these mystery samples.
+        if sample_type is None:
+            matched = field_data.get("matched") or {}
+            if isinstance(matched, dict):
+                brand = (matched.get("brand") or "").strip().lower()
+                scent = (matched.get("scent") or "").strip().lower()
+                if brand == "unknown" and scent == "blind date":
+                    sample_type = "sample"
 
         # Create enriched data
         enriched_data = {

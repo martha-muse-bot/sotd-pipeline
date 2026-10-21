@@ -8603,6 +8603,13 @@ Uncle Jon's Soap:
       patterns:
       - uncle jon.*p[io]pe smoke
       wsdb_slug: uncle-jons-soap-pipe-smoke-soap
+# Catch-all for Lather Games Blind Date swaps (and similar mystery samples) that
+# credit a username/joke label instead of a real maker. Mapped via correct_matches;
+# SoapSampleEnricher forces sample_type for brand Unknown + scent Blind Date.
+Unknown:
+  scents:
+    Blind Date:
+      patterns: []
 Valobra:
   patterns:
   - valobra
