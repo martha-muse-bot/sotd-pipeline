@@ -253,6 +253,14 @@ async def global_exception_handler(request, exc):
     )
 
 
+# Serve the built frontend when present (container deploy); harmless in dev (no dist).
+_frontend_dist = Path(__file__).parent.parent / "dist"
+if _frontend_dist.is_dir():
+    from fastapi.staticfiles import StaticFiles
+
+    app.mount("/", StaticFiles(directory=str(_frontend_dist), html=True), name="frontend")
+
+
 if __name__ == "__main__":
     logger.info("🎯 Starting API server with uvicorn")
     uvicorn.run("webui.api.main:app", host="0.0.0.0", port=8000, reload=True, log_level="info")

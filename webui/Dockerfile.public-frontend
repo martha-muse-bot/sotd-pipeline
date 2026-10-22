@@ -1,0 +1,12 @@
+# Static public frontend; nginx serves it and proxies /api to the public API service.
+FROM node:20-slim AS build
+WORKDIR /src
+COPY webui/package.json webui/package-lock.json ./
+RUN npm ci
+COPY webui/ .
+RUN npm run build:public
+
+FROM nginx:alpine
+COPY --from=build /src/dist-public /usr/share/nginx/html
+COPY webui/nginx/public.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
