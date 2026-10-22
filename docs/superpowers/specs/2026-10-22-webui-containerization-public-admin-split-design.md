@@ -83,20 +83,26 @@ The three public routers read only two directories:
   `SOTD_DATA_DIR`; add the same env-var lookup to `product_usage.py` and
   `monthly_user_posts.py` (small change, unit-tested).
 
-## Containers & Deployment (GitHub CI)
+## Containers & Deployment (GitHub CI, myacuright pattern)
 
-GitHub Actions builds and pushes images; the NAS pulls. No Mac builds,
-no `docker save | ssh`.
+The `myacuright` project's loop, applied here: GitHub Actions builds and
+pushes images, a Portainer webhook redeploys, Portainer pulls fresh
+`ghcr.io/nmrs/...:latest`. No Mac builds, no `docker save | ssh`, no
+manual pulls.
 
-**CI (`.github/workflows/docker.yml`):**
+**CI (`.github/workflows/build.yml`)** — modeled on
+`myacuright/.github/workflows/build.yml`:
 
 - Triggers: push to `master` (paths affecting webui/docker), manual
   `workflow_dispatch`.
 - Gates: `make test`, `make test-react`, lint before building; broken
   images never land.
 - buildx multi-stage builds, tags
-  `ghcr.io/nmrs/sotd-pipeline-{admin,public}:{sha,latest}`, GHA build
-  cache.
+  `ghcr.io/nmrs/sotd-pipeline-{admin,public}:{latest,sha}`, login with
+  `secrets.GITHUB_TOKEN`, GHA build cache.
+- After push: curl the Portainer webhook(s) for the public stack (and
+  admin stack when it runs on the NAS) — skip with a notice if
+  `PORTAINER_WEBHOOK` is unset.
 
 **Images:**
 
@@ -107,14 +113,20 @@ no `docker save | ssh`.
   StaticFiles plus the full API on a single port. (v1 keeps the admin
   container simple; separate nginx added later only if needed.)
 
-**NAS (nas-stacks pattern):**
+**Stack compose in this repo (`deploy/`)** — deployed via Portainer
+gitops source, following `myacuright/deploy/compose-myacuright.yml`:
 
-- Repo is **public** → GHCR images pull without credentials.
-- Compose files reference the GHCR images; public stack joins
-  `npm-bridge`/`cf_tunnel_net` as NPM routes the public hostname →
-  public-frontend, `/api` → public-api. Admin stack is LAN-only (bound
-  to LAN interface, no tunnel route).
-- `docker pull` (manual or Portainer redeploy) picks up new images.
+- `pull_policy: always`, `mem_limit` only (never `cpus:` — Synology's
+  cgroup v1 rejects it), healthcheck via python stdlib, `TZ` set.
+- **Public stack** joins `npm-bridge` (NPM routes the public hostname →
+  public-frontend, `/api` → public-api) and `cf_tunnel_net` (tunnel
+  routes it).
+- **Admin stack** LAN-only: reachable on the LAN (macvlan static IP or
+  published LAN port), no `npm-bridge`/`cf_tunnel_net` membership —
+  no route can reach it from outside.
+- NAS pulls from GHCR. The repo is public, so the GHCR packages are
+  public and need no registry credential on the NAS (unlike
+  myacuright's private image + `ghcr-nmrs` PAT).
 
 ## Repo Safety (public repo)
 
