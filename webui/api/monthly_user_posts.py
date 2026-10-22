@@ -10,6 +10,8 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
+from .utils.data_dir import get_enriched_dir, get_user_analysis_dir  # noqa: E402
+
 # Add the project root to the path to import from sotd
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
@@ -53,9 +55,8 @@ class MonthData(BaseModel):
 async def get_available_months() -> List[MonthData]:
     """Get list of available months with data."""
     try:
-        # Get project root directory (3 levels up from this file)
-        project_root = Path(__file__).parent.parent.parent
-        enriched_dir = project_root / "data" / "enriched"
+        # Get the enriched data directory
+        enriched_dir = get_enriched_dir()
 
         if not enriched_dir.exists():
             return []
@@ -98,12 +99,8 @@ async def get_users_for_month(
 ) -> List[Dict[str, Any]]:
     """Get list of users who posted in a specific month."""
     try:
-        project_root = Path(__file__).parent.parent.parent
-
         # Try to load from pre-computed user analysis file
-        user_analysis_file = (
-            project_root / "data" / "aggregated" / "user_analysis" / f"{month}.json"
-        )
+        user_analysis_file = get_user_analysis_dir() / f"{month}.json"
 
         if user_analysis_file.exists():
             try:
@@ -133,7 +130,7 @@ async def get_users_for_month(
 
         # Fallback: Load enriched data and process on-demand
         try:
-            enriched_file = project_root / "data" / "enriched" / f"{month}.json"
+            enriched_file = get_enriched_dir() / f"{month}.json"
 
             if not enriched_file.exists():
                 return []
@@ -171,12 +168,8 @@ async def get_users_for_month(
 async def get_user_posting_analysis(month: str, username: str) -> UserPostingAnalysis:
     """Get posting analysis for a specific user in a specific month."""
     try:
-        project_root = Path(__file__).parent.parent.parent
-
         # Try to load from pre-computed user analysis file
-        user_analysis_file = (
-            project_root / "data" / "aggregated" / "user_analysis" / f"{month}.json"
-        )
+        user_analysis_file = get_user_analysis_dir() / f"{month}.json"
 
         if user_analysis_file.exists():
             try:
@@ -204,7 +197,7 @@ async def get_user_posting_analysis(month: str, username: str) -> UserPostingAna
 
         # Fallback: Load enriched data and process on-demand
         try:
-            enriched_file = project_root / "data" / "enriched" / f"{month}.json"
+            enriched_file = get_enriched_dir() / f"{month}.json"
 
             if not enriched_file.exists():
                 raise HTTPException(status_code=404, detail=f"No data available for {month}")

@@ -11,6 +11,8 @@ from urllib.parse import unquote
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
+from .utils.data_dir import get_aggregated_dir, get_enriched_dir  # noqa: E402
+
 # Add the project root to the path to import from sotd
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
@@ -161,12 +163,8 @@ async def get_products_for_month(
         if product_type not in ["razor", "blade", "brush", "soap"]:
             raise HTTPException(status_code=400, detail=f"Invalid product type: {product_type}")
 
-        project_root = Path(__file__).parent.parent.parent
-
         # Try to load from pre-computed product usage file
-        product_usage_file = (
-            project_root / "data" / "aggregated" / "product_usage" / f"{month}.json"
-        )
+        product_usage_file = get_aggregated_dir() / "product_usage" / f"{month}.json"
 
         if product_usage_file.exists():
             try:
@@ -209,7 +207,7 @@ async def get_products_for_month(
 
         # Fallback: Load enriched data and process on-demand
         try:
-            enriched_file = project_root / "data" / "enriched" / f"{month}.json"
+            enriched_file = get_enriched_dir() / f"{month}.json"
 
             if not enriched_file.exists():
                 return []
@@ -297,8 +295,6 @@ async def get_product_usage_analysis(
         if product_type not in ["razor", "blade", "brush", "soap"]:
             raise HTTPException(status_code=400, detail=f"Invalid product type: {product_type}")
 
-        project_root = Path(__file__).parent.parent.parent
-
         # Generate product key for lookup
         if product_type == "soap":
             product_key = f"{brand}|{model}"  # model is scent for soap
@@ -306,9 +302,7 @@ async def get_product_usage_analysis(
             product_key = f"{brand}|{model}"
 
         # Try to load from pre-computed product usage file
-        product_usage_file = (
-            project_root / "data" / "aggregated" / "product_usage" / f"{month}.json"
-        )
+        product_usage_file = get_aggregated_dir() / "product_usage" / f"{month}.json"
 
         if product_usage_file.exists():
             try:
@@ -339,7 +333,7 @@ async def get_product_usage_analysis(
 
         # Fallback: Load enriched data and process on-demand
         try:
-            enriched_file = project_root / "data" / "enriched" / f"{month}.json"
+            enriched_file = get_enriched_dir() / f"{month}.json"
 
             if not enriched_file.exists():
                 raise HTTPException(status_code=404, detail=f"No data available for {month}")
@@ -447,8 +441,7 @@ async def get_product_yearly_summary(
         category = category_map[product_type]
 
         # Load aggregated data for each month
-        project_root = Path(__file__).parent.parent.parent
-        aggregated_dir = project_root / "data" / "aggregated"
+        aggregated_dir = get_aggregated_dir()
 
         monthly_summaries = []
 
