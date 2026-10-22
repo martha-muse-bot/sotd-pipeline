@@ -1,0 +1,41 @@
+# .dockerignore — repo root. The Dockerfiles in webui/ are built with the repo
+# root as context (docker build -f webui/Dockerfile.* .), so this filters what
+# COPY sees. Primarily:
+#  - webui/node_modules/: the node build stages run `npm ci` in-image; copying
+#    the host's node_modules over it would replace Linux native binaries
+#    (@esbuild/*, @rollup/rollup-*) with darwin ones and break the build.
+#  - data/: huge, gitignored pipeline data — must never enter images
+#    (defense in depth; the public API mounts /data read-only at runtime).
+#  - test code / caches: keep internals out of the shipped images.
+
+# --- frontend build dirs (rebuilt in-image) ---
+webui/node_modules/
+webui/dist/
+webui/dist-public/
+
+# --- python caches / environments ---
+**/__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# --- test code (internal; not needed in images) ---
+webui/api/tests/
+webui/api/__tests__/
+tests/
+
+# --- repo/VCS and workspace internals ---
+.git/
+.gitignore
+.github/
+.superpowers/
+.claude/
+.cursor/
+
+# --- pipeline data (never bake into images) ---
+data/
+
+# --- tooling/docs not needed at runtime ---
+docs/
+*.md
+!README.md
