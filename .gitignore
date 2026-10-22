@@ -68,6 +68,7 @@ profile_*.prof
 webui/node_modules/
 webui/.vite/
 webui/dist/
+webui/dist-public/
 webui/build/
 webui/.env.local
 webui/.env.development.local
