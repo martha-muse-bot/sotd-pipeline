@@ -65,6 +65,15 @@ export type RankChartTooltipProps = {
 };
 export type RankChartTooltipSeries = { item: string }[];
 
+/** Inclusive YYYY-MM filter. Empty from/to means no bound on that side. Exported for tests. */
+export function filterMonthsInRange(months: string[], from: string, to: string): string[] {
+  return months.filter(m => {
+    if (from && m < from) return false;
+    if (to && m > to) return false;
+    return true;
+  });
+}
+
 /** Custom tooltip content for rank-over-time chart: shows rank, shaves, unique users per item. Exported for tests. */
 export function RankChartTooltipContent(
   props: RankChartTooltipProps,
@@ -120,6 +129,8 @@ const ReportPlacementOverTime: React.FC = () => {
   const [chartPrimaryMetric, setChartPrimaryMetric] = useState<
     'rank' | 'shaves' | 'unique_users'
   >('rank');
+  const [chartFromMonth, setChartFromMonth] = useState<string>('');
+  const [chartToMonth, setChartToMonth] = useState<string>('');
   const [typeAheadOpen, setTypeAheadOpen] = useState(false);
   const [typeAheadQuery, setTypeAheadQuery] = useState('');
   const [typeAheadHighlightedIndex, setTypeAheadHighlightedIndex] = useState(0);
@@ -273,6 +284,23 @@ const ReportPlacementOverTime: React.FC = () => {
     setSelectedItems([]);
   };
 
+  // Reset chart window to full series whenever new series data loads.
+  useEffect(() => {
+    if (!series?.months?.length) {
+      setChartFromMonth('');
+      setChartToMonth('');
+      return;
+    }
+    const sorted = [...series.months].sort();
+    setChartFromMonth(sorted[0]);
+    setChartToMonth(sorted[sorted.length - 1]);
+  }, [series]);
+
+  const seriesMonthsSorted = React.useMemo(() => {
+    if (!series?.months?.length) return [];
+    return [...series.months].sort();
+  }, [series]);
+
   const chartData = React.useMemo(() => {
     if (!series || series.months.length === 0) return [];
     const points = series.months.map(month => {
@@ -288,31 +316,65 @@ const ReportPlacementOverTime: React.FC = () => {
     return points.reverse();
   }, [series]);
 
+  const chartDisplayData = React.useMemo(() => {
+    if (!chartFromMonth && !chartToMonth) return chartData;
+    const allowed = new Set(
+      filterMonthsInRange(
+        chartData.map(row => String(row.month)),
+        chartFromMonth,
+        chartToMonth
+      )
+    );
+    return chartData.filter(row => allowed.has(String(row.month)));
+  }, [chartData, chartFromMonth, chartToMonth]);
+
   const maxRank = React.useMemo(() => {
     if (!series) return 10;
+    const inWindow = new Set(
+      filterMonthsInRange(series.months, chartFromMonth, chartToMonth)
+    );
     let m = 0;
     series.series.forEach(entry => {
       entry.data.forEach(p => {
+        if (!inWindow.has(p.month)) return;
         if (p.rank != null && p.rank > m) m = p.rank;
       });
     });
     return m || 10;
-  }, [series]);
+  }, [series, chartFromMonth, chartToMonth]);
 
   const maxChartValue = React.useMemo(() => {
     if (!series || (chartPrimaryMetric !== 'shaves' && chartPrimaryMetric !== 'unique_users'))
       return 10;
     const field = chartPrimaryMetric === 'shaves' ? 'shaves' : 'unique_users';
+    const inWindow = new Set(
+      filterMonthsInRange(series.months, chartFromMonth, chartToMonth)
+    );
     let m = 0;
     series.series.forEach(entry => {
       entry.data.forEach(p => {
+        if (!inWindow.has(p.month)) return;
         const v = p[field];
         if (v != null && typeof v === 'number' && v > m) m = v;
       });
     });
     const padded = Math.ceil(m * 1.05) || 10;
     return Math.max(padded, 1);
-  }, [series, chartPrimaryMetric]);
+  }, [series, chartPrimaryMetric, chartFromMonth, chartToMonth]);
+
+  const handleChartFromChange = (value: string) => {
+    setChartFromMonth(value);
+    if (chartToMonth && value > chartToMonth) {
+      setChartToMonth(value);
+    }
+  };
+
+  const handleChartToChange = (value: string) => {
+    setChartToMonth(value);
+    if (chartFromMonth && value < chartFromMonth) {
+      setChartFromMonth(value);
+    }
+  };
 
   const placementSummary = React.useMemo(() => {
     if (!series?.series?.length) return { firstPlaces: 0, podiums: 0, top10s: 0 };
@@ -699,46 +761,103 @@ const ReportPlacementOverTime: React.FC = () => {
             <CardHeader>
               <CardTitle>Rank over time</CardTitle>
               {chartData.length > 0 && (
-                <div className="flex flex-wrap items-center gap-2 pt-2">
-                  <Label className="text-sm font-normal text-muted-foreground shrink-0">
-                    Chart metric
-                  </Label>
-                  <Tabs
-                    value={chartPrimaryMetric}
-                    onValueChange={v =>
-                      setChartPrimaryMetric(v as 'rank' | 'shaves' | 'unique_users')
-                    }
-                  >
-                    <TabsList className="h-8">
-                      <TabsTrigger value="rank" className="text-xs px-2 py-1">
-                        Rank
-                      </TabsTrigger>
-                      <TabsTrigger value="shaves" className="text-xs px-2 py-1">
-                        Shaves
-                      </TabsTrigger>
-                      <TabsTrigger value="unique_users" className="text-xs px-2 py-1">
-                        Unique users
-                      </TabsTrigger>
-                    </TabsList>
-                  </Tabs>
+                <div className="flex flex-wrap items-center gap-3 pt-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Label className="text-sm font-normal text-muted-foreground shrink-0">
+                      Chart metric
+                    </Label>
+                    <Tabs
+                      value={chartPrimaryMetric}
+                      onValueChange={v =>
+                        setChartPrimaryMetric(v as 'rank' | 'shaves' | 'unique_users')
+                      }
+                    >
+                      <TabsList className="h-8">
+                        <TabsTrigger value="rank" className="text-xs px-2 py-1">
+                          Rank
+                        </TabsTrigger>
+                        <TabsTrigger value="shaves" className="text-xs px-2 py-1">
+                          Shaves
+                        </TabsTrigger>
+                        <TabsTrigger value="unique_users" className="text-xs px-2 py-1">
+                          Unique users
+                        </TabsTrigger>
+                      </TabsList>
+                    </Tabs>
+                  </div>
+                  {seriesMonthsSorted.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Label
+                        htmlFor="chart-from-month"
+                        className="text-sm font-normal text-muted-foreground shrink-0"
+                      >
+                        From
+                      </Label>
+                      <Select value={chartFromMonth} onValueChange={handleChartFromChange}>
+                        <SelectTrigger
+                          id="chart-from-month"
+                          className="h-8 w-[120px]"
+                          aria-label="From"
+                        >
+                          <SelectValue placeholder="From" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {seriesMonthsSorted.map(m => (
+                            <SelectItem key={`from-${m}`} value={m}>
+                              {m}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Label
+                        htmlFor="chart-to-month"
+                        className="text-sm font-normal text-muted-foreground shrink-0"
+                      >
+                        To
+                      </Label>
+                      <Select value={chartToMonth} onValueChange={handleChartToChange}>
+                        <SelectTrigger
+                          id="chart-to-month"
+                          className="h-8 w-[120px]"
+                          aria-label="To"
+                        >
+                          <SelectValue placeholder="To" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {seriesMonthsSorted.map(m => (
+                            <SelectItem key={`to-${m}`} value={m}>
+                              {m}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                 </div>
               )}
             </CardHeader>
             <CardContent>
               {chartData.length === 0 ? (
                 <p className="text-muted-foreground">No data for the selected aggregation and items.</p>
+              ) : chartDisplayData.length === 0 ? (
+                <p className="text-muted-foreground">No months in the selected From/To range.</p>
               ) : (
                 <div className="h-[400px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={chartData} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
+                    <LineChart data={chartDisplayData} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
                       <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                       <XAxis dataKey="month" tick={{ fontSize: 12 }} />
                       <YAxis
+                        type="number"
+                        // Rank: reverse so #1 is at the top (higher on chart = better).
+                        // domain={[high, low]} alone does not invert in Recharts.
+                        reversed={chartPrimaryMetric === 'rank'}
                         domain={
                           chartPrimaryMetric === 'rank'
-                            ? [maxRank + 1, 1]
+                            ? [1, maxRank]
                             : [0, maxChartValue]
                         }
+                        allowDecimals={chartPrimaryMetric !== 'rank'}
                         tick={{ fontSize: 12 }}
                         label={{
                           value:

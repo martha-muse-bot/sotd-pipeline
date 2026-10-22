@@ -11,7 +11,10 @@ jest.mock('../../services/api', () => ({
   handleApiError: jest.fn((err: unknown) => (err instanceof Error ? err.message : 'API Error')),
 }));
 
-import ReportPlacementOverTime, { RankChartTooltipContent } from '../ReportPlacementOverTime';
+import ReportPlacementOverTime, {
+  RankChartTooltipContent,
+  filterMonthsInRange,
+} from '../ReportPlacementOverTime';
 import * as api from '../../services/api';
 
 const mockGetTables = api.getReportRankingsTables as jest.MockedFunction<
@@ -398,6 +401,72 @@ describe('ReportPlacementOverTime', () => {
     const shavesTab = screen.getByRole('tab', { name: /Shaves/i });
     await user.click(shavesTab);
     expect(screen.getByText('Rank over time')).toBeInTheDocument();
+  });
+
+  describe('filterMonthsInRange', () => {
+    const months = ['2024-01', '2024-06', '2025-01', '2025-06', '2025-07'];
+
+    it('returns all months when from/to are empty', () => {
+      expect(filterMonthsInRange(months, '', '')).toEqual(months);
+    });
+
+    it('filters inclusive from and to bounds', () => {
+      expect(filterMonthsInRange(months, '2024-06', '2025-06')).toEqual([
+        '2024-06',
+        '2025-01',
+        '2025-06',
+      ]);
+    });
+
+    it('returns empty when range excludes all months', () => {
+      expect(filterMonthsInRange(months, '2026-01', '2026-12')).toEqual([]);
+    });
+  });
+
+  it('shows From/To month filters after series loads and defaults to full range', async () => {
+    const user = userEvent.setup();
+    mockGetSeries.mockResolvedValue({
+      months: ['2025-05', '2025-06', '2025-07'],
+      series: [
+        {
+          item: 'Razor A',
+          data: [
+            { month: '2025-05', rank: 3, shaves: 50, unique_users: 5 },
+            { month: '2025-06', rank: 1, shaves: 100, unique_users: 10 },
+            { month: '2025-07', rank: 2, shaves: 80, unique_users: 8 },
+          ],
+        },
+      ],
+    });
+    render(
+      <MemoryRouter>
+        <ReportPlacementOverTime />
+      </MemoryRouter>
+    );
+    await waitFor(() => {
+      expect(mockGetTables).toHaveBeenCalled();
+    });
+    fireEvent.click(screen.getAllByRole('combobox')[0]);
+    await waitFor(() => {
+      expect(screen.getByText('Razors')).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByText('Razors'));
+    await waitFor(() => {
+      expect(mockGetItems).toHaveBeenCalled();
+    });
+    fireEvent.click(screen.getAllByRole('combobox')[1]);
+    await waitFor(() => {
+      expect(screen.getByText('Razor A')).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByText('Razor A'));
+    await user.click(screen.getByRole('button', { name: /Load series/i }));
+    await waitFor(() => {
+      expect(screen.getByText('Chart metric')).toBeInTheDocument();
+    });
+    expect(screen.getByText('From')).toBeInTheDocument();
+    expect(screen.getByText('To')).toBeInTheDocument();
+    expect(screen.getByLabelText('From')).toHaveTextContent('2025-05');
+    expect(screen.getByLabelText('To')).toHaveTextContent('2025-07');
   });
 
   it('chart tooltip content shows shaves and unique users for payload', () => {
