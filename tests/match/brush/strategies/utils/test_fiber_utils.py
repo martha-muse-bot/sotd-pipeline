@@ -41,8 +41,9 @@ def test_match_fiber_hybrid_handle_vs_true_mix(text: str, expected: str | None) 
         ("Zenith - Bleached Bristle - 26mm x 60mm Boar Knot", "Boar"),
         ("Century Pure Bristle 18mm", "Boar"),
         ("Semogue 1460 Natural Boar Bristle Shaving Brush", "Boar"),
-        # Bare stiff bristle without boar/pure/bleach cue
-        ("unknown - stiff bristle brush", None),
+        # Bare stiff bristle still cues Boar (stiff/vintage/finest added as
+        # boar-bristle qualifiers in 814c109be for analyzer input parsing)
+        ("unknown - stiff bristle brush", "Boar"),
     ],
 )
 def test_match_fiber_bristle_as_boar_when_qualified(text: str, expected: str | None) -> None:
