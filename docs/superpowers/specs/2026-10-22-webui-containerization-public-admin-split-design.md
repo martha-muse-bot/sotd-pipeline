@@ -67,21 +67,35 @@ endpoint classification or read-by-POST wrangling is needed.
 - `vite.config.public.ts` — separate build config, own outDir
   (`dist-public`).
 
-## Data Publishing
+## Data Publishing (slim public bundle)
 
-The three public routers read only two directories:
+The three public routers read pre-computed aggregates as their primary
+path; `data/enriched/` is only an on-demand fallback used when an
+aggregated file is missing. The public data bundle therefore ships only
+aggregates — a **selective copy**, no new derivation code:
 
-- `data/aggregated/` (~504 MB, incl. `product_usage/` 274 MB)
-- `data/enriched/` (~966 MB)
-
-- `scripts/publish-data.sh` — rsync of those two dirs to a NAS dataset
-  (e.g. `/volume1/docker/sotd-public/data/`), incremental, run manually
-  after pipeline runs (v1; automation later if desired).
+- `scripts/publish-public-data.sh` — rsync to the NAS share
+  (e.g. `/volume1/docker/sotd-public/data/`):
+  - `data/aggregated/product_usage/` (~274 MB)
+  - `data/aggregated/user_analysis/` (~125 MB)
+  - `data/aggregated/{YYYY-MM}.json` (~84 MB total)
+  - `data/aggregated/annual/` (~20 MB)
+  - Total ~500 MB initial, then tens of MB of deltas monthly.
+  - **`data/enriched/` (966 MB, comment-level records) never leaves the
+    Mac.**
+- Run manually after pipeline runs in v1; post-run hook as fast-follow.
 - Containers mount the share read-only and resolve it via
   `SOTD_DATA_DIR`.
 - `report_rankings.py` and `utils/non_matches.py` already honor
   `SOTD_DATA_DIR`; add the same env-var lookup to `product_usage.py` and
   `monthly_user_posts.py` (small change, unit-tested).
+- `monthly_user_posts` `/months` scans `data/enriched/` for the month
+  list — change it to scan `aggregated/user_analysis/` first (enriched
+  stays the fallback), so the public container needs no enriched data.
+- Privacy note: the public pages expose usernames by design (monthly
+  user posts, per-product user lists); the bundle bounds what else
+  ships (no comment text, no raw records). Comment-level data stays in
+  the admin deployment's data only.
 
 ## Containers & Deployment (GitHub CI, myacuright pattern)
 
