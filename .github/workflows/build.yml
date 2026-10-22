@@ -1,0 +1,101 @@
+name: build
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'webui/**'
+      - 'sotd/**'
+      - 'requirements.txt'
+      - 'deploy/**'
+      - '.github/workflows/build.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install python deps
+        run: pip install -r requirements.txt -r requirements-dev.txt
+      - name: Ruff + black check
+        run: |
+          ruff check sotd webui/api
+          black --check sotd webui/api
+      - name: Python tests (scoped to CI-verifiable suites)
+        run: |
+          PYTHONPATH=. pytest tests/ -q -n auto \
+            --deselect tests/fetch/test_reddit.py::TestThreadOverrides \
+            --deselect tests/match/test_brush_matcher_optimization.py::TestBrushMatcherOptimization::test_performance_improvement \
+            --deselect tests/performance/test_tier_delta_performance.py::TestTierDeltaPerformance::test_optimization_impact \
+            --ignore=tests/integration/test_brush_validation_counting_integration.py \
+            --ignore=tests/webui/api/production_tests
+      - name: React tests
+        working-directory: webui
+        run: |
+          npm ci
+          npx eslint src/public --ext ts,tsx --report-unused-disable-directives --max-warnings 0
+          npm run test
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: webui/Dockerfile.public-api
+          push: true
+          tags: |
+            ghcr.io/nmrs/sotd-pipeline-public-api:latest
+            ghcr.io/nmrs/sotd-pipeline-public-api:${{ github.sha }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: webui/Dockerfile.public-frontend
+          push: true
+          tags: |
+            ghcr.io/nmrs/sotd-pipeline-public-frontend:latest
+            ghcr.io/nmrs/sotd-pipeline-public-frontend:${{ github.sha }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: webui/Dockerfile.admin
+          push: true
+          tags: |
+            ghcr.io/nmrs/sotd-pipeline-admin:latest
+            ghcr.io/nmrs/sotd-pipeline-admin:${{ github.sha }}
+      - name: redeploy public stack (webhook)
+        env:
+          WEBHOOK: ${{ secrets.PORTAINER_WEBHOOK_PUBLIC }}
+        run: |
+          if [ -n "$WEBHOOK" ]; then
+            curl -fsS -X POST "$WEBHOOK"
+          else
+            echo "PORTAINER_WEBHOOK_PUBLIC not set — skipping redeploy"
+          fi
+      - name: redeploy admin stack (webhook)
+        env:
+          WEBHOOK: ${{ secrets.PORTAINER_WEBHOOK_ADMIN }}
+        run: |
+          if [ -n "$WEBHOOK" ]; then
+            curl -fsS -X POST "$WEBHOOK"
+          else
+            echo "PORTAINER_WEBHOOK_ADMIN not set — skipping redeploy"
+          fi
