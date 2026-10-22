@@ -55,34 +55,53 @@ class MonthData(BaseModel):
 async def get_available_months() -> List[MonthData]:
     """Get list of available months with data."""
     try:
-        # Get the enriched data directory
-        enriched_dir = get_enriched_dir()
-
-        if not enriched_dir.exists():
-            return []
-
+        # Primary source: pre-computed user_analysis aggregates (present in the
+        # public bundle, which has no enriched/).
+        user_analysis_dir = get_user_analysis_dir()
         months = []
-        for file_path in enriched_dir.glob("*.json"):
-            month = file_path.stem
-            if month and len(month) == 7 and month[4] == "-":  # YYYY-MM format
-                # Check if file has data
-                try:
-                    import json
-
-                    with open(file_path, "r", encoding="utf-8") as f:
-                        data = json.load(f)
-                        user_count = len(
-                            set(
-                                record.get("author")
-                                for record in data.get("data", [])
-                                if record.get("author")
+        if user_analysis_dir.exists():
+            for file_path in user_analysis_dir.glob("*.json"):
+                month = file_path.stem
+                if month and len(month) == 7 and month[4] == "-":  # YYYY-MM format
+                    try:
+                        with file_path.open("r", encoding="utf-8") as f:
+                            data = json.load(f)
+                        months.append(
+                            MonthData(
+                                month=month,
+                                has_data=True,
+                                user_count=len(data.get("users", {})),
                             )
                         )
+                    except Exception as e:
+                        logger.warning(f"Error reading {file_path}: {e}")
+                        months.append(MonthData(month=month, has_data=False, user_count=0))
 
-                    months.append(MonthData(month=month, has_data=True, user_count=user_count))
-                except Exception as e:
-                    logger.warning(f"Error reading {file_path}: {e}")
-                    months.append(MonthData(month=month, has_data=False, user_count=0))
+        # Fallback: scan enriched/ only when user_analysis yielded nothing.
+        if not months:
+            enriched_dir = get_enriched_dir()
+            if enriched_dir.exists():
+                for file_path in enriched_dir.glob("*.json"):
+                    month = file_path.stem
+                    if month and len(month) == 7 and month[4] == "-":  # YYYY-MM format
+                        # Check if file has data
+                        try:
+                            with file_path.open("r", encoding="utf-8") as f:
+                                data = json.load(f)
+                                user_count = len(
+                                    set(
+                                        record.get("author")
+                                        for record in data.get("data", [])
+                                        if record.get("author")
+                                    )
+                                )
+
+                            months.append(
+                                MonthData(month=month, has_data=True, user_count=user_count)
+                            )
+                        except Exception as e:
+                            logger.warning(f"Error reading {file_path}: {e}")
+                            months.append(MonthData(month=month, has_data=False, user_count=0))
 
         # Sort by month (newest first)
         months.sort(key=lambda x: x.month, reverse=True)
