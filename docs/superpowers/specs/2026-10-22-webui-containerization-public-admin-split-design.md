@@ -84,6 +84,14 @@ aggregates — a **selective copy**, no new derivation code:
   - **`data/enriched/` (966 MB, comment-level records) never leaves the
     Mac.**
 - Run manually after pipeline runs in v1; post-run hook as fast-follow.
+- **Completeness invariant**: the aggregate phase must produce every
+  file the public routers' primary paths read — for each month with
+  enriched data, a `product_usage/{month}.json`, a
+  `user_analysis/{month}.json`, and an `aggregated/{month}.json`. The
+  publish script verifies this before rsyncing (every month present in
+  one slice must be present in the others) and fails loudly rather than
+  shipping a hole. This keeps the routers' enriched fallbacks from ever
+  firing in production; no router-mode flag is needed.
 - Containers mount the share read-only and resolve it via
   `SOTD_DATA_DIR`.
 - `report_rankings.py` and `utils/non_matches.py` already honor
@@ -92,10 +100,13 @@ aggregates — a **selective copy**, no new derivation code:
 - `monthly_user_posts` `/months` scans `data/enriched/` for the month
   list — change it to scan `aggregated/user_analysis/` first (enriched
   stays the fallback), so the public container needs no enriched data.
-- Privacy note: the public pages expose usernames by design (monthly
-  user posts, per-product user lists); the bundle bounds what else
-  ships (no comment text, no raw records). Comment-level data stays in
-  the admin deployment's data only.
+- Privacy note: leak prevention comes from the bundle itself —
+  `data/enriched/` (966 MB, comment-level records) never leaves the
+  Mac, so no fallback path in the public container can ever read it.
+  The pages expose usernames by design (monthly user posts, per-product
+  user lists); the bundle bounds what else ships (no comment text, no
+  raw records). Comment-level data stays in the admin deployment's data
+  only.
 
 ## Containers & Deployment (GitHub CI, myacuright pattern)
 
