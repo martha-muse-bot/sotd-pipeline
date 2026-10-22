@@ -1679,12 +1679,12 @@ class TestThreadOverrides:
             )
 
     def test_validate_thread_override_deleted_thread(self, monkeypatch):
-        """Test validating a deleted thread."""
+        """Test validating a deleted thread (no title survives)."""
         from sotd.fetch.reddit import validate_thread_override
 
-        # Mock PRAW submission with no author (deleted)
+        # Mock PRAW submission for a deleted thread: no title, no author
         mock_submission = Mock()
-        mock_submission.title = "deleted"
+        mock_submission.title = None
         mock_submission.author = None
 
         mock_reddit = Mock()
@@ -1693,6 +1693,46 @@ class TestThreadOverrides:
         with pytest.raises(ValueError, match="Thread not accessible"):
             validate_thread_override(
                 "https://www.reddit.com/r/Wetshaving/comments/1lk3ooa/deleted/", mock_reddit
+            )
+
+    def test_validate_thread_override_deleted_author_live_thread(self, monkeypatch):
+        """A thread whose AUTHOR account was deleted but whose title survives is valid.
+
+        Hero-day threads (a user posted the daily when AutoModerator's didn't go
+        up) outlive their authors: ntownuser deleted the account, but the posts
+        remain live with all comments. Only a missing title means the thread
+        itself is gone.
+        """
+        from sotd.fetch.reddit import validate_thread_override
+
+        mock_submission = Mock()
+        mock_submission.title = "Monday SOTD Thread - Sep 02, 2019"
+        mock_submission.author = None  # author account deleted
+
+        mock_reddit = Mock()
+        mock_reddit.submission.return_value = mock_submission
+
+        result = validate_thread_override(
+            "https://www.reddit.com/r/Wetshaving/comments/cymep3/monday_sotd_thread_sep_02_2019/",
+            mock_reddit,
+        )
+
+        assert result == mock_submission
+
+    def test_validate_thread_override_missing_title_still_rejected(self, monkeypatch):
+        """A thread with neither title nor author (deleted thread) stays invalid."""
+        from sotd.fetch.reddit import validate_thread_override
+
+        mock_submission = Mock()
+        mock_submission.title = ""  # gone
+        mock_submission.author = None
+
+        mock_reddit = Mock()
+        mock_reddit.submission.return_value = mock_submission
+
+        with pytest.raises(ValueError, match="Thread not accessible"):
+            validate_thread_override(
+                "https://www.reddit.com/r/Wetshaving/comments/1lk3ooa/gone/", mock_reddit
             )
 
     def test_process_thread_overrides_all_valid(self, tmp_path, monkeypatch):

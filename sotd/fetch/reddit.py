@@ -537,8 +537,11 @@ def validate_thread_override(url: str, reddit) -> Submission:
     try:
         submission = reddit.submission(url=url)
 
-        # Basic validation that thread exists and is accessible
-        if not submission.title or submission.author is None:
+        # Basic validation that thread exists and is accessible. A deleted
+        # AUTHOR does not disqualify: hero-day threads outlive their authors
+        # (account deleted, post and comments still live). Only a missing
+        # title means the thread itself is gone.
+        if not submission.title:
             raise ValueError(f"Thread not accessible: {url}")
 
         return submission
