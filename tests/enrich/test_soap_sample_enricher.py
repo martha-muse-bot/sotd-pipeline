@@ -254,24 +254,24 @@ class TestSoapSampleEnricher:
         assert result["total_samples"] is None
         assert result["extraction_remainder"] == ""
 
-    def test_enrich_unknown_blind_date_forces_sample(self):
-        """Lather Games Blind Date swaps map to Unknown/Blind Date with no (sample) marker."""
+    def test_enrich_unknown_smush_forces_sample(self):
+        """Mystery smushes map to Unknown/Smush with no (sample) marker in original."""
         field_data = {
             "original": "Snooting - Blind Date",
             "normalized": "Snooting - Blind Date",
-            "matched": {"brand": "Unknown", "scent": "Blind Date"},
+            "matched": {"brand": "Unknown", "scent": "Smush"},
         }
         result = self.enricher.enrich(field_data, "")
         assert result["sample_type"] == "sample"
         assert result["sample_number"] is None
         assert result["total_samples"] is None
 
-    def test_enrich_unknown_blind_date_case_insensitive(self):
-        """Blind Date special-case is case-insensitive on matched brand/scent."""
+    def test_enrich_unknown_smush_case_insensitive(self):
+        """Unknown/Smush special-case is case-insensitive on matched brand/scent."""
         field_data = {
-            "original": "u/priusaurus - blind date",
-            "normalized": "u/priusaurus - blind date",
-            "matched": {"brand": "unknown", "scent": "blind date"},
+            "original": "Unknown Something From u/hugbckt",
+            "normalized": "Unknown Something From u/hugbckt",
+            "matched": {"brand": "unknown", "scent": "smush"},
         }
         result = self.enricher.enrich(field_data, "")
         assert result["sample_type"] == "sample"

@@ -98,15 +98,17 @@ def _extract_sample_patterns(remainder: str) -> Tuple[Optional[str], Optional[in
     # Convert to lowercase for case-insensitive matching
     remainder_lower = remainder.lower()
 
-    # Pattern 1: (sample), (tester), (smush)
+    def _normalize_sample_token(token: str) -> str:
+        if token in ("samp", "smush", "samples", "sampler"):
+            return "sample"
+        return token
+
+    # Pattern 1: (sample), (tester), (smush), (sampler)
     basic_sample_match = re.search(r"\((\w+)\)", remainder_lower)
     if basic_sample_match:
         sample_type = basic_sample_match.group(1)
-        if sample_type in ["sample", "samp", "tester", "smush"]:
-            # Normalize samp and smush to sample
-            if sample_type in ["samp", "smush"]:
-                sample_type = "sample"
-            return sample_type, None, None
+        if sample_type in ["sample", "samp", "tester", "smush", "sampler"]:
+            return _normalize_sample_token(sample_type), None, None
 
     # Pattern 2: (sample #23), (sample #5), (smush #23)
     numbered_sample_match = re.search(r"\((?:sample|smush)\s+#(\d+)\)", remainder_lower)
@@ -137,21 +139,22 @@ def _extract_sample_patterns(remainder: str) -> Tuple[Optional[str], Optional[in
         except ValueError:
             pass
 
-    # Pattern 5: trailing "sample", "tester", or "smush" (e.g., "Brand - Scent - sample")
-    trailing_sample_match = re.search(r"\b(sample|samp|tester|smush)\b$", remainder_lower)
+    # Pattern 5: trailing sample/tester/smush/sampler with optional punctuation
+    # (e.g. "Brand - Scent - sample", "Indigo sample.", "Island Man Sampler")
+    trailing_sample_match = re.search(
+        r"\b(sample|samp|tester|smush|sampler)\b\s*[.!?,:;]*\s*$",
+        remainder_lower,
+    )
     if trailing_sample_match:
-        sample_type = trailing_sample_match.group(1)
-        if sample_type in ["samp", "smush"]:
-            sample_type = "sample"
-        return sample_type, None, None
+        return _normalize_sample_token(trailing_sample_match.group(1)), None, None
 
     # Pattern 6: (sample) with any whitespace variations
-    loose_sample_match = re.search(r"\(\s*(sample|samp|tester|smush)\s*\)", remainder_lower)
+    loose_sample_match = re.search(
+        r"\(\s*(sample|samp|tester|smush|sampler)\s*\)",
+        remainder_lower,
+    )
     if loose_sample_match:
-        sample_type = loose_sample_match.group(1)
-        if sample_type in ["samp", "smush"]:
-            sample_type = "sample"
-        return sample_type, None, None
+        return _normalize_sample_token(loose_sample_match.group(1)), None, None
 
     # Pattern 7: (sample -- thanks!!) or similar gratitude patterns, (smush -- thanks!!)
     gratitude_sample_match = re.search(r"\((?:sample|smush)[^)]*thanks[^)]*\)", remainder_lower)
@@ -172,20 +175,38 @@ def _extract_sample_patterns(remainder: str) -> Tuple[Optional[str], Optional[in
     # "combined ... samples"). Prefer plural / sized forms so scent names like
     # "Sample Mashup" are not treated as sample usage.
     descriptive_paren_match = re.search(
-        r"\([^)]*\b(?:\d+(?:\.\d+)?\s*oz\s+)?(?:samples?|samp|tester|smush)\b[^)]*\)",
+        r"\([^)]*\b(?:\d+(?:\.\d+)?\s*oz\s+)?(?:samples?|samp|tester|smush|sampler)\b[^)]*\)",
         remainder_lower,
     )
     if descriptive_paren_match:
-        token = re.search(r"\b(samples?|samp|tester|smush)\b", descriptive_paren_match.group(0))
+        token = re.search(
+            r"\b(samples?|samp|tester|smush|sampler)\b",
+            descriptive_paren_match.group(0),
+        )
         if token:
-            sample_type = token.group(1)
-            if sample_type in ["samp", "smush", "samples"]:
-                sample_type = "sample"
-            return sample_type, None, None
+            return _normalize_sample_token(token.group(1)), None, None
 
     # Pattern 11: plural "samples" or sized "N oz sample(s)" outside bare markers
     # (usage language; avoids matching singular "Sample" in product names).
     if re.search(r"\b(?:\d+(?:\.\d+)?\s*oz\s+samples?|samples)\b", remainder_lower):
+        return "sample", None, None
+
+    # Pattern 12: bare mid-string smush/samp (usage language; rarely catalog scent tokens).
+    # Covers "a smush from u/...", "Mystery Smush Croap", "Nonsensical Smush of...".
+    if re.search(r"\b(smush|samp)\b", remainder_lower):
+        return "sample", None, None
+
+    # Pattern 13: clear mid-string sample usage phrases (avoid scent names like "Sample Mashup").
+    if re.search(r"\b(?:a\s+sample|samples?\s+from|sample\s+of)\b", remainder_lower):
+        return "sample", None, None
+
+    # Pattern 14: "Product Sample - Location" (SOTD location suffix after sample marker).
+    # Does not match "Sample Mash Up - Location" (no dash immediately after sample).
+    if re.search(r"\b(sample|samp|tester|smush|sampler)\b\s*[-–—]", remainder_lower):
+        return "sample", None, None
+
+    # Pattern 15: "last of the sample"
+    if re.search(r"\blast of the samples?\b", remainder_lower):
         return "sample", None, None
 
     return None, None, None
@@ -223,6 +244,7 @@ def normalize_soap_suffixes(text: str) -> str:
         # Sample indicators in parentheses (highest priority)
         (r"\s*\(sample[^)]*\)\s*", re.IGNORECASE),  # (sample), (sample -- thanks!!), etc.
         (r"\s*\(tester[^)]*\)\s*", re.IGNORECASE),  # (tester), etc.
+        (r"\s*\(sampler[^)]*\)\s*", re.IGNORECASE),  # (sampler), etc.
         (r"\s*\(samp[^)]*\)\s*", re.IGNORECASE),  # (samp), etc.
         (r"\s*\(smush[^)]*\)\s*", re.IGNORECASE),  # (smush), etc.
         # Size indicators in parentheses
@@ -241,15 +263,24 @@ def normalize_soap_suffixes(text: str) -> str:
         (r"\s*\(tallow\s+formulation\)\s*", re.IGNORECASE),
         (r"\s*\(tallow\)\s*", re.IGNORECASE),  # (tallow) standalone
         (r"\s*\(vegan\)\s*", re.IGNORECASE),
-        # Trailing sample indicators (without parentheses)
-        (r"\s*-\s*sample\s*$", re.IGNORECASE),  # "- sample" at end
-        (r"\s*-\s*tester\s*$", re.IGNORECASE),  # "- tester" at end
-        (r"\s*-\s*samp\s*$", re.IGNORECASE),  # "- samp" at end
-        (r"\s*-\s*smush\s*$", re.IGNORECASE),  # "- smush" at end
-        (r"\s+sample\s*$", re.IGNORECASE),  # "sample" at end (without dash)
-        (r"\s+tester\s*$", re.IGNORECASE),  # "tester" at end (without dash)
-        (r"\s+samp\s*$", re.IGNORECASE),  # "samp" at end (without dash)
-        (r"\s+smush\s*$", re.IGNORECASE),  # "smush" at end (without dash)
+        # Trailing sample indicators (without parentheses; optional trailing punct)
+        (r"\s*-\s*sample\s*[.!?]*\s*$", re.IGNORECASE),  # "- sample" / "- sample."
+        (r"\s*-\s*tester\s*[.!?]*\s*$", re.IGNORECASE),
+        (r"\s*-\s*sampler\s*[.!?]*\s*$", re.IGNORECASE),
+        (r"\s*-\s*samp\s*[.!?]*\s*$", re.IGNORECASE),
+        (r"\s*-\s*smush\s*[.!?]*\s*$", re.IGNORECASE),
+        (r"\s+sample\s*[.!?]*\s*$", re.IGNORECASE),  # "sample" / "sample."
+        (r"\s+tester\s*[.!?]*\s*$", re.IGNORECASE),
+        (r"\s+sampler\s*[.!?]*\s*$", re.IGNORECASE),
+        (r"\s+samp\s*[.!?]*\s*$", re.IGNORECASE),
+        (r"\s+smush\s*[.!?]*\s*$", re.IGNORECASE),
+        # "Product Sample - Location" → strip sample + location tail for matching
+        (r"\s+sample\s*[-–—]\s*[A-Za-z].*$", re.IGNORECASE),
+        (r"\s+sampler\s*[-–—]\s*[A-Za-z].*$", re.IGNORECASE),
+        (r"\s+tester\s*[-–—]\s*[A-Za-z].*$", re.IGNORECASE),
+        (r"\s+smush\s*[-–—]\s*[A-Za-z].*$", re.IGNORECASE),
+        # "last of the sample" usage tails
+        (r"\s*[-–—:]?\s*last of the samples?\b.*$", re.IGNORECASE),
         # Shave/Shaving prefix patterns for all formats (MUST come before standalone formats)
         # Generate patterns for " - shaving [format]" and " - shave [format]" for each format
         # Longer patterns (shaving) come before shorter (shave) to avoid partial matches

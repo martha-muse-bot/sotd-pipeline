@@ -50,17 +50,18 @@ class SoapSampleEnricher(BaseEnricher):
         total_samples = result[2] if result else None
         extraction_remainder = result[3] if result else None
 
-        # Lather Games "Blind Date" swaps credit a username (or joke label) instead of a
-        # real soap brand. Those strings are mapped via correct_matches to catalog
-        # Unknown / Blind Date. The original text has no "(sample)" / "smush" marker, so
-        # the normalization-difference path above leaves sample_type unset — force it
-        # here so sample aggregators still count these mystery samples.
+        # Mystery/anonymous smushes (Blind Date swaps, "unknown something from u/…",
+        # unlabeled smush, etc.) are mapped via correct_matches to catalog Unknown /
+        # Smush. Many of those originals have no "(sample)" marker, so the
+        # normalization-difference path above leaves sample_type unset — force it
+        # here so sample aggregators still count them. (Catalog scent is "Smush";
+        # do not put trailing "smush" in extract text — normalization strips it.)
         if sample_type is None:
             matched = field_data.get("matched") or {}
             if isinstance(matched, dict):
                 brand = (matched.get("brand") or "").strip().lower()
                 scent = (matched.get("scent") or "").strip().lower()
-                if brand == "unknown" and scent == "blind date":
+                if brand == "unknown" and scent == "smush":
                     sample_type = "sample"
 
         # Create enriched data

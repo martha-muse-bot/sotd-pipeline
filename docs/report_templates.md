@@ -65,10 +65,10 @@ The following variables are available for both monthly and annual report templat
 | `{{unique_shavers}}` | Number of unique users | `567` |
 | `{{avg_shaves_per_user}}` | Average shaves per user | `2.2` |
 | `{{median_shaves_per_user}}` | Median shaves per user | `1.0` |
-| `{{total_samples}}` | Total number of sample shaves used | `89` |
-| `{{sample_percentage}}` | Percentage of shaves that used samples | `7.2%` |
-| `{{sample_users}}` | Number of unique users who used samples | `67` |
-| `{{sample_brands}}` | Number of unique brands sampled | `23` |
+| `{{total_samples}}` | Total number of sample/smush shaves used | `89` |
+| `{{sample_percentage}}` | Percentage of shaves that used samples or smushes | `7.2%` |
+| `{{sample_users}}` | Number of unique users who used samples or smushes | `67` |
+| `{{sample_brands}}` | Number of unique brands sampled/smushed | `23` |
 
 ### Monthly Report Specific Variables
 

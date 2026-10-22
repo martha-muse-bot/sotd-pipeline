@@ -674,3 +674,93 @@ class TestExtractSoapSampleViaNormalization:
         text = "Mama Bear Sample Mashup"
         result = extract_soap_sample_via_normalization(text, text)
         assert result == (None, None, None, "")
+
+    def test_mid_string_smush_from_user(self):
+        """Mid-string 'smush from u/...' is sample usage (Oct 2026 real case)."""
+        text = "a smush from u/Impressive_Donut114"
+        result = extract_soap_sample_via_normalization(text, text)
+        assert result[0] == "sample"
+        assert result[1] is None
+        assert result[2] is None
+
+    def test_smush_with_trailing_format_in_remainder(self):
+        """Smush stripped for matching but remainder still has format suffix.
+
+        Real case: 'Mystery Smush Croap' → normalized without Smush/Croap,
+        remainder 'Smush Croap' must still count as sample usage.
+        """
+        result = extract_soap_sample_via_normalization(
+            "u/solongamerica Mystery Smush Croap",
+            "u/solongamerica Mystery",
+        )
+        assert result[0] == "sample"
+        assert result[3] == "Smush Croap"
+
+    def test_named_smush_product_phrase_is_sample_usage(self):
+        """Named smushes (user mixes) count as sample/smush usage."""
+        text = "u/AntwonPeachFuzz - Nonsensical Smush of Gloom and Despair"
+        result = extract_soap_sample_via_normalization(text, text)
+        assert result[0] == "sample"
+
+    def test_mid_string_sample_usage_phrases(self):
+        """Clear mid-string sample usage phrases without relying on trailing/parens."""
+        text = "a sample from u/Someone"
+        result = extract_soap_sample_via_normalization(text, text)
+        assert result[0] == "sample"
+
+    def test_trailing_sample_with_period(self):
+        """Trailing 'sample.' must count even when norm keeps '... sample' (period stripped)."""
+        result = extract_soap_sample_via_normalization(
+            "House of Mammoth - Indigo sample.",
+            "House of Mammoth - Indigo sample",
+        )
+        assert result[0] == "sample"
+
+        result = extract_soap_sample_via_normalization(
+            "MDC - Vetyver sample.",
+            "MDC - Vetyver sample",
+        )
+        assert result[0] == "sample"
+
+        result = extract_soap_sample_via_normalization(
+            "Stirling Sandpiper Sample .",
+            "Stirling Sandpiper Sample",
+        )
+        assert result[0] == "sample"
+
+    def test_sample_before_location_dash(self):
+        """'Product Sample - Location' is sample usage (SOTD location suffix)."""
+        for text in (
+            "Stirling Black Cherry Sample - Arkansas",
+            'Barrister & Mann "Pencil Pusher" Sample - New York',
+            "Martin de Candre Absynthe Sample - France",
+        ):
+            result = extract_soap_sample_via_normalization(text, text)
+            assert result[0] == "sample", text
+
+    def test_last_of_the_sample(self):
+        text = "Henri et Victoria Cognac and Cuban Cigars - last of the sample :("
+        result = extract_soap_sample_via_normalization(text, text)
+        assert result[0] == "sample"
+
+    def test_sampler_parenthetical_and_trailing(self):
+        result = extract_soap_sample_via_normalization(
+            "Henri et Victoria Lime (sampler)",
+            "Henri et Victoria Lime",
+        )
+        assert result[0] == "sample"
+
+        text = "Stirling Island Man Sampler"
+        result = extract_soap_sample_via_normalization(text, text)
+        assert result[0] == "sample"
+
+    def test_sample_mashup_still_not_usage(self):
+        """Catalog/product 'Sample Mash Up' names remain non-usage."""
+        for text in (
+            "Stirling Sample Mash Up",
+            "Mama Bear's Soap - Sample Mash Up",
+            "Stirling Sample Mash Up - Arkansas",
+            "Mama Bears Sample Mix (Nag Champa/Spice/Vetiver)",
+        ):
+            result = extract_soap_sample_via_normalization(text, text)
+            assert result[0] is None, text
