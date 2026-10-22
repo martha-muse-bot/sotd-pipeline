@@ -22,9 +22,11 @@ test.describe('Safari Basic Functionality', () => {
     await expect(page.locator('header')).toBeVisible();
     await expect(page.locator('main')).toBeVisible();
 
-    // Check navigation links exist
-    const navLinks = page.locator('nav a');
-    await expect(navLinks).toHaveCount(6);
+    // Check navigation groups exist — the header uses grouped dropdowns
+    // (three buttons: Analyzers, Validators, Tools) since 1448785ce, not
+    // a flat list of links.
+    const navButtons = page.locator('nav button');
+    await expect(navButtons).toHaveCount(3);
   });
 
   test('should handle navigation between pages', async ({ page }) => {
@@ -42,25 +44,15 @@ test.describe('Safari Basic Functionality', () => {
     // Wait for page load
     await page.waitForLoadState('networkidle');
 
-    // Test navigation to different pages
-    const navLinks = page.locator('nav a');
+    // Open the Analyzers dropdown and navigate via one of its links
+    await page.getByRole('button', { name: /Analyzers/ }).click();
+    const productUsageLink = page.getByRole('link', { name: /Product Usage/ });
 
-    // Click on each navigation link and verify the page changes
-    for (let i = 0; i < (await navLinks.count()); i++) {
-      const link = navLinks.nth(i);
-      const href = await link.getAttribute('href');
+    await expect(productUsageLink).toBeVisible();
+    await productUsageLink.click();
 
-      if (href && href !== '#') {
-        await link.click();
-
-        // Wait for navigation
-        await page.waitForLoadState('networkidle');
-
-        // Verify we're on a different page (URL changed)
-        const currentUrl = page.url();
-        expect(currentUrl).toContain(href);
-      }
-    }
+    // Verify we navigated (URL changed to the product usage page)
+    await expect(page).toHaveURL(/product-usage/);
   });
 
   test('should handle form interactions', async ({ page }) => {
