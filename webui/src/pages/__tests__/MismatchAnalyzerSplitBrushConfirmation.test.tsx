@@ -4,8 +4,15 @@ import '@testing-library/jest-dom';
 import MatchAnalyzer from '../MatchAnalyzer';
 import * as api from '@/services/api';
 
-// Mock the API module
-jest.mock('@/services/api');
+// Mock the API module — factory keeps real exports for functions the component
+// calls on mount (e.g. getValidatedMonths) while stubbing the ones tests control.
+jest.mock('@/services/api', () => ({
+  ...jest.requireActual('@/services/api'),
+  getCorrectMatches: jest.fn(),
+  getAvailableMonths: jest.fn(),
+  getValidatedMonths: jest.fn().mockResolvedValue({ months: [] }),
+  handleApiError: jest.fn((err: unknown) => (err instanceof Error ? err.message : String(err))),
+}));
 
 const mockApi = api as jest.Mocked<typeof api>;
 
