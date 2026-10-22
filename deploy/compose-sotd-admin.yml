@@ -1,0 +1,23 @@
+# SOTD admin (operator) stack — LAN ONLY. No npm-bridge, no cf_tunnel_net:
+# no external route exists to it. Reachable at the macvlan static IP.
+# Mounts the FULL pipeline data dir (bundle + enriched) read-only.
+#
+# NOTE: do NOT set a `cpus:` limit — Synology's cgroup v1 rejects it.
+services:
+  sotd-admin:
+    image: ghcr.io/nmrs/sotd-pipeline-admin:latest
+    restart: unless-stopped
+    mem_limit: 1g
+    pull_policy: always
+    environment:
+      - TZ=America/Chicago
+      - SOTD_DATA_DIR=/data
+    volumes:
+      - /volume1/docker/sotd-admin/data:/data:ro
+    networks:
+      macvlan_lan:
+        ipv4_address: 192.168.2.23
+
+networks:
+  macvlan_lan:
+    external: true

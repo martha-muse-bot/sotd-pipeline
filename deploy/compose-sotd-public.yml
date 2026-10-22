@@ -1,0 +1,47 @@
+# SOTD public analytics stack — deployed via Portainer (gitops source "sotd-pipeline").
+# Images built by GitHub Actions on push to master (ghcr.io/nmrs, public packages —
+# no registry credential needed on the NAS).
+#
+# Data: slim public bundle rsync'd from the Mac to
+#   /volume1/docker/sotd-public/data  (aggregated slices only — NO enriched/)
+# mounted read-only into public-api. Refresh with scripts/publish-public-data.sh.
+#
+# Networking: npm-bridge so nginx-proxy-manager routes the public hostname to
+# sotd-public-frontend (and /api through the same host → frontend proxies to the
+# API service); cf_tunnel_net so the cloudflared tunnel can route it.
+#
+# NOTE: do NOT set a `cpus:` limit — Synology's cgroup v1 rejects it.
+services:
+  sotd-public-api:
+    image: ghcr.io/nmrs/sotd-pipeline-public-api:latest
+    restart: unless-stopped
+    mem_limit: 1g
+    pull_policy: always
+    environment:
+      - TZ=America/Chicago
+      - SOTD_DATA_DIR=/data
+      - PUBLIC_ALLOWED_ORIGIN=${SOTD_PUBLIC_ORIGIN:-https://sotd.example.invalid}
+    volumes:
+      - /volume1/docker/sotd-public/data:/data:ro
+    networks:
+      - sotd-internal
+
+  sotd-public-frontend:
+    image: ghcr.io/nmrs/sotd-pipeline-public-frontend:latest
+    restart: unless-stopped
+    mem_limit: 128m
+    pull_policy: always
+    depends_on:
+      - sotd-public-api
+    networks:
+      - sotd-internal
+      - npm-bridge
+      - cf_tunnel_net
+
+networks:
+  sotd-internal:
+    driver: bridge
+  npm-bridge:
+    external: true
+  cf_tunnel_net:
+    external: true
