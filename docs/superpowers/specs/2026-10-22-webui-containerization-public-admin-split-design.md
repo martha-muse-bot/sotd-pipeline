@@ -10,9 +10,16 @@ separate applications:
 
 - **Admin app** — the existing full WebUI (all 16 routers, all 13 pages,
   mutating endpoints). LAN-only by topology; no authentication code.
-- **Public app** — a new curated build exposing only read-only analytics:
-  Product Usage, Monthly User Posts, Report Placement Over Time. Deployed
-  behind Nginx Proxy Manager / Cloudflare tunnel on the NAS.
+- **Public app** — a new curated build exposing only read-only product
+  analytics: Product Usage (with per-user drill-down, as-is) and Report
+  Placement Over Time. Deployed behind Nginx Proxy Manager / Cloudflare
+  tunnel on the NAS.
+
+**User analytics deferred:** Monthly User Posts and any user-centric
+pages are left out of this release pending a community pulse check on
+publishing user-level analytics. The per-user detail inside Product
+Usage drill-downs stays in deliberately — it lets users self-serve
+"why is my day missing" questions, which the author receives often.
 
 Permissions live in deployment topology rather than application code:
 the public container physically contains no mutating code paths, and the
@@ -31,7 +38,7 @@ admin container is never given an outward exposure.
 **One codebase, two builds** (chosen over fork/middleware-allowlist):
 
 - A single FastAPI router set; the public backend is a slim app that
-  imports only the three read-only routers. Mutating routers are never
+  imports only the two read-only routers. Mutating routers are never
   imported into the public process.
 - A single frontend codebase with two Vite builds: the admin build is the
   existing app untouched; the public build is a new entry point that
@@ -39,7 +46,7 @@ admin container is never given an outward exposure.
 
 Rationale: the isolation guarantee is structural (public image cannot
 mutate data) rather than dependent on an allowlist staying current. All
-three public-candidate routers are already 100% GET endpoints, so no
+two public-candidate routers are already 100% GET endpoints, so no
 endpoint classification or read-by-POST wrangling is needed.
 
 ## Public Backend Surface
@@ -49,7 +56,6 @@ endpoint classification or read-by-POST wrangling is needed.
 | Router | Prefix | Endpoints |
 |---|---|---|
 | `product_usage` | `/api/product-usage` | 4 GET (products, analysis, yearly-summary, health) |
-| `monthly_user_posts` | `/api/monthly-user-posts` | 4 GET (months, users/{month}, analysis/{month}/{user}, health) |
 | `report_rankings` | `/api/report-rankings` | 5 GET (months, tables, items, series, pivoted) |
 
 - CORS locked to the public origin.
@@ -61,15 +67,15 @@ endpoint classification or read-by-POST wrangling is needed.
 ## Public Frontend
 
 - `webui/src/public/` — new entry: `main.tsx`, `App.tsx` with public nav
-  (Home, Product Usage, Monthly User Posts, Placement Over Time), and
-  thin page wrappers around the existing shared components.
+  (Home, Product Usage, Placement Over Time), and thin page wrappers
+  around the existing shared components.
 - New public Home page (curated landing; admin Dashboard stays as-is).
 - `vite.config.public.ts` — separate build config, own outDir
   (`dist-public`).
 
 ## Data Publishing (slim public bundle)
 
-The three public routers read pre-computed aggregates as their primary
+The two public routers read pre-computed aggregates as their primary
 path; `data/enriched/` is only an on-demand fallback used when an
 aggregated file is missing. The public data bundle therefore ships only
 aggregates — a **selective copy**, no new derivation code:
@@ -77,17 +83,17 @@ aggregates — a **selective copy**, no new derivation code:
 - `scripts/publish-public-data.sh` — rsync to the NAS share
   (e.g. `/volume1/docker/sotd-public/data/`):
   - `data/aggregated/product_usage/` (~274 MB)
-  - `data/aggregated/user_analysis/` (~125 MB)
   - `data/aggregated/{YYYY-MM}.json` (~84 MB total)
   - `data/aggregated/annual/` (~20 MB)
-  - Total ~500 MB initial, then tens of MB of deltas monthly.
+  - Total ~380 MB initial, then tens of MB of deltas monthly.
   - **`data/enriched/` (966 MB, comment-level records) never leaves the
-    Mac.**
+    Mac**, and `user_analysis/` (per-user posting records, deferred
+    feature) is not published in this release.
 - Run manually after pipeline runs in v1; post-run hook as fast-follow.
 - **Completeness invariant**: the aggregate phase must produce every
   file the public routers' primary paths read — for each month with
-  enriched data, a `product_usage/{month}.json`, a
-  `user_analysis/{month}.json`, and an `aggregated/{month}.json`. The
+  enriched data, a `product_usage/{month}.json` and an
+  `aggregated/{month}.json`. The
   publish script verifies this before rsyncing (every month present in
   one slice must be present in the others) and fails loudly rather than
   shipping a hole. This keeps the routers' enriched fallbacks from ever
@@ -95,18 +101,15 @@ aggregates — a **selective copy**, no new derivation code:
 - Containers mount the share read-only and resolve it via
   `SOTD_DATA_DIR`.
 - `report_rankings.py` and `utils/non_matches.py` already honor
-  `SOTD_DATA_DIR`; add the same env-var lookup to `product_usage.py` and
-  `monthly_user_posts.py` (small change, unit-tested).
-- `monthly_user_posts` `/months` scans `data/enriched/` for the month
-  list — change it to scan `aggregated/user_analysis/` first (enriched
-  stays the fallback), so the public container needs no enriched data.
+  `SOTD_DATA_DIR`; add the same env-var lookup to `product_usage.py`
+  (small change, unit-tested).
 - Privacy note: leak prevention comes from the bundle itself —
   `data/enriched/` (966 MB, comment-level records) never leaves the
   Mac, so no fallback path in the public container can ever read it.
-  The pages expose usernames by design (monthly user posts, per-product
-  user lists); the bundle bounds what else ships (no comment text, no
-  raw records). Comment-level data stays in the admin deployment's data
-  only.
+  Product-usage drill-downs expose usernames + usage dates by design
+  (deliberate: users self-serve "why is my day missing"); the bundle
+  bounds what else ships (no comment text, no raw records).
+  Comment-level data stays in the admin deployment's data only.
 
 ## Containers & Deployment (GitHub CI, myacuright pattern)
 
@@ -174,3 +177,8 @@ gitops source, following `myacuright/deploy/compose-myacuright.yml`:
   beyond LAN.
 - Post-pipeline-hook automation of `publish-data.sh`.
 - Public access to rendered monthly report archives.
+- **Monthly User Pages / user-centric analytics on the public app** —
+  deferred pending a community pulse check on publishing user-level
+  analytics. Enabling it later is additive: include `monthly_user_posts`
+  in `public_main.py`, add the page to the public frontend, and add
+  `data/aggregated/user_analysis/` to the publish bundle.
