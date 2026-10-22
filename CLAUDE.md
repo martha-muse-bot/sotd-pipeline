@@ -74,9 +74,15 @@ python -m sotd.report.tools.community_query search --months 2026-08:2026-09 --qu
 Consumption: the `community-summarizer` agent (`.claude/agents/community-summarizer.md`)
 distills one fetched month into `data/community/summaries/YYYY-MM.md` — storyline
 context with thread/comment provenance, gitignored, never a numeric source. Invoke it
-explicitly with a month ("summarize community context for 2026-09"); the
-`observations-drafter` reads that summary (plus the two prior months', as arc context)
-when drafting and spawns the summarizer itself when a summary is missing. Design:
+explicitly with a month ("summarize community context for 2026-09").
+
+The `observations-drafter` agent (`.claude/agents/observations-drafter.md`) drafts the
+`## Observations` section for the monthly hardware/software reports in the community-announcer
+voice. Invoke it explicitly with a month AND type ("draft observations for 2026-09 hardware"
+or "... software"); drafts are applied to `data/report_archive/YYYY-MM-{hardware,software}.md`
+for the author to edit. It reads the month's community summary (plus the two prior months',
+as arc context) and spawns the summarizer itself when a summary is missing. Every number
+comes from `data/aggregated/` via the `sotd.report.tools` CLIs. Design:
 `docs/superpowers/specs/2026-09-06-community-summarizer-design.md`.
 
 Backfill notes: months older than `REDDIT_HORIZON_FLOOR` (`2026-01`) skip Reddit
@@ -192,7 +198,7 @@ Data persists at each stage, enabling individual phase re-runs and debugging.
 - **Hybrid Fetching**: Combines Reddit API with Pushshift for completeness
 - **Error Handling**: Graceful degradation when APIs fail
 - **Analysis Tools**: Utilities in `sotd/match/tools/` for debugging matches
-- **WebUI – WSDB Alignment Analyzer**: Two modes—**Alignment** (bidirectional pipeline vs WSDB, catalog or match files, two tabs) and **Slug finder** (pipeline scents from soaps.yaml → suggested WSDB slugs from software.json, catalog-only, single “Slug suggestions” view)
+- **WebUI – WSDB Alignment Analyzer**: Two modes—**Alignment** (bidirectional pipeline vs WSDB, catalog or match files, two tabs) and **Slug finder** (pipeline scents from soaps.yaml → suggested WSDB slugs from software.json, catalog-only, single “Slug suggestions” view). Its CLI companion is `scripts/auto_assign_single_100_slugs.py`, which auto-applies WSDB slugs to `data/soaps.yaml` wherever a soap has exactly one 100% match (same batch analysis as the analyzer; respects non-matches; skips scents that already have a slug). Run `--dry-run` first to preview, then run without it to apply.
 
 ## Agent tool promotion
 
