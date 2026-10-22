@@ -108,6 +108,7 @@ post/comment record keys).
 .venv/bin/python -m sotd.report.tools.community_query meta --month 2026-08
 .venv/bin/python -m sotd.report.tools.community_query schema --month 2026-08
 .venv/bin/python -m sotd.report.tools.community_query threads --month 2026-08 --filter non-sotd --sort comments --top 20
+.venv/bin/python -m sotd.report.tools.community_query threads --month 2026-08 --sort date --reverse --filter non-sotd --top 20  # newest-first month-end scan
 .venv/bin/python -m sotd.report.tools.community_query thread --month 2026-08 --id t3_1sbgn5g --max-comments 50
 .venv/bin/python -m sotd.report.tools.community_query thread --month 2026-08 --id t3_1sbgn5g --top-level
 .venv/bin/python -m sotd.report.tools.community_query thread --month 2026-08 --id t3_1sbgn5g --tail 10

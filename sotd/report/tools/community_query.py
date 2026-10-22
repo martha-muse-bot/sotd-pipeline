@@ -108,6 +108,7 @@ def cmd_threads(
     flair: str | None = None,
     top: int = 10,
     sort: str = "comments",
+    reverse: bool = False,
     thread_filter: str = "all",
     as_json: bool = False,
 ) -> str:
@@ -127,7 +128,7 @@ def cmd_threads(
             continue
         rows.append({**p, "_comments": n_comments})
 
-    rows.sort(key=keymap_for(sort))
+    rows.sort(key=keymap_for(sort), reverse=reverse)
 
     if as_json:
         return json.dumps(
@@ -135,8 +136,7 @@ def cmd_threads(
         )
 
     lines = [
-        f"{'id':<12} {'date':<10} {'flag':<5} {'cmts':>4} {'score':>5}  "
-        f"{'author':<20} {'title'}"
+        f"{'id':<12} {'date':<10} {'flag':<5} {'cmts':>4} {'score':>5}  {'author':<20} {'title'}"
     ]
     for r in rows[:top]:
         flag = ("SOTD" if r.get("in_pipeline") else "-") if "in_pipeline" in r else "n/a"
@@ -167,6 +167,11 @@ def build_parser() -> argparse.ArgumentParser:
     threads.add_argument("--author", help="Exact author name (case-insensitive)")
     threads.add_argument("--flair", help="Exact link flair text")
     threads.add_argument("--top", type=int, default=10, help="Max rows (default 10)")
+    threads.add_argument(
+        "--reverse",
+        action="store_true",
+        help="Reverse the sort (e.g. newest first with --sort date)",
+    )
     threads.add_argument(
         "--sort", choices=["comments", "score", "date"], default="comments", help="Sort key"
     )
@@ -250,6 +255,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                         flair=args.flair,
                         top=args.top,
                         sort=args.sort,
+                        reverse=args.reverse,
                         thread_filter=args.filter,
                         as_json=args.json,
                     )
@@ -364,8 +370,7 @@ def cmd_thread(
                 body = _flatten_body(c["body"])[:200]
                 op = " (OP)" if c.get("is_submitter") else ""
                 lines.append(
-                    f"{'  ' * depth}[{c['id']}] u/{c['author']} "
-                    f"{c['created_utc'][:10]}{op}: {body}"
+                    f"{'  ' * depth}[{c['id']}] u/{c['author']} {c['created_utc'][:10]}{op}: {body}"
                 )
                 rendered += 1
                 walk(c["id"], depth + 1)
@@ -471,7 +476,7 @@ def cmd_gaps(doc: dict, *, as_json: bool = False) -> str:
         for c, _reasons in gapped_comments:
             parts = [
                 f"t1_{c['id']}",
-                f"in t3_{c.get('thread_id')} (\"{c.get('thread_title')}\")",
+                f'in t3_{c.get("thread_id")} ("{c.get("thread_title")}")',
                 f"author={c.get('author')}",
             ]
             if c.get("body") in _CONTENT_MARKERS:
@@ -674,7 +679,7 @@ def cmd_search(
             )
         if title:
             lines.append(f"           thread: {title[:60]}")
-        lines.append(f"           \"{h['snippet']}\"")
+        lines.append(f'           "{h["snippet"]}"')
     return "\n".join(lines)
 
 

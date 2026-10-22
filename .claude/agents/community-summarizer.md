@@ -43,8 +43,9 @@ instead of guessing. One month per run.
    - `... --filter non-sotd --sort score --top 15` — catches low-comment/high-score
      posts (review videos, winner announcements, meetups).
    - `... --filter sotd --sort comments --top 10` — which dailies mattered.
-   - `... --sort date --top 30` — title scan for month-end events the other sorts
-     under-rank.
+   - `... --sort date --reverse --top 30` — title scan for month-end events the
+     other sorts under-rank (newest first, so the tail is reachable without
+     ad-hoc slices).
    AutoModerator fixtures (SOTD dailies, Daily Questions, Deals/New Products, Free
    Talk Friday) are recurring low-signal rows — inventory their titles, drill one
    only when its title signals an event. If the flag column shows `n/a` (threads

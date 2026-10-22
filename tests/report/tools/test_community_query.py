@@ -236,6 +236,35 @@ class TestThreads:
         assert code == 1
 
 
+class TestThreadReverseSort:
+    def test_reverse_sort_date_lists_newest_first(self, data_dir, capsys):
+        # ascending date is sotd (Aug 01) -> disc (Aug 05) -> quiet (Aug 10)
+        code, out, _ = run(
+            capsys,
+            [
+                "--data-dir",
+                str(data_dir),
+                "threads",
+                "--month",
+                "2026-08",
+                "--sort",
+                "date",
+                "--reverse",
+            ],
+        )
+        assert code == 0
+        assert out.index("quiet") < out.index("disc") < out.index("sotd")
+
+    def test_reverse_sort_comments_flips_ranking(self, data_dir, capsys):
+        # desc by comments is disc (3) -> quiet (2) -> sotd (1); --reverse flips it
+        code, out, _ = run(
+            capsys,
+            ["--data-dir", str(data_dir), "threads", "--month", "2026-08", "--reverse"],
+        )
+        assert code == 0
+        assert out.index("sotd") < out.index("quiet") < out.index("disc")
+
+
 class TestThread:
     def test_renders_tree_indented(self, data_dir, capsys):
         code, out, _ = run(
