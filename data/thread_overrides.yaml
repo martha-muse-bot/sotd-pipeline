@@ -13,6 +13,79 @@
 #
 
 include:
+  # 2018-2021 hero days found via PullPush on 2026-10-22 (threads audit): AutoModerator
+  # was alive (posted DQ/Mail Call) but the SOTD daily didn't go up — a user posted it
+  # instead, so titles are nonstandard. One duplicate candidate per day (0-2 comments,
+  # deleted author) was skipped.
+  2018-02-15:
+    - https://www.reddit.com/r/Wetshaving/comments/7xq22n/thursday_sotd_feb_15/
+
+  2018-07-11:
+    - https://www.reddit.com/r/Wetshaving/comments/8xyobh/wednesday_sotd_thread_71118/
+
+  2018-07-23:
+    # found during 2026-10-22 threads audit re-check (hero day — MadDingersYo posted it)
+    - https://www.reddit.com/r/Wetshaving/comments/9165s3/monday_sotd_july_23_2018/
+
+  2019-07-15:
+    # hero day (Mochee38) — exposed when 2019-07 re-fetched during 2026-10-22 audit
+    - https://www.reddit.com/r/Wetshaving/comments/cdf656/monday_sotd_thread_july_15_2019/
+
+  2019-07-27:
+    # AutoModerator's 6:00am post (ciexo9) got zero comments — the live thread is relided's
+    - https://www.reddit.com/r/Wetshaving/comments/cifiru/saturday_sotd_thread_july_27_2019/
+
+  2019-07-29:
+    # found during 2026-10-22 threads audit re-check (hero day — "29 July 2019" title format)
+    - https://www.reddit.com/r/Wetshaving/comments/cj8kq4/monday_sotd_thread_29_july_2019/
+
+  2018-11-01:
+    - https://www.reddit.com/r/Wetshaving/comments/9t7ppu/thursday_sotd_thread_1st_november2018/
+
+  2019-09-02:
+    - https://www.reddit.com/r/Wetshaving/comments/cymep3/monday_sotd_thread_sep_02_2019/
+
+  2019-11-04:
+    - https://www.reddit.com/r/Wetshaving/comments/drefsw/monday_sotd_thread_nov_042019/
+
+  2020-02-24:
+    - https://www.reddit.com/r/Wetshaving/comments/f8olpz/monday_sotd_thread_24_feb_2020/
+
+  2020-03-02:
+    - https://www.reddit.com/r/Wetshaving/comments/fc8gfx/monday_sotd_thread_mar_02_2020/
+
+  2020-03-04:
+    - https://www.reddit.com/r/Wetshaving/comments/fd9jyf/wednesday_sotd_thread_04_mar_2020/
+
+  2020-04-04:
+    - https://www.reddit.com/r/Wetshaving/comments/fupidd/saturday_sotd_thread_apr_04_2020/
+
+  2021-09-01:
+    - https://www.reddit.com/r/Wetshaving/comments/pfqjo3/wednesday_sotd_thread_sept_1_2020/
+
+  # 2021-01 trio + 2022-04 pair + 2023-02 pair found via Arctic Shift on 2026-10-22 (threads audit);
+  # the 2021-01 trio is tagged [reddit]-removed in archive — PRAW may refuse them
+  2021-01-22:
+    - https://www.reddit.com/r/Wetshaving/comments/l2iakt/friday_sotd_thread_jan_22_2021/
+
+  2021-01-23:
+    - https://www.reddit.com/r/Wetshaving/comments/l37bh2/saturday_sotd_thread_jan_23_2021/
+
+  2021-01-24:
+    - https://www.reddit.com/r/Wetshaving/comments/l3ul0m/sunday_sotd_thread_jan_24_2021/
+
+  2022-04-08:
+    - https://www.reddit.com/r/Wetshaving/comments/tyws9z/friday_sotd_thread_apr_08_2022/
+
+  2022-04-09:
+    - https://www.reddit.com/r/Wetshaving/comments/tzmuz3/saturday_sotd_thread_apr_09_2022/
+
+  2023-02-08:
+    - https://www.reddit.com/r/Wetshaving/comments/10wq1bw/wednesday_sotd_thread_feb_08_2023/
+
+  2023-02-09:
+    - https://www.reddit.com/r/Wetshaving/comments/10xo5lt/theme_thursday_sotd_thread_feb_09_2023/
+
   2016-05-01:
     - https://www.reddit.com/r/Wetshaving/comments/4haea3/daily_sotd_thread_sunday_512016/
 
@@ -28,15 +101,6 @@ include:
   2016-08-01:
     # No threads found for this date
 
-  2018-02-15:
-    # No threads found for this date
-
-  2018-07-11:
-    # No threads found for this date
-
-  2018-11-01:
-    # No threads found for this date
-
   2018-12-06:
     - https://www.reddit.com/r/Wetshaving/comments/a3mv6j/theme_thursday_sotd_thread_dec_06_2018/
 
@@ -48,12 +112,6 @@ include:
 
   2018-12-27:
     - https://www.reddit.com/r/Wetshaving/comments/a9yagr/theme_thursday_sotd_thread_dec_27_2018/
-
-  2019-09-02:
-    - https://www.reddit.com/r/Wetshaving/comments/cymep3/monday_sotd_thread_sep_02_2019/
-
-  2019-11-04:
-    - https://www.reddit.com/r/Wetshaving/comments/dw4b4w/monday_sotd_thread_nov_04_2019/
 
   2022-04-10:
     - https://www.reddit.com/r/Wetshaving/comments/u0aide/sunday_sotd_thread_apr_10_2022/
@@ -137,7 +195,8 @@ include:
     - https://www.reddit.com/r/Wetshaving/comments/uk6ttd/saturday_sotd_thread_may_07_2022/
 
   2022-05-08:
-    # No threads found for this date
+    # found via Arctic Shift archive search on 2026-10-22 (old probe missed it)
+    - https://www.reddit.com/r/Wetshaving/comments/ukuixe/sunday_sotd_thread_may_08_2022/
 
   2022-05-09:
     - https://www.reddit.com/r/Wetshaving/comments/ulkjbp/monday_sotd_thread_may_09_2022/
@@ -149,7 +208,8 @@ include:
     - https://www.reddit.com/r/Wetshaving/comments/un2vem/wednesday_sotd_thread_may_11_2022/
 
   2022-05-12:
-    # No threads found for this date
+    # found via Arctic Shift archive search on 2026-10-22 (old probe missed it)
+    - https://www.reddit.com/r/Wetshaving/comments/unu8fz/thursday_sotd_thread_may_12_2022/
 
   2022-05-13:
     - https://www.reddit.com/r/Wetshaving/comments/uol1zo/friday_sotd_thread_may_13_2022/
@@ -167,6 +227,11 @@ include:
     - https://www.reddit.com/r/Wetshaving/comments/1lk3ooa/wednesday_sotd_25_june/
 
 exclude:
+  2026-10-01:
+    # mod's mistaken repost — single comment "Use the right thread folks", locked;
+    # the real LG thread is 1wurp9f (same day)
+    - https://www.reddit.com/r/Wetshaving/comments/1wurp6k/lather_games_sotd_thread_oct_01_2026/
+
   2026-06-01:
     # Joke / Lather Games post, not a real SOTD thread
     - https://www.reddit.com/r/Wetshaving/comments/1ttrafo/monday_lather_games_sotd_thread_jun_1_2026/
