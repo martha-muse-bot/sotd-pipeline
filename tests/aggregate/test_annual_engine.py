@@ -740,6 +740,57 @@ class TestAnnualAggregationEngine:
         assert by_user["alice"]["shaves"] == 2
         assert by_user["bob"]["single_use_soaps"] == 1
 
+    @patch("sotd.aggregate.load.load_enriched_data")
+    def test_aggregate_soap_mashup_users_from_enriched(self, mock_load_enriched):
+        """Annual soap-mashup-users table is recalculated from combined enriched records.
+
+        Mirrors the monthly processor's data.soap_mashup_users key; the annual
+        software template renders a soap-mashup-users table, so the annual
+        aggregate must carry the same key.
+        """
+        engine = AnnualAggregationEngine("2024", Path("/data"))
+        monthly_data = {"2024-01": {"data": {}}, "2024-02": {"data": {}}}
+
+        mock_load_enriched.side_effect = [
+            [
+                {
+                    "author": "alice",
+                    "soap": {
+                        "matched": {"brand": "A", "scent": "1"},
+                        "enriched": {"is_mashup": True},
+                    },
+                },
+                {
+                    "author": "bob",
+                    "soap": {
+                        "matched": {"brand": "B", "scent": "2"},
+                        "enriched": {"is_mashup": True},
+                    },
+                },
+            ],
+            [
+                {
+                    "author": "alice",
+                    "soap": {
+                        "matched": {"brand": "C", "scent": "3"},
+                        "enriched": {"is_mashup": True},
+                    },
+                },
+                {
+                    # non-mashup: must not count
+                    "author": "alice",
+                    "soap": {"matched": {"brand": "D", "scent": "4"}, "enriched": {}},
+                },
+            ],
+        ]
+
+        result = engine._aggregate_soap_mashup_users(monthly_data)
+
+        by_user = {row["user"]: row for row in result}
+        assert by_user["alice"]["shaves"] == 2
+        assert by_user["bob"]["shaves"] == 1
+        assert result[0]["user"] == "alice"  # sorted by shaves desc
+
 
 class TestAggregateMonthlyData:
     """Test the aggregate_monthly_data function."""

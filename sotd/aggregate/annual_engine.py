@@ -1317,6 +1317,31 @@ class AnnualAggregationEngine:
         except Exception:
             return []
 
+    def _aggregate_soap_mashup_users(self, monthly_data: Dict[str, Dict]) -> List[Dict[str, Any]]:
+        """Recalculate the soap-mashup-users table from full-year enriched records."""
+        if not monthly_data:
+            return []
+
+        try:
+            from .aggregators.users.soap_mashup_user_aggregator import aggregate_soap_mashup_users
+            from .load import load_enriched_data
+
+            all_enriched_records = []
+            for month in monthly_data.keys():
+                try:
+                    all_enriched_records.extend(load_enriched_data(month, self.data_dir))
+                except FileNotFoundError:
+                    continue
+                except Exception:
+                    continue
+
+            if not all_enriched_records:
+                return []
+
+            return aggregate_soap_mashup_users(all_enriched_records)
+        except Exception:
+            return []
+
     def generate_metadata(
         self,
         monthly_data: Dict[str, Dict],
@@ -1513,6 +1538,7 @@ class AnnualAggregationEngine:
                 monthly_data, "user_soap_brand_scent_diversity"
             ),
             "user_single_use_soaps": self._aggregate_user_single_use_soaps(monthly_data),
+            "soap_mashup_users": self._aggregate_soap_mashup_users(monthly_data),
         }
 
 
