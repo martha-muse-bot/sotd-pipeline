@@ -80,7 +80,7 @@ The system checks correct matches at multiple levels:
     "original": "input_string",
     "matched": {
         "brand": str | None,
-        "model": str | None, 
+        "model": str | None,
         "fiber": str | None,
         "knot_size_mm": float | None,
         # Removed redundant fields: handle_maker, knot_maker
@@ -89,8 +89,9 @@ The system checks correct matches at multiple levels:
             "model": str | None,
             "source_text": str | None,
             "_matched_by": str | None,  # Strategy attribution
-            "_pattern": str | None       # Pattern used for matching
-        } | None,
+            "_pattern": str | None,  # Pattern used for matching
+        }
+        | None,
         "knot": {
             "brand": str | None,
             "model": str | None,
@@ -98,12 +99,14 @@ The system checks correct matches at multiple levels:
             "knot_size_mm": float | None,
             "source_text": str | None,
             "_matched_by": str | None,  # Strategy attribution
-            "_pattern": str | None       # Pattern used for matching
-        } | None,
-        "user_intent": str | None,      # "handle_primary" | "knot_primary" | None
-    } | None,
+            "_pattern": str | None,  # Pattern used for matching
+        }
+        | None,
+        "user_intent": str | None,  # "handle_primary" | "knot_primary" | None
+    }
+    | None,
     "match_type": "exact|regex|alias|brand|fiber|knot|artisan|unmatched" | None,
-    "pattern": str | None
+    "pattern": str | None,
 }
 ```
 
@@ -127,20 +130,20 @@ The system checks correct matches at multiple levels:
             "model": "Chubby 2",
             "source_text": "Simpson Chubby 2",
             "_matched_by": "known_brush",
-            "_pattern": "\\bchubby\\s*2\\b"
+            "_pattern": "\\bchubby\\s*2\\b",
         },
         "knot": {
-            "brand": "Simpson", 
+            "brand": "Simpson",
             "model": "Chubby 2",
             "fiber": "Badger",
             "knot_size_mm": 27,
             "source_text": "Simpson Chubby 2",
             "_matched_by": "known_brush",
-            "_pattern": "\\bchubby\\s*2\\b"
-        }
+            "_pattern": "\\bchubby\\s*2\\b",
+        },
     },
     "match_type": "regex",
-    "pattern": "\\bchubby\\s*2\\b"
+    "pattern": "\\bchubby\\s*2\\b",
 }
 ```
 
@@ -158,7 +161,7 @@ The system checks correct matches at multiple levels:
             "model": None,
             "source_text": "Muninn Woodworks BFM",
             "_matched_by": "known_brush",
-            "_pattern": "\\bbfm\\b"
+            "_pattern": "\\bbfm\\b",
         },
         "knot": {
             "brand": "Moti",
@@ -167,11 +170,11 @@ The system checks correct matches at multiple levels:
             "knot_size_mm": 50,
             "source_text": "Muninn Woodworks BFM",
             "_matched_by": "known_brush",
-            "_pattern": "\\bbfm\\b"
-        }
+            "_pattern": "\\bbfm\\b",
+        },
     },
     "match_type": "regex",
-    "pattern": "\\bbfm\\b(.*50mm)?"
+    "pattern": "\\bbfm\\b(.*50mm)?",
 }
 ```
 
@@ -417,7 +420,7 @@ When user input conflicts with catalog data:
 {
     "fiber": "Badger",  # YAML wins
     "fiber_strategy": "yaml",
-    "fiber_conflict": "user_input: Synthetic"  # Conflict recorded
+    "fiber_conflict": "user_input: Synthetic",  # Conflict recorded
 }
 ```
 

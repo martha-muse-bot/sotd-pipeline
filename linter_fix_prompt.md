@@ -175,10 +175,7 @@ long_string = (
 result = some_function_with_many_parameters(param1, param2, param3, param4, param5, param6)
 
 # Use:
-result = some_function_with_many_parameters(
-    param1, param2, param3, 
-    param4, param5, param6
-)
+result = some_function_with_many_parameters(param1, param2, param3, param4, param5, param6)
 ```
 
 ### Long Import Statements
@@ -187,10 +184,7 @@ result = some_function_with_many_parameters(
 from very.long.module.path import very_long_function_name, another_long_function_name
 
 # Use:
-from very.long.module.path import (
-    very_long_function_name, 
-    another_long_function_name
-)
+from very.long.module.path import very_long_function_name, another_long_function_name
 ```
 
 ## Step 5: Emergency Fallback Options

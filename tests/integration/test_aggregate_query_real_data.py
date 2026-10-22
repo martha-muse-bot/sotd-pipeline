@@ -37,13 +37,17 @@ pytestmark = [
 
 month_label = _monthly_files[-1].stem if _monthly_files else None
 month_categories = (
-    _categories := sorted(
-        key
-        for key, value in json.loads(_monthly_files[-1].read_text(encoding="utf-8"))["data"].items()
-        if isinstance(value, list) and value and isinstance(value[0], dict)
+    _categories := (
+        sorted(
+            key
+            for key, value in json.loads(_monthly_files[-1].read_text(encoding="utf-8"))[
+                "data"
+            ].items()
+            if isinstance(value, list) and value and isinstance(value[0], dict)
+        )
+        if _monthly_files
+        else []
     )
-    if _monthly_files
-    else []
 )
 
 annual_path = _annual_files[-1] if _annual_files else None
@@ -187,19 +191,17 @@ class TestRealDataRankingOrder:
 
     def test_monthly_categories_covered(self):
         unregistered = [c for c in month_categories if c not in _CATEGORY_RANKING]
-        assert not unregistered, (
-            f"categories missing from aggregate_query _CATEGORY_RANKING: {unregistered}"
-        )
+        assert (
+            not unregistered
+        ), f"categories missing from aggregate_query _CATEGORY_RANKING: {unregistered}"
 
     def test_annual_categories_covered(self):
         unregistered = [c for c in annual_categories if c not in _CATEGORY_RANKING]
-        assert not unregistered, (
-            f"categories missing from aggregate_query _CATEGORY_RANKING: {unregistered}"
-        )
+        assert (
+            not unregistered
+        ), f"categories missing from aggregate_query _CATEGORY_RANKING: {unregistered}"
 
-    @pytest.mark.parametrize(
-        "category", [c for c in month_categories if c in _CATEGORY_RANKING]
-    )
+    @pytest.mark.parametrize("category", [c for c in month_categories if c in _CATEGORY_RANKING])
     def test_monthly_order_matches_registry(self, category):
         rows = self._rows(_monthly_files[-1], "data", category)
         if rows is None:
@@ -209,9 +211,7 @@ class TestRealDataRankingOrder:
             f"{_CATEGORY_RANKING[category]}"
         )
 
-    @pytest.mark.parametrize(
-        "category", [c for c in annual_categories if c in _CATEGORY_RANKING]
-    )
+    @pytest.mark.parametrize("category", [c for c in annual_categories if c in _CATEGORY_RANKING])
     def test_annual_order_matches_registry(self, category):
         rows = self._rows(annual_path, "data", category)
         if rows is None:

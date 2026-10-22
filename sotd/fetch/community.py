@@ -658,9 +658,13 @@ def _process_month(year: int, month: int, args, *, reddit) -> dict:
         "comment_fetch": comment_fetch,
     }
     write_community_file(out_path, meta, posts, comments)
-    fetch_note = "" if comment_fetch["complete"] else (
-        f"; comment fetch INCOMPLETE: {len(fetch_failed_ids)} threads "
-        f"({', '.join(fetch_failed_ids[:5])}{'…' if len(fetch_failed_ids) > 5 else ''})"
+    fetch_note = (
+        ""
+        if comment_fetch["complete"]
+        else (
+            f"; comment fetch INCOMPLETE: {len(fetch_failed_ids)} threads "
+            f"({', '.join(fetch_failed_ids[:5])}{'…' if len(fetch_failed_ids) > 5 else ''})"
+        )
     )
     logger.info(
         f"{month_str}: wrote {len(posts)} posts / {len(comments)} comments "

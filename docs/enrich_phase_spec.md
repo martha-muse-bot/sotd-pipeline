@@ -51,11 +51,11 @@ def enrich_record(record: dict) -> dict:
     """Enrich a single shave record with metadata from applicable enrichers."""
     enrichers = [
         blade_count_enricher,
-        straight_razor_enricher, 
+        straight_razor_enricher,
         game_changer_enricher,
-        christopher_bradley_enricher
+        christopher_bradley_enricher,
     ]
-    
+
     result = record.copy()
     for enricher in enrichers:
         if enricher.applies_to(result):
@@ -65,7 +65,7 @@ def enrich_record(record: dict) -> dict:
             except Exception as e:
                 logger.error(f"Enricher {enricher.__class__.__name__} failed: {e}")
                 # Continue with other enrichers
-    
+
     return result
 ```
 
@@ -76,13 +76,9 @@ def enrich_record(record: dict) -> dict:
 {
     "blade": {
         "original": "Feather (3)",
-        "matched": {
-            "brand": "Feather",
-            "model": "Hi-Stainless", 
-            "format": "DE"
-        },
+        "matched": {"brand": "Feather", "model": "Hi-Stainless", "format": "DE"},
         "match_type": "exact",
-        "pattern": "feather.*hi"
+        "pattern": "feather.*hi",
     },
     "razor": {
         "original": "Koraat Moarteen",
@@ -92,11 +88,11 @@ def enrich_record(record: dict) -> dict:
             "format": "Straight",
             "grind": "Full Hollow",
             "point": "Square",
-            "width": "15/16"
+            "width": "15/16",
         },
         "match_type": "exact",
-        "pattern": "koraat.*moarteen"
-    }
+        "pattern": "koraat.*moarteen",
+    },
 }
 ```
 
@@ -105,18 +101,14 @@ def enrich_record(record: dict) -> dict:
 {
     "blade": {
         "original": "Feather (3)",
-        "matched": {
-            "brand": "Feather",
-            "model": "Hi-Stainless", 
-            "format": "DE"
-        },
+        "matched": {"brand": "Feather", "model": "Hi-Stainless", "format": "DE"},
         "match_type": "exact",
         "pattern": "feather.*hi",
         "enriched": {
             "use_count": 3,
             "_enriched_by": "BladeCountEnricher",
-            "_extraction_source": "parenthetical_pattern"
-        }
+            "_extraction_source": "parenthetical_pattern",
+        },
     }
 }
 ```
@@ -405,9 +397,9 @@ class DEPlateEnricher(BaseEnricher):
         self.sub_enrichers = [
             game_changer_enricher,
             christopher_bradley_enricher,
-            rockwell_enricher  # Future addition
+            rockwell_enricher,  # Future addition
         ]
-    
+
     def applies_to(self, record: dict) -> bool:
         return any(enricher.applies_to(record) for enricher in self.sub_enrichers)
 ```

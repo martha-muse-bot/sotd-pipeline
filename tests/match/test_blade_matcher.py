@@ -280,14 +280,12 @@ Hair Shaper:
     correct_matches_dir = tmp_path / "correct_matches"
     correct_matches_dir.mkdir()
     blade_cm = correct_matches_dir / "blade.yaml"
-    blade_cm.write_text(
-        """
+    blade_cm.write_text("""
 Hair Shaper:
   Personna:
     Hair Shaper:
       - personna hair shaper
-"""
-    )
+""")
 
     matcher = BladeMatcher(catalog_path=catalog_file, correct_matches_path=correct_matches_dir)
     # Generic "Shavette" triggers _find_best_global_match; must return exact from correct_matches

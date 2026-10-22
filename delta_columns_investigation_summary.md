@@ -57,7 +57,12 @@ The issue was indeed a **data structure mismatch** in the data flow between the 
 **Fix Applied**: Updated `TableGenerator.__init__()` to automatically extract the data section from full data structures:
 
 ```python
-def __init__(self, data: Dict[str, Any], comparison_data: Optional[Dict[str, Any]] = None, debug: bool = False):
+def __init__(
+    self,
+    data: Dict[str, Any],
+    comparison_data: Optional[Dict[str, Any]] = None,
+    debug: bool = False,
+):
     # Extract data section if full structure is passed (meta + data)
     if "meta" in data and "data" in data:
         self.data = data["data"]
@@ -67,7 +72,7 @@ def __init__(self, data: Dict[str, Any], comparison_data: Optional[Dict[str, Any
         self.data = data
         if debug:
             print("[DEBUG] TableGenerator: Using data directly (no meta section)")
-    
+
     self.comparison_data = comparison_data or {}
     self.debug = debug
 ```
@@ -107,11 +112,9 @@ table_gen = TableGenerator(data, comparison_data, debug=True)
 #### Working Delta Calculation Example
 ```python
 # When called directly, this works perfectly:
-generator = BrushFibersTableGenerator(data['data'], debug=True)
+generator = BrushFibersTableGenerator(data["data"], debug=True)
 table_content = generator.generate_table(
-    include_delta=True, 
-    comparison_data=comparison_data, 
-    include_header=False
+    include_delta=True, comparison_data=comparison_data, include_header=False
 )
 # Produces: Synthetic: "=", "=", "↑1" (no change, no change, moved up 1)
 ```

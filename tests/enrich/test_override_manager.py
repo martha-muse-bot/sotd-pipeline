@@ -38,15 +38,13 @@ class TestEnrichmentOverrideManager:
     def test_load_overrides_valid_brush_fiber_use_catalog(self, tmp_path):
         """Test loading valid override with use_catalog flag for brush fiber."""
         override_file = tmp_path / "enrichment_overrides.yaml"
-        override_file.write_text(
-            """
+        override_file.write_text("""
 2026-01:
   m99b8f9:
     brush:
       fiber:
         use_catalog: true
-"""
-        )
+""")
         manager = EnrichmentOverrideManager(override_file)
         manager.load_overrides()
         assert manager.has_overrides()
@@ -55,14 +53,12 @@ class TestEnrichmentOverrideManager:
     def test_load_overrides_valid_brush_fiber_explicit_value(self, tmp_path):
         """Test loading valid override with explicit value for brush fiber."""
         override_file = tmp_path / "enrichment_overrides.yaml"
-        override_file.write_text(
-            """
+        override_file.write_text("""
 2026-01:
   m99b8f9:
     brush:
       fiber: "Mixed Badger/Horse"
-"""
-        )
+""")
         manager = EnrichmentOverrideManager(override_file)
         manager.load_overrides()
         assert manager.has_overrides()
@@ -71,14 +67,12 @@ class TestEnrichmentOverrideManager:
     def test_load_overrides_valid_brush_knot_size(self, tmp_path):
         """Test loading valid override for brush knot_size_mm."""
         override_file = tmp_path / "enrichment_overrides.yaml"
-        override_file.write_text(
-            """
+        override_file.write_text("""
 2026-01:
   m99b8f9:
     brush:
       knot_size_mm: 28.0
-"""
-        )
+""")
         manager = EnrichmentOverrideManager(override_file)
         manager.load_overrides()
         assert manager.has_overrides()
@@ -87,14 +81,12 @@ class TestEnrichmentOverrideManager:
     def test_load_overrides_valid_razor_grind(self, tmp_path):
         """Test loading valid override for razor grind."""
         override_file = tmp_path / "enrichment_overrides.yaml"
-        override_file.write_text(
-            """
+        override_file.write_text("""
 2026-01:
   m99b8f9:
     razor:
       grind: "full_hollow"
-"""
-        )
+""")
         manager = EnrichmentOverrideManager(override_file)
         manager.load_overrides()
         assert manager.has_overrides()
@@ -103,14 +95,12 @@ class TestEnrichmentOverrideManager:
     def test_load_overrides_valid_blade_use_count(self, tmp_path):
         """Test loading valid override for blade use_count."""
         override_file = tmp_path / "enrichment_overrides.yaml"
-        override_file.write_text(
-            """
+        override_file.write_text("""
 2026-01:
   m99b8f9:
     blade:
       use_count: 3
-"""
-        )
+""")
         manager = EnrichmentOverrideManager(override_file)
         manager.load_overrides()
         assert manager.has_overrides()
@@ -119,14 +109,12 @@ class TestEnrichmentOverrideManager:
     def test_load_overrides_valid_soap_sample_brand(self, tmp_path):
         """Test loading valid override for soap sample_brand."""
         override_file = tmp_path / "enrichment_overrides.yaml"
-        override_file.write_text(
-            """
+        override_file.write_text("""
 2026-01:
   m99b8f9:
     soap:
       sample_brand: "Declaration Grooming"
-"""
-        )
+""")
         manager = EnrichmentOverrideManager(override_file)
         manager.load_overrides()
         assert manager.has_overrides()
@@ -138,8 +126,7 @@ class TestEnrichmentOverrideManager:
     def test_load_overrides_multiple_fields(self, tmp_path):
         """Test loading overrides for multiple fields."""
         override_file = tmp_path / "enrichment_overrides.yaml"
-        override_file.write_text(
-            """
+        override_file.write_text("""
 2026-01:
   m99b8f9:
     brush:
@@ -148,8 +135,7 @@ class TestEnrichmentOverrideManager:
       knot_size_mm: 21.0
     razor:
       grind: "full_hollow"
-"""
-        )
+""")
         manager = EnrichmentOverrideManager(override_file)
         manager.load_overrides()
         assert manager.has_overrides()
@@ -162,16 +148,14 @@ class TestEnrichmentOverrideManager:
         override_file = tmp_path / "enrichment_overrides.yaml"
         # Note: In YAML, if both are specified, the last one wins
         # But our validation should handle this - explicit value should be preferred
-        override_file.write_text(
-            """
+        override_file.write_text("""
 2026-01:
   m99b8f9:
     brush:
       fiber: "Mixed Badger/Horse"
       fiber:
         use_catalog: true
-"""
-        )
+""")
         manager = EnrichmentOverrideManager(override_file)
         # In YAML, duplicate keys - last one wins, so use_catalog will be the value
         # But we want explicit value to win, so we need to handle this in validation
@@ -202,14 +186,12 @@ class TestEnrichmentOverrideManager:
     def test_load_overrides_invalid_month_format(self, tmp_path):
         """Test loading override file with invalid month format."""
         override_file = tmp_path / "enrichment_overrides.yaml"
-        override_file.write_text(
-            """
+        override_file.write_text("""
 2026/01:
   m99b8f9:
     brush:
       fiber: "test"
-"""
-        )
+""")
         manager = EnrichmentOverrideManager(override_file)
         with pytest.raises(ValueError, match="Invalid month format"):
             manager.load_overrides()
@@ -217,14 +199,12 @@ class TestEnrichmentOverrideManager:
     def test_load_overrides_invalid_month_number(self, tmp_path):
         """Test loading override file with invalid month number."""
         override_file = tmp_path / "enrichment_overrides.yaml"
-        override_file.write_text(
-            """
+        override_file.write_text("""
 2026-13:
   m99b8f9:
     brush:
       fiber: "test"
-"""
-        )
+""")
         manager = EnrichmentOverrideManager(override_file)
         with pytest.raises(ValueError, match="Invalid month format"):
             manager.load_overrides()
@@ -232,14 +212,12 @@ class TestEnrichmentOverrideManager:
     def test_load_overrides_invalid_field(self, tmp_path):
         """Test loading override file with invalid field name."""
         override_file = tmp_path / "enrichment_overrides.yaml"
-        override_file.write_text(
-            """
+        override_file.write_text("""
 2026-01:
   m99b8f9:
     invalid_field:
       fiber: "test"
-"""
-        )
+""")
         manager = EnrichmentOverrideManager(override_file)
         with pytest.raises(ValueError, match="Invalid field"):
             manager.load_overrides()
@@ -247,14 +225,12 @@ class TestEnrichmentOverrideManager:
     def test_load_overrides_invalid_enrichment_key(self, tmp_path):
         """Test loading override file with invalid enrichment key."""
         override_file = tmp_path / "enrichment_overrides.yaml"
-        override_file.write_text(
-            """
+        override_file.write_text("""
 2026-01:
   m99b8f9:
     brush:
       invalid_key: "test"
-"""
-        )
+""")
         manager = EnrichmentOverrideManager(override_file)
         with pytest.raises(ValueError, match="Invalid enrichment key"):
             manager.load_overrides()
@@ -262,15 +238,13 @@ class TestEnrichmentOverrideManager:
     def test_load_overrides_invalid_use_catalog_type(self, tmp_path):
         """Test loading override file with invalid use_catalog type."""
         override_file = tmp_path / "enrichment_overrides.yaml"
-        override_file.write_text(
-            """
+        override_file.write_text("""
 2026-01:
   m99b8f9:
     brush:
       fiber:
         use_catalog: "true"
-"""
-        )
+""")
         manager = EnrichmentOverrideManager(override_file)
         with pytest.raises(ValueError, match="must be a boolean"):
             manager.load_overrides()
@@ -278,14 +252,12 @@ class TestEnrichmentOverrideManager:
     def test_load_overrides_invalid_knot_size_type(self, tmp_path):
         """Test loading override file with invalid knot_size_mm type."""
         override_file = tmp_path / "enrichment_overrides.yaml"
-        override_file.write_text(
-            """
+        override_file.write_text("""
 2026-01:
   m99b8f9:
     brush:
       knot_size_mm: "28.0"
-"""
-        )
+""")
         # String "28.0" should be converted to float
         manager = EnrichmentOverrideManager(override_file)
         manager.load_overrides()
@@ -296,14 +268,12 @@ class TestEnrichmentOverrideManager:
     def test_load_overrides_invalid_use_count_type(self, tmp_path):
         """Test loading override file with invalid use_count type."""
         override_file = tmp_path / "enrichment_overrides.yaml"
-        override_file.write_text(
-            """
+        override_file.write_text("""
 2026-01:
   m99b8f9:
     blade:
       use_count: "3"
-"""
-        )
+""")
         # String "3" should be converted to int
         manager = EnrichmentOverrideManager(override_file)
         manager.load_overrides()
@@ -314,14 +284,12 @@ class TestEnrichmentOverrideManager:
     def test_load_overrides_empty_string_value(self, tmp_path):
         """Test loading override file with empty string value."""
         override_file = tmp_path / "enrichment_overrides.yaml"
-        override_file.write_text(
-            """
+        override_file.write_text("""
 2026-01:
   m99b8f9:
     brush:
       fiber: ""
-"""
-        )
+""")
         manager = EnrichmentOverrideManager(override_file)
         with pytest.raises(ValueError, match="cannot be empty"):
             manager.load_overrides()
@@ -329,14 +297,12 @@ class TestEnrichmentOverrideManager:
     def test_get_override_nonexistent(self, tmp_path):
         """Test getting override that doesn't exist."""
         override_file = tmp_path / "enrichment_overrides.yaml"
-        override_file.write_text(
-            """
+        override_file.write_text("""
 2026-01:
   m99b8f9:
     brush:
       fiber: "test"
-"""
-        )
+""")
         manager = EnrichmentOverrideManager(override_file)
         manager.load_overrides()
         assert manager.get_override("2026-01", "nonexistent", "brush", "fiber") is None
@@ -346,15 +312,13 @@ class TestEnrichmentOverrideManager:
     def test_has_override(self, tmp_path):
         """Test has_override method."""
         override_file = tmp_path / "enrichment_overrides.yaml"
-        override_file.write_text(
-            """
+        override_file.write_text("""
 2026-01:
   m99b8f9:
     brush:
       fiber:
         use_catalog: true
-"""
-        )
+""")
         manager = EnrichmentOverrideManager(override_file)
         manager.load_overrides()
         assert manager.has_override("2026-01", "m99b8f9", "brush", "fiber")
@@ -364,14 +328,12 @@ class TestEnrichmentOverrideManager:
     def test_validate_overrides_missing_comment_id(self, tmp_path):
         """Test validate_overrides with missing comment ID (should warn, not fail)."""
         override_file = tmp_path / "enrichment_overrides.yaml"
-        override_file.write_text(
-            """
+        override_file.write_text("""
 2026-01:
   m99b8f9:
     brush:
       fiber: "test"
-"""
-        )
+""")
         manager = EnrichmentOverrideManager(override_file)
         manager.load_overrides()
         # Should not raise, just warn
@@ -382,8 +344,7 @@ class TestEnrichmentOverrideManager:
     def test_get_override_summary(self, tmp_path):
         """Test get_override_summary method."""
         override_file = tmp_path / "enrichment_overrides.yaml"
-        override_file.write_text(
-            """
+        override_file.write_text("""
 2026-01:
   m99b8f9:
     brush:
@@ -397,8 +358,7 @@ class TestEnrichmentOverrideManager:
   m99b8f1:
     blade:
       use_count: 3
-"""
-        )
+""")
         manager = EnrichmentOverrideManager(override_file)
         manager.load_overrides()
         summary = manager.get_override_summary()
@@ -417,8 +377,7 @@ class TestEnrichmentOverrideManager:
     def test_all_razor_enrichment_keys(self, tmp_path):
         """Test all razor enrichment keys are supported."""
         override_file = tmp_path / "enrichment_overrides.yaml"
-        override_file.write_text(
-            """
+        override_file.write_text("""
 2026-01:
   m99b8f9:
     razor:
@@ -432,8 +391,7 @@ class TestEnrichmentOverrideManager:
       plate_level: "1"
       super_speed_variant: "Red Tip"
       format: "DE"
-"""
-        )
+""")
         manager = EnrichmentOverrideManager(override_file)
         manager.load_overrides()
         assert manager.get_override("2026-01", "m99b8f9", "razor", "grind") == "full_hollow"

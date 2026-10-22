@@ -152,10 +152,10 @@ knot:
         "brand": "AP Shave Co",
         "model": "Black Matte Alumihandle Layered Comfort",
         "handle_maker": None,  # Missing
-        "handle": None,        # Missing
-        "knot": None           # Missing
+        "handle": None,  # Missing
+        "knot": None,  # Missing
     },
-    "match_type": "exact"
+    "match_type": "exact",
 }
 ```
 
@@ -165,22 +165,22 @@ knot:
 {
     "matched": {
         "brand": "Mühle",  # From knot
-        "model": "STF",    # From knot
+        "model": "STF",  # From knot
         "handle_maker": "AP Shave Co",
         "handle": {
             "brand": "AP Shave Co",
             "model": "Black Matte Alumihandle Layered Comfort",
-            "source_text": "AP Shave Co - Black Matte Alumihandle Layered Comfort"
+            "source_text": "AP Shave Co - Black Matte Alumihandle Layered Comfort",
         },
         "knot": {
             "brand": "Mühle",
             "model": "STF",
             "fiber": "Synthetic",
             "knot_size_mm": 25.0,
-            "source_text": "25mm Mühle STF"
-        }
+            "source_text": "25mm Mühle STF",
+        },
     },
-    "match_type": "exact"
+    "match_type": "exact",
 }
 
 # Case 2: Handle maker only (no specific model)
@@ -192,17 +192,17 @@ knot:
         "handle": {
             "brand": "Muninn Woodworks",
             "model": None,  # No specific model
-            "source_text": "Muninn Woodworks BFM"
+            "source_text": "Muninn Woodworks BFM",
         },
         "knot": {
             "brand": "Moti",
             "model": "Motherlode",
             "fiber": "Synthetic",
             "knot_size_mm": 50.0,
-            "source_text": "Muninn Woodworks BFM"
-        }
+            "source_text": "Muninn Woodworks BFM",
+        },
     },
-    "match_type": "exact"
+    "match_type": "exact",
 }
 ```
 

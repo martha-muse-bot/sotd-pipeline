@@ -388,10 +388,20 @@ Declaration Grooming:
         "brand": None,  # Deferred to reporting
         "model": None,  # Deferred to reporting
         "handle_maker": "Chisel & Hound",
-        "handle": {"brand": "Chisel & Hound", "model": "Zebra", "source_text": "DG B15 w/ C&H Zebra"},
-        "knot": {"brand": "Declaration Grooming", "model": "B15", "fiber": "Badger", "knot_size_mm": 26.0, "source_text": "DG B15 w/ C&H Zebra"}
+        "handle": {
+            "brand": "Chisel & Hound",
+            "model": "Zebra",
+            "source_text": "DG B15 w/ C&H Zebra",
+        },
+        "knot": {
+            "brand": "Declaration Grooming",
+            "model": "B15",
+            "fiber": "Badger",
+            "knot_size_mm": 26.0,
+            "source_text": "DG B15 w/ C&H Zebra",
+        },
     },
-    "match_type": "exact"
+    "match_type": "exact",
 }
 ```
 
@@ -429,7 +439,7 @@ Correct matches now enhance rather than degrade data quality by preserving all a
     "matched": {
         "user_intent": "knot_primary",  # Preserved in correct matches
         "handle": {"brand": "Rad Dinosaur", "model": "Creation"},
-        "knot": {"brand": "AP Shave Co", "model": "G5C"}
+        "knot": {"brand": "AP Shave Co", "model": "G5C"},
     }
 }
 ``` 

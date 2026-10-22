@@ -107,12 +107,12 @@ def extract_products(comment: dict) -> dict:
     # Fail fast on invalid input
     if not isinstance(comment, dict):
         raise ValueError(f"Expected dict, got {type(comment)}")
-    
-    required_fields = ['id', 'body', 'created_utc']
+
+    required_fields = ["id", "body", "created_utc"]
     for field in required_fields:
         if field not in comment:
             raise ValueError(f"Missing required field '{field}' in comment")
-    
+
     # Process with fail-fast approach
     return process_extraction(comment)
 ```
@@ -149,7 +149,7 @@ def aggregate_month(year: int, month: int) -> dict:
 ```python
 def validate_sotd_comment(comment: dict) -> bool:
     """Validate SOTD comment structure."""
-    required_fields = ['id', 'body', 'created_utc', 'author']
+    required_fields = ["id", "body", "created_utc", "author"]
     for field in required_fields:
         if field not in comment:
             # Fail fast - this is a data structure violation
@@ -165,18 +165,18 @@ def load_catalog(catalog_path: Path) -> dict:
     if not catalog_path.exists():
         # Fail fast - missing catalog is a configuration error
         raise FileNotFoundError(f"Catalog file not found: {catalog_path}")
-    
+
     try:
-        with catalog_path.open('r', encoding='utf-8') as f:
+        with catalog_path.open("r", encoding="utf-8") as f:
             catalog = yaml.safe_load(f)
     except yaml.YAMLError as e:
         # Fail fast - malformed YAML is a configuration error
         raise ValueError(f"Invalid YAML in catalog {catalog_path}: {e}")
-    
+
     if not isinstance(catalog, dict):
         # Fail fast - invalid structure is a configuration error
         raise ValueError(f"Catalog must be a dict, got {type(catalog)}")
-    
+
     return catalog
 ```
 
@@ -223,6 +223,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"[ERROR] Internal error: {e}")
         if args.debug:
             import traceback
+
             traceback.print_exc()
         return 1
 ```
@@ -236,6 +237,7 @@ def test_fail_fast_on_invalid_input():
     """Test that functions fail fast on invalid input."""
     with pytest.raises(ValueError, match="Expected dict"):
         extract_products("not a dict")
+
 
 def test_fail_fast_on_missing_fields():
     """Test that functions fail fast on missing required fields."""
@@ -304,12 +306,12 @@ except requests.RequestException as e:
 def process_comment(comment: dict) -> dict:
     if not isinstance(comment, dict):
         raise ValueError(f"Expected dict, got {type(comment)}")
-    
-    required_fields = ['id', 'body']
+
+    required_fields = ["id", "body"]
     for field in required_fields:
         if field not in comment:
             raise ValueError(f"Missing required field '{field}'")
-    
+
     return process_validated_comment(comment)
 ```
 

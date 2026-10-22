@@ -16,15 +16,13 @@ class TestEnrichmentOverrideIntegration:
         """Test end-to-end override application for brush fiber."""
         # Create override file
         override_file = tmp_path / "enrichment_overrides.yaml"
-        override_file.write_text(
-            """
+        override_file.write_text("""
 2026-01:
   m99b8f9:
     brush:
       fiber:
         use_catalog: true
-"""
-        )
+""")
 
         # Initialize override manager
         override_manager = EnrichmentOverrideManager(override_file)
@@ -68,15 +66,13 @@ class TestEnrichmentOverrideIntegration:
         """Test end-to-end override application with explicit value."""
         # Create override file
         override_file = tmp_path / "enrichment_overrides.yaml"
-        override_file.write_text(
-            """
+        override_file.write_text("""
 2026-01:
   m99b8f9:
     brush:
       fiber: "Mixed Badger/Horse"
       knot_size_mm: 28.0
-"""
-        )
+""")
 
         # Initialize override manager
         override_manager = EnrichmentOverrideManager(override_file)
@@ -120,15 +116,13 @@ class TestEnrichmentOverrideIntegration:
         """Test that overrides persist correctly in enriched output structure."""
         # Create override file
         override_file = tmp_path / "enrichment_overrides.yaml"
-        override_file.write_text(
-            """
+        override_file.write_text("""
 2026-01:
   m99b8f9:
     brush:
       fiber:
         use_catalog: true
-"""
-        )
+""")
 
         # Initialize override manager
         override_manager = EnrichmentOverrideManager(override_file)
@@ -173,8 +167,7 @@ class TestEnrichmentOverrideIntegration:
         """Test override application across multiple months."""
         # Create override file with multiple months
         override_file = tmp_path / "enrichment_overrides.yaml"
-        override_file.write_text(
-            """
+        override_file.write_text("""
 2026-01:
   m99b8f9:
     brush:
@@ -184,8 +177,7 @@ class TestEnrichmentOverrideIntegration:
   m99b8f0:
     brush:
       fiber: "Badger"
-"""
-        )
+""")
 
         # Initialize override manager
         override_manager = EnrichmentOverrideManager(override_file)

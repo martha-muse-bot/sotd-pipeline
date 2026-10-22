@@ -338,34 +338,18 @@ def tmp_data_dir(tmp_path):
     soaps = {
         "House of Mammoth": {
             "patterns": ["(?:house of )?mammoth"],
-            "scents": {
-                "Tobacconist": {
-                    "patterns": ["mammoth.*tobacconist"]
-                }
-            }
+            "scents": {"Tobacconist": {"patterns": ["mammoth.*tobacconist"]}},
         }
     }
     (tmp_path / "soaps.yaml").write_text(yaml.dump(soaps, default_flow_style=False))
 
     # razors.yaml
-    razors = {
-        "Karve": {
-            "Christopher Bradley": {
-                "patterns": ["karve.*(?:christopher|cb)"]
-            }
-        }
-    }
+    razors = {"Karve": {"Christopher Bradley": {"patterns": ["karve.*(?:christopher|cb)"]}}}
     (tmp_path / "razors.yaml").write_text(yaml.dump(razors, default_flow_style=False))
 
     # blades.yaml
     blades = {
-        "DE": {
-            "Astra": {
-                "Superior Platinum": {
-                    "patterns": ["astra.*(?:superior|sp|green)"]
-                }
-            }
-        }
+        "DE": {"Astra": {"Superior Platinum": {"patterns": ["astra.*(?:superior|sp|green)"]}}}
     }
     (tmp_path / "blades.yaml").write_text(yaml.dump(blades, default_flow_style=False))
 
@@ -376,7 +360,7 @@ def tmp_data_dir(tmp_path):
                 "V21 Fanchurian": {
                     "fiber": "Badger",
                     "knot_size_mm": 28,
-                    "patterns": ["chisel.*hound.*v21.*fanchurian"]
+                    "patterns": ["chisel.*hound.*v21.*fanchurian"],
                 }
             }
         }
@@ -396,7 +380,9 @@ class TestAddSoapScent:
         updater.add_soap_scent("House of Mammoth", "Cerulean", ["mammoth.*cerulean"])
         catalog = yaml.safe_load((tmp_data_dir / "soaps.yaml").read_text())
         assert "Cerulean" in catalog["House of Mammoth"]["scents"]
-        assert catalog["House of Mammoth"]["scents"]["Cerulean"]["patterns"] == ["mammoth.*cerulean"]
+        assert catalog["House of Mammoth"]["scents"]["Cerulean"]["patterns"] == [
+            "mammoth.*cerulean"
+        ]
 
     def test_preserves_existing_scents(self, updater, tmp_data_dir):
         updater.add_soap_scent("House of Mammoth", "Cerulean", ["mammoth.*cerulean"])
@@ -476,8 +462,11 @@ class TestAddBladeModel:
 class TestAddBrushModel:
     def test_adds_brush_to_existing_brand(self, updater, tmp_data_dir):
         updater.add_brush_model(
-            "Chisel & Hound", "V23 Synth", ["chisel.*hound.*v23"],
-            fiber="Synthetic", knot_size_mm=26
+            "Chisel & Hound",
+            "V23 Synth",
+            ["chisel.*hound.*v23"],
+            fiber="Synthetic",
+            knot_size_mm=26,
         )
         catalog = yaml.safe_load((tmp_data_dir / "brushes.yaml").read_text())
         entry = catalog["known_brushes"]["Chisel & Hound"]["V23 Synth"]
@@ -486,10 +475,7 @@ class TestAddBrushModel:
         assert entry["patterns"] == ["chisel.*hound.*v23"]
 
     def test_adds_new_brand(self, updater, tmp_data_dir):
-        updater.add_brush_model(
-            "New Artisan", "Model 1", ["new.*artisan.*model.*1"],
-            fiber="Boar"
-        )
+        updater.add_brush_model("New Artisan", "Model 1", ["new.*artisan.*model.*1"], fiber="Boar")
         catalog = yaml.safe_load((tmp_data_dir / "brushes.yaml").read_text())
         assert "New Artisan" in catalog["known_brushes"]
 
@@ -502,7 +488,7 @@ class TestApplyProposal:
             "brand": "House of Mammoth",
             "model": "Cerulean",
             "suggested_pattern": "mammoth.*cerulean",
-            "confidence": 0.9
+            "confidence": 0.9,
         }
         updater.apply_proposal(proposal)
         catalog = yaml.safe_load((tmp_data_dir / "soaps.yaml").read_text())
@@ -515,7 +501,7 @@ class TestApplyProposal:
             "brand": "Karve",
             "model": "Christopher Bradley",
             "suggested_pattern": "karve.*cb.*sb",
-            "confidence": 0.85
+            "confidence": 0.85,
         }
         updater.apply_proposal(proposal)
         catalog = yaml.safe_load((tmp_data_dir / "razors.yaml").read_text())
@@ -529,7 +515,7 @@ class TestApplyProposal:
             "model": "921-H",
             "suggested_pattern": "yates.*921",
             "suggested_entry": {"format": "DE", "patterns": ["yates.*921"]},
-            "confidence": 0.75
+            "confidence": 0.75,
         }
         updater.apply_proposal(proposal)
         catalog = yaml.safe_load((tmp_data_dir / "razors.yaml").read_text())
@@ -544,7 +530,7 @@ class TestApplyProposal:
             "model": "Super Iridium",
             "suggested_pattern": "wizamet",
             "suggested_entry": {"format": "DE", "patterns": ["wizamet"]},
-            "confidence": 0.8
+            "confidence": 0.8,
         }
         updater.apply_proposal(proposal)
         catalog = yaml.safe_load((tmp_data_dir / "blades.yaml").read_text())
@@ -560,9 +546,9 @@ class TestApplyProposal:
             "suggested_entry": {
                 "fiber": "Badger",
                 "knot_size_mm": 28,
-                "patterns": ["new.*artisan.*brush"]
+                "patterns": ["new.*artisan.*brush"],
             },
-            "confidence": 0.7
+            "confidence": 0.7,
         }
         updater.apply_proposal(proposal)
         catalog = yaml.safe_load((tmp_data_dir / "brushes.yaml").read_text())
@@ -657,9 +643,7 @@ class CatalogUpdater:
         catalog[brand][model]["patterns"].append(pattern)
         self._save_catalog("razor", catalog)
 
-    def add_blade_model(
-        self, format: str, brand: str, model: str, patterns: list[str]
-    ) -> None:
+    def add_blade_model(self, format: str, brand: str, model: str, patterns: list[str]) -> None:
         catalog = self._load_catalog("blade")
         if format not in catalog:
             catalog[format] = {}
@@ -670,7 +654,11 @@ class CatalogUpdater:
 
     def add_blade_pattern(self, format: str, brand: str, model: str, pattern: str) -> None:
         catalog = self._load_catalog("blade")
-        if format not in catalog or brand not in catalog[format] or model not in catalog[format][brand]:
+        if (
+            format not in catalog
+            or brand not in catalog[format]
+            or model not in catalog[format][brand]
+        ):
             raise KeyError(f"Blade '{format} / {brand} / {model}' not found in catalog")
         catalog[format][brand][model]["patterns"].append(pattern)
         self._save_catalog("blade", catalog)
@@ -709,20 +697,31 @@ class CatalogUpdater:
             )
         elif ptype == "new_pattern":
             if field == "soap":
-                self.add_soap_pattern(proposal["brand"], proposal["model"], proposal["suggested_pattern"])
+                self.add_soap_pattern(
+                    proposal["brand"], proposal["model"], proposal["suggested_pattern"]
+                )
             elif field == "razor":
-                self.add_razor_pattern(proposal["brand"], proposal["model"], proposal["suggested_pattern"])
+                self.add_razor_pattern(
+                    proposal["brand"], proposal["model"], proposal["suggested_pattern"]
+                )
             elif field == "blade":
                 entry = proposal.get("suggested_entry", {})
                 fmt = entry.get("format", "DE")
-                self.add_blade_pattern(fmt, proposal["brand"], proposal["model"], proposal["suggested_pattern"])
+                self.add_blade_pattern(
+                    fmt, proposal["brand"], proposal["model"], proposal["suggested_pattern"]
+                )
             elif field == "brush":
                 # For brush patterns, we'd need to append to known_brushes
                 catalog = self._load_catalog("brush")
                 brand = proposal["brand"]
                 model = proposal["model"]
-                if brand in catalog.get("known_brushes", {}) and model in catalog["known_brushes"][brand]:
-                    catalog["known_brushes"][brand][model]["patterns"].append(proposal["suggested_pattern"])
+                if (
+                    brand in catalog.get("known_brushes", {})
+                    and model in catalog["known_brushes"][brand]
+                ):
+                    catalog["known_brushes"][brand][model]["patterns"].append(
+                        proposal["suggested_pattern"]
+                    )
                     self._save_catalog("brush", catalog)
                 else:
                     raise KeyError(f"Brush '{brand} / {model}' not found in catalog")
@@ -836,7 +835,11 @@ def sample_verified(tmp_path):
 def sample_proposed(tmp_path):
     """Create a sample proposed file."""
     proposed = {
-        "metadata": {"month": "2026-02", "processed_at": "2026-03-09T12:00:00Z", "proposal_count": 1},
+        "metadata": {
+            "month": "2026-02",
+            "processed_at": "2026-03-09T12:00:00Z",
+            "proposal_count": 1,
+        },
         "proposals": [
             {
                 "type": "new_scent",
@@ -1038,12 +1041,14 @@ async def reject_proposal(request: RejectProposalRequest):
         with open(rejections_path, "r", encoding="utf-8") as f:
             rejections = json.load(f)
 
-    rejections.append({
-        "rejected_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        "month": request.month,
-        "proposal": proposal,
-        "reason": request.reason,
-    })
+    rejections.append(
+        {
+            "rejected_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "month": request.month,
+            "proposal": proposal,
+            "reason": request.reason,
+        }
+    )
 
     with open(rejections_path, "w", encoding="utf-8") as f:
         json.dump(rejections, f, indent=2)
@@ -1086,7 +1091,10 @@ async def bulk_approve(request: BulkApproveRequest):
 Add to `webui/api/main.py`:
 
 ```python
-from webui.api.routers.validation import router as validation_router, configure as configure_validation
+from webui.api.routers.validation import (
+    router as validation_router,
+    configure as configure_validation,
+)
 
 # In the lifespan/startup section, after data_dir is resolved:
 configure_validation(data_dir)

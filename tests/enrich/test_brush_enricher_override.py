@@ -27,15 +27,13 @@ class TestBrushEnricherOverride:
         """Test fiber override with use_catalog flag forces catalog value."""
         # Setup override file
         override_file = tmp_path / "enrichment_overrides.yaml"
-        override_file.write_text(
-            """
+        override_file.write_text("""
 2026-01:
   m99b8f9:
     brush:
       fiber:
         use_catalog: true
-"""
-        )
+""")
         override_manager.load_overrides()
 
         # Create enricher with override manager
@@ -71,14 +69,12 @@ class TestBrushEnricherOverride:
         """Test fiber override with explicit value."""
         # Setup override file
         override_file = tmp_path / "enrichment_overrides.yaml"
-        override_file.write_text(
-            """
+        override_file.write_text("""
 2026-01:
   m99b8f9:
     brush:
       fiber: "Mixed Badger/Horse"
-"""
-        )
+""")
         override_manager.load_overrides()
 
         # Create enricher with override manager
@@ -110,14 +106,12 @@ class TestBrushEnricherOverride:
         """Test knot_size_mm override with explicit value."""
         # Setup override file
         override_file = tmp_path / "enrichment_overrides.yaml"
-        override_file.write_text(
-            """
+        override_file.write_text("""
 2026-01:
   m99b8f9:
     brush:
       knot_size_mm: 21.0
-"""
-        )
+""")
         override_manager.load_overrides()
 
         # Create enricher with override manager
@@ -149,15 +143,13 @@ class TestBrushEnricherOverride:
         """Test knot_size_mm override with use_catalog flag."""
         # Setup override file
         override_file = tmp_path / "enrichment_overrides.yaml"
-        override_file.write_text(
-            """
+        override_file.write_text("""
 2026-01:
   m99b8f9:
     brush:
       knot_size_mm:
         use_catalog: true
-"""
-        )
+""")
         override_manager.load_overrides()
 
         # Create enricher with override manager
@@ -194,16 +186,14 @@ class TestBrushEnricherOverride:
         """Test multiple field overrides in same record."""
         # Setup override file
         override_file = tmp_path / "enrichment_overrides.yaml"
-        override_file.write_text(
-            """
+        override_file.write_text("""
 2026-01:
   m99b8f9:
     brush:
       fiber:
         use_catalog: true
       knot_size_mm: 21.0
-"""
-        )
+""")
         override_manager.load_overrides()
 
         # Create enricher with override manager
@@ -238,14 +228,12 @@ class TestBrushEnricherOverride:
         # Setup override file with both explicit and flag (YAML will use last one)
         # But our implementation should handle explicit value if both exist
         override_file = tmp_path / "enrichment_overrides.yaml"
-        override_file.write_text(
-            """
+        override_file.write_text("""
 2026-01:
   m99b8f9:
     brush:
       fiber: "Mixed Badger/Horse"
-"""
-        )
+""")
         override_manager.load_overrides()
 
         # Create enricher with override manager
@@ -276,15 +264,13 @@ class TestBrushEnricherOverride:
         """Test that default behavior (user overrides catalog) works when no override."""
         # Setup override file with different comment_id
         override_file = tmp_path / "enrichment_overrides.yaml"
-        override_file.write_text(
-            """
+        override_file.write_text("""
 2026-01:
   other_id:
     brush:
       fiber:
         use_catalog: true
-"""
-        )
+""")
         override_manager.load_overrides()
 
         # Create enricher with override manager
@@ -318,15 +304,13 @@ class TestBrushEnricherOverride:
         """Test that override is not applied when record is not provided."""
         # Setup override file
         override_file = tmp_path / "enrichment_overrides.yaml"
-        override_file.write_text(
-            """
+        override_file.write_text("""
 2026-01:
   m99b8f9:
     brush:
       fiber:
         use_catalog: true
-"""
-        )
+""")
         override_manager.load_overrides()
 
         # Create enricher with override manager

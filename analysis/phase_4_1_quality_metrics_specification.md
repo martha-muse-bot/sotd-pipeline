@@ -220,17 +220,19 @@ Total Confidence = Strategy Confidence + Pattern Confidence + Catalog Confidence
 def calculate_base_quality_score(match_data):
     # Determine tier base score
     tier_score = determine_quality_tier(match_data)
-    
+
     # Apply modifiers
     strategy_mod = get_strategy_modifier(match_data.strategy)
     pattern_mod = get_pattern_modifier(match_data.pattern)
     catalog_mod = get_catalog_modifier(match_data.catalog_entry)
     brand_mod = get_brand_modifier(match_data.brand)
     user_mod = get_user_feedback_modifier(match_data.brand, match_data.pattern)
-    
+
     # Calculate total (capped at 100)
-    total_score = min(100, tier_score + strategy_mod + pattern_mod + catalog_mod + brand_mod + user_mod)
-    
+    total_score = min(
+        100, tier_score + strategy_mod + pattern_mod + catalog_mod + brand_mod + user_mod
+    )
+
     return total_score
 ```
 

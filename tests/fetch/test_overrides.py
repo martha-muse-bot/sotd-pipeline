@@ -31,8 +31,7 @@ def test_extract_thread_id_from_url() -> None:
 
 def test_load_thread_exclude_ids(tmp_path: Path) -> None:
     path = tmp_path / "thread_overrides.yaml"
-    path.write_text(
-        """
+    path.write_text("""
 include: {}
 exclude:
   2026-06-01:
@@ -41,8 +40,7 @@ exclude:
     - https://www.reddit.com/r/Wetshaving/comments/otherid/other/
   2026-07-01:
     - https://www.reddit.com/r/Wetshaving/comments/julyid/july/
-"""
-    )
+""")
     assert load_thread_exclude_ids("2026-06", path) == {"1ttrafo", "otherid"}
     assert load_thread_exclude_ids("2026-07", path) == {"julyid"}
     assert load_thread_exclude_ids("2025-01", path) == set()
@@ -50,14 +48,12 @@ exclude:
 
 def test_load_thread_exclude_ids_skips_bad_urls(tmp_path: Path, caplog) -> None:
     path = tmp_path / "thread_overrides.yaml"
-    path.write_text(
-        """
+    path.write_text("""
 exclude:
   2026-06-01:
     - not-a-reddit-url
     - https://www.reddit.com/r/Wetshaving/comments/goodid/title/
-"""
-    )
+""")
     with caplog.at_level("WARNING"):
         ids = load_thread_exclude_ids("2026-06", path)
     assert ids == {"goodid"}
@@ -70,13 +66,11 @@ def test_load_thread_exclude_ids_missing_file(tmp_path: Path) -> None:
 
 def test_load_thread_exclude_ids_missing_exclude_key(tmp_path: Path) -> None:
     path = tmp_path / "thread_overrides.yaml"
-    path.write_text(
-        """
+    path.write_text("""
 include:
   2025-06-25:
     - https://www.reddit.com/r/Wetshaving/comments/1lk3ooa/wednesday/
-"""
-    )
+""")
     assert load_thread_exclude_ids("2025-06", path) == set()
 
 
@@ -97,12 +91,10 @@ def test_apply_thread_excludes_empty_set_noop() -> None:
 
 def test_warn_on_legacy_root_date_keys(tmp_path: Path, caplog) -> None:
     path = tmp_path / "thread_overrides.yaml"
-    path.write_text(
-        """
+    path.write_text("""
 2025-06-25:
   - https://www.reddit.com/r/Wetshaving/comments/1lk3ooa/wednesday/
-"""
-    )
+""")
     with caplog.at_level("WARNING"):
         data = load_thread_overrides_data(path)
     keys = {k.isoformat() if hasattr(k, "isoformat") else str(k) for k in data}
@@ -115,8 +107,7 @@ def test_include_loader_reads_include_section_only(tmp_path: Path, monkeypatch) 
     from sotd.fetch.reddit import load_thread_overrides
 
     path = tmp_path / "thread_overrides.yaml"
-    path.write_text(
-        """
+    path.write_text("""
 include:
   2025-06-25:
     - https://www.reddit.com/r/Wetshaving/comments/includeid/inc/
@@ -125,8 +116,7 @@ exclude:
     - https://www.reddit.com/r/Wetshaving/comments/excludeid/exc/
 2025-06-26:
   - https://www.reddit.com/r/Wetshaving/comments/legacyid/leg/
-"""
-    )
+""")
     monkeypatch.setattr(overrides_mod, "OVERRIDE_PATH", path)
 
     urls = load_thread_overrides("2025-06")

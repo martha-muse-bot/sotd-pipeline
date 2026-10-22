@@ -71,9 +71,21 @@ def ts(*parts: int) -> int:
 class FakeSub:
     """Duck-typed praw Submission with every field build_post_record reads."""
 
-    def __init__(self, _id, title, created_utc, *, selftext="", author="tester",
-                 score=5, num_comments=0, flair=None, permalink="/p",
-                 locked=False, stickied=False):
+    def __init__(
+        self,
+        _id,
+        title,
+        created_utc,
+        *,
+        selftext="",
+        author="tester",
+        score=5,
+        num_comments=0,
+        flair=None,
+        permalink="/p",
+        locked=False,
+        stickied=False,
+    ):
         self.id = _id
         self.title = title
         self.created_utc = created_utc
@@ -88,8 +100,9 @@ class FakeSub:
 
 
 class FakeComment:
-    def __init__(self, _id, body, created_utc, *, parent_id="t3_t1", author="u1",
-                 score=1, is_submitter=False):
+    def __init__(
+        self, _id, body, created_utc, *, parent_id="t3_t1", author="u1", score=1, is_submitter=False
+    ):
         self.id = _id
         self.body = body
         self.created_utc = created_utc
@@ -101,9 +114,17 @@ class FakeComment:
 
 class TestBuildPostRecord:
     def test_full_record(self):
-        sub = FakeSub("abc123", "Hello", ts(2026, 9, 1, 6, 0, 9), selftext="body text",
-                      author="someone", score=12, num_comments=3, flair="Discussion",
-                      permalink="/r/wetshaving/comments/abc123/x/")
+        sub = FakeSub(
+            "abc123",
+            "Hello",
+            ts(2026, 9, 1, 6, 0, 9),
+            selftext="body text",
+            author="someone",
+            score=12,
+            num_comments=3,
+            flair="Discussion",
+            permalink="/r/wetshaving/comments/abc123/x/",
+        )
         rec = community.build_post_record(sub, in_pipeline=False)
         assert rec == {
             "id": "abc123",
@@ -129,8 +150,15 @@ class TestBuildPostRecord:
 
 class TestBuildCommentRecord:
     def test_full_record(self):
-        c = FakeComment("c1", "nice shave", ts(2026, 9, 2), parent_id="t3_abc",
-                        author="bob", score=2, is_submitter=True)
+        c = FakeComment(
+            "c1",
+            "nice shave",
+            ts(2026, 9, 2),
+            parent_id="t3_abc",
+            author="bob",
+            score=2,
+            is_submitter=True,
+        )
         rec = community.build_comment_record(c, "abc", "Thread Title")
         assert rec == {
             "id": "c1",
@@ -601,8 +629,7 @@ class TestProcessMonth:
         monkeypatch.setattr(community, "discover_month_posts", fake_discover)
         monkeypatch.setattr(community, "fetch_all_comments", fake_comments)
         result = community._process_month(2026, 8, FakeArgs(tmp_path), reddit=FakeReddit())
-        assert result == {"year": 2026, "month": 8, "posts": 2, "comments": 4,
-                          "complete": True}
+        assert result == {"year": 2026, "month": 8, "posts": 2, "comments": 4, "complete": True}
         meta, data = community.load_community_file(tmp_path / "community" / "2026-08.json")
         assert meta["month"] == "2026-08"
         assert meta["post_count"] == 2
@@ -629,7 +656,8 @@ class TestProcessMonth:
     def test_incomplete_boundary_recorded(self, tmp_path, monkeypatch):
         write_threads_fixture(tmp_path, [])
         monkeypatch.setattr(
-            community, "discover_month_posts",
+            community,
+            "discover_month_posts",
             lambda s, y, m: ([FakeSub("x", "X", ts(2026, 8, 5))], False),
         )
         monkeypatch.setattr(community, "fetch_all_comments", lambda s: [])
@@ -649,7 +677,8 @@ class TestProcessMonth:
         write_threads_fixture(tmp_path, [])
         monkeypatch.setattr(community, "fetch_all_comments", lambda s: [])
         monkeypatch.setattr(
-            community, "discover_month_posts",
+            community,
+            "discover_month_posts",
             lambda s, y, m: ([FakeSub("a", "A", ts(2026, 8, 1))], True),
         )
         community._process_month(2026, 8, FakeArgs(tmp_path), reddit=FakeReddit())
@@ -701,9 +730,7 @@ def _process_month(year: int, month: int, args, *, reddit) -> dict:
 
     sotd_ids = load_sotd_ids(args.data_dir, year, month)
     if sotd_ids is None:
-        logger.warning(
-            f"No threads file for {month_str}; posts will lack the in_pipeline flag"
-        )
+        logger.warning(f"No threads file for {month_str}; posts will lack the in_pipeline flag")
 
     if args.force and out_path.exists():
         out_path.unlink()
@@ -712,8 +739,7 @@ def _process_month(year: int, month: int, args, *, reddit) -> dict:
     posts_new, boundary_reached = discover_month_posts(subreddit, year, month)
     if not boundary_reached:
         logger.warning(
-            f"{month_str}: pagination cap reached before month boundary; "
-            "discovery incomplete"
+            f"{month_str}: pagination cap reached before month boundary; discovery incomplete"
         )
 
     new_posts = [
@@ -737,8 +763,13 @@ def _process_month(year: int, month: int, args, *, reddit) -> dict:
 
     if not posts and not comments and existing is None:
         logger.warning(f"No community data found for {month_str}; skipping file write.")
-        return {"year": year, "month": month, "posts": 0, "comments": 0,
-                "complete": boundary_reached}
+        return {
+            "year": year,
+            "month": month,
+            "posts": 0,
+            "comments": 0,
+            "complete": boundary_reached,
+        }
 
     meta = {
         "month": month_str,
@@ -758,8 +789,13 @@ def _process_month(year: int, month: int, args, *, reddit) -> dict:
             f"Community fetch complete for {month_str}: "
             f"{len(posts)} posts, {len(comments)} comments"
         )
-    return {"year": year, "month": month, "posts": len(posts), "comments": len(comments),
-            "complete": boundary_reached}
+    return {
+        "year": year,
+        "month": month,
+        "posts": len(posts),
+        "comments": len(comments),
+        "complete": boundary_reached,
+    }
 
 
 # --------------------------------------------------------------------------- #
@@ -783,16 +819,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         reddit = get_reddit()
 
         results = []
-        for year, month in tqdm(months, desc="Months", unit="month",
-                                disable=should_disable_tqdm()):
+        for year, month in tqdm(months, desc="Months", unit="month", disable=should_disable_tqdm()):
             results.append(_process_month(year, month, args, reddit=reddit))
 
         if results and getattr(args, "verbose", False):
             total_posts = sum(r["posts"] for r in results)
             total_comments = sum(r["comments"] for r in results)
-            incomplete = [
-                f"{r['year']:04d}-{r['month']:02d}" for r in results if not r["complete"]
-            ]
+            incomplete = [f"{r['year']:04d}-{r['month']:02d}" for r in results if not r["complete"]]
             logger.info(
                 f"Community fetch complete: {total_posts} posts, {total_comments} comments"
                 + (f"; incomplete discovery: {', '.join(incomplete)}" if incomplete else "")
@@ -1081,9 +1114,7 @@ class TestProcessMonthBackfill:
         write_threads_fixture(tmp_path, ["sotd1"])
         sotd_sub = FakeSub("sotd1", "SOTD Thread", ts(2025, 7, 4))
 
-        monkeypatch.setattr(
-            community, "discover_month_posts", lambda s, y, m: ([], False)
-        )
+        monkeypatch.setattr(community, "discover_month_posts", lambda s, y, m: ([], False))
 
         class FakeReddit:
             def submission(self, **kwargs):
@@ -1214,12 +1245,11 @@ Then extend `_process_month` — replace the discovery + meta sections:
 Replace:
 
 ```python
-    posts_new, boundary_reached = discover_month_posts(subreddit, year, month)
-    if not boundary_reached:
-        logger.warning(
-            f"{month_str}: pagination cap reached before month boundary; "
-            "discovery incomplete"
-        )
+posts_new, boundary_reached = discover_month_posts(subreddit, year, month)
+if not boundary_reached:
+    logger.warning(
+        f"{month_str}: pagination cap reached before month boundary; discovery incomplete"
+    )
 ```
 
 with:
@@ -1332,38 +1362,116 @@ def data_dir(tmp_path):
         comm / "2026-08.json",
         "2026-08",
         posts=[
-            {"id": "sotd", "title": "Saturday SOTD Thread - Aug 01, 2026", "selftext": "",
-             "author": "AutoModerator", "created_utc": "2026-08-01T06:00:00Z", "score": 10,
-             "num_comments": 2, "flair": "SOTD", "url": "u1", "locked": False,
-             "stickied": True, "in_pipeline": True},
-            {"id": "disc", "title": "Lather Games wrap-up", "selftext": "the final standings",
-             "author": "bigcheese", "created_utc": "2026-08-05T10:00:00Z", "score": 88,
-             "num_comments": 40, "flair": "Discussion", "url": "u2",
-             "locked": False, "stickied": False, "in_pipeline": False},
-            {"id": "quiet", "title": "Quiet question", "selftext": "",
-             "author": "newbie", "created_utc": "2026-08-10T10:00:00Z", "score": 2,
-             "num_comments": 1, "flair": None, "url": "u3",
-             "locked": False, "stickied": False, "in_pipeline": False},
+            {
+                "id": "sotd",
+                "title": "Saturday SOTD Thread - Aug 01, 2026",
+                "selftext": "",
+                "author": "AutoModerator",
+                "created_utc": "2026-08-01T06:00:00Z",
+                "score": 10,
+                "num_comments": 2,
+                "flair": "SOTD",
+                "url": "u1",
+                "locked": False,
+                "stickied": True,
+                "in_pipeline": True,
+            },
+            {
+                "id": "disc",
+                "title": "Lather Games wrap-up",
+                "selftext": "the final standings",
+                "author": "bigcheese",
+                "created_utc": "2026-08-05T10:00:00Z",
+                "score": 88,
+                "num_comments": 40,
+                "flair": "Discussion",
+                "url": "u2",
+                "locked": False,
+                "stickied": False,
+                "in_pipeline": False,
+            },
+            {
+                "id": "quiet",
+                "title": "Quiet question",
+                "selftext": "",
+                "author": "newbie",
+                "created_utc": "2026-08-10T10:00:00Z",
+                "score": 2,
+                "num_comments": 1,
+                "flair": None,
+                "url": "u3",
+                "locked": False,
+                "stickied": False,
+                "in_pipeline": False,
+            },
         ],
         comments=[
-            {"id": "c1", "thread_id": "sotd", "thread_title": "Saturday SOTD Thread - Aug 01, 2026",
-             "parent_id": "t3_sotd", "author": "shaver1", "created_utc": "2026-08-01T07:00:00Z",
-             "body": "great lather", "score": 3, "is_submitter": False},
-            {"id": "c4", "thread_id": "disc", "thread_title": "Lather Games wrap-up",
-             "parent_id": "t3_disc", "author": "judge1", "created_utc": "2026-08-05T11:00:00Z",
-             "body": "final verdict posted", "score": 5, "is_submitter": False},
-            {"id": "c5", "thread_id": "disc", "thread_title": "Lather Games wrap-up",
-             "parent_id": "t1_c4", "author": "bigcheese", "created_utc": "2026-08-05T12:00:00Z",
-             "body": "thanks judges", "score": 2, "is_submitter": True},
-            {"id": "c6", "thread_id": "disc", "thread_title": "Lather Games wrap-up",
-             "parent_id": "t1_c4", "author": "rival", "created_utc": "2026-08-05T13:00:00Z",
-             "body": "rematch next year?", "score": 1, "is_submitter": False},
-            {"id": "c2", "thread_id": "quiet", "thread_title": "Quiet question",
-             "parent_id": "t3_quiet", "author": "bigcheese", "created_utc": "2026-08-10T11:00:00Z",
-             "body": "good question", "score": 1, "is_submitter": False},
-            {"id": "c3", "thread_id": "quiet", "thread_title": "Quiet question",
-             "parent_id": "t1_c2", "author": "newbie", "created_utc": "2026-08-10T12:00:00Z",
-             "body": "thanks", "score": 0, "is_submitter": True},
+            {
+                "id": "c1",
+                "thread_id": "sotd",
+                "thread_title": "Saturday SOTD Thread - Aug 01, 2026",
+                "parent_id": "t3_sotd",
+                "author": "shaver1",
+                "created_utc": "2026-08-01T07:00:00Z",
+                "body": "great lather",
+                "score": 3,
+                "is_submitter": False,
+            },
+            {
+                "id": "c4",
+                "thread_id": "disc",
+                "thread_title": "Lather Games wrap-up",
+                "parent_id": "t3_disc",
+                "author": "judge1",
+                "created_utc": "2026-08-05T11:00:00Z",
+                "body": "final verdict posted",
+                "score": 5,
+                "is_submitter": False,
+            },
+            {
+                "id": "c5",
+                "thread_id": "disc",
+                "thread_title": "Lather Games wrap-up",
+                "parent_id": "t1_c4",
+                "author": "bigcheese",
+                "created_utc": "2026-08-05T12:00:00Z",
+                "body": "thanks judges",
+                "score": 2,
+                "is_submitter": True,
+            },
+            {
+                "id": "c6",
+                "thread_id": "disc",
+                "thread_title": "Lather Games wrap-up",
+                "parent_id": "t1_c4",
+                "author": "rival",
+                "created_utc": "2026-08-05T13:00:00Z",
+                "body": "rematch next year?",
+                "score": 1,
+                "is_submitter": False,
+            },
+            {
+                "id": "c2",
+                "thread_id": "quiet",
+                "thread_title": "Quiet question",
+                "parent_id": "t3_quiet",
+                "author": "bigcheese",
+                "created_utc": "2026-08-10T11:00:00Z",
+                "body": "good question",
+                "score": 1,
+                "is_submitter": False,
+            },
+            {
+                "id": "c3",
+                "thread_id": "quiet",
+                "thread_title": "Quiet question",
+                "parent_id": "t1_c2",
+                "author": "newbie",
+                "created_utc": "2026-08-10T12:00:00Z",
+                "body": "thanks",
+                "score": 0,
+                "is_submitter": True,
+            },
         ],
     )
     return tmp_path
@@ -1403,8 +1511,8 @@ class TestThreads:
 
     def test_filter_non_sotd(self, data_dir, capsys):
         code, out, _ = run(
-            capsys, ["--data-dir", str(data_dir), "threads", "--month", "2026-08",
-                     "--filter", "non-sotd"]
+            capsys,
+            ["--data-dir", str(data_dir), "threads", "--month", "2026-08", "--filter", "non-sotd"],
         )
         assert code == 0
         assert "Lather Games wrap-up" in out
@@ -1412,8 +1520,8 @@ class TestThreads:
 
     def test_filter_sotd(self, data_dir, capsys):
         code, out, _ = run(
-            capsys, ["--data-dir", str(data_dir), "threads", "--month", "2026-08",
-                     "--filter", "sotd"]
+            capsys,
+            ["--data-dir", str(data_dir), "threads", "--month", "2026-08", "--filter", "sotd"],
         )
         assert code == 0
         assert "Saturday SOTD Thread" in out
@@ -1421,8 +1529,8 @@ class TestThreads:
 
     def test_min_comments(self, data_dir, capsys):
         code, out, _ = run(
-            capsys, ["--data-dir", str(data_dir), "threads", "--month", "2026-08",
-                     "--min-comments", "3"]
+            capsys,
+            ["--data-dir", str(data_dir), "threads", "--month", "2026-08", "--min-comments", "3"],
         )
         assert code == 0
         assert "Lather Games wrap-up" in out
@@ -1430,8 +1538,8 @@ class TestThreads:
 
     def test_author_filter(self, data_dir, capsys):
         code, out, _ = run(
-            capsys, ["--data-dir", str(data_dir), "threads", "--month", "2026-08",
-                     "--author", "newbie"]
+            capsys,
+            ["--data-dir", str(data_dir), "threads", "--month", "2026-08", "--author", "newbie"],
         )
         assert code == 0
         assert "Quiet question" in out
@@ -1446,9 +1554,7 @@ class TestThreads:
         assert "Saturday SOTD Thread" not in out
 
     def test_missing_month_exits_1(self, capsys):
-        code, _, err = run(
-            capsys, ["--data-dir", "/nonexistent", "threads", "--month", "2025-01"]
-        )
+        code, _, err = run(capsys, ["--data-dir", "/nonexistent", "threads", "--month", "2025-01"])
         assert code == 1
 ```
 
@@ -1596,8 +1702,7 @@ def cmd_threads(
         return json.dumps(rows[:top], indent=2)
 
     lines = [
-        f"{'id':<12} {'date':<10} {'flag':<5} {'cmts':>4} {'score':>5}  "
-        f"{'author':<20} {'title'}"
+        f"{'id':<12} {'date':<10} {'flag':<5} {'cmts':>4} {'score':>5}  {'author':<20} {'title'}"
     ]
     for r in rows[:top]:
         flag = ("SOTD" if r.get("in_pipeline") else "-") if "in_pipeline" in r else "n/a"
@@ -1632,8 +1737,10 @@ def build_parser() -> argparse.ArgumentParser:
         "--sort", choices=["comments", "score", "date"], default="comments", help="Sort key"
     )
     threads.add_argument(
-        "--filter", choices=["sotd", "non-sotd", "all"], default="all",
-        help="Key off the in_pipeline flag (default all)"
+        "--filter",
+        choices=["sotd", "non-sotd", "all"],
+        default="all",
+        help="Key off the in_pipeline flag (default all)",
     )
 
     return parser
@@ -1703,8 +1810,9 @@ Append to `tests/report/tools/test_community_query.py`:
 ```python
 class TestThread:
     def test_renders_tree_indented(self, data_dir, capsys):
-        code, out, _ = run(capsys, ["--data-dir", str(data_dir), "thread", "--month", "2026-08",
-                                    "--id", "quiet"])
+        code, out, _ = run(
+            capsys, ["--data-dir", str(data_dir), "thread", "--month", "2026-08", "--id", "quiet"]
+        )
         assert code == 0
         assert "Quiet question" in out
         lines = out.splitlines()
@@ -1715,26 +1823,52 @@ class TestThread:
         assert "(OP)" in c3_line  # c3 has is_submitter=True
 
     def test_accepts_t3_prefix(self, data_dir, capsys):
-        code, out, _ = run(capsys, ["--data-dir", str(data_dir), "thread", "--month", "2026-08",
-                                    "--id", "t3_quiet"])
+        code, out, _ = run(
+            capsys,
+            ["--data-dir", str(data_dir), "thread", "--month", "2026-08", "--id", "t3_quiet"],
+        )
         assert code == 0
 
     def test_unknown_id_exits_1(self, data_dir, capsys):
-        code, _, err = run(capsys, ["--data-dir", str(data_dir), "thread", "--month", "2026-08",
-                                    "--id", "nope"])
+        code, _, err = run(
+            capsys, ["--data-dir", str(data_dir), "thread", "--month", "2026-08", "--id", "nope"]
+        )
         assert code == 1
         assert "Unknown thread" in err
 
     def test_max_comments_caps_render(self, data_dir, capsys):
-        code, out, _ = run(capsys, ["--data-dir", str(data_dir), "thread", "--month", "2026-08",
-                                    "--id", "quiet", "--max-comments", "1"])
+        code, out, _ = run(
+            capsys,
+            [
+                "--data-dir",
+                str(data_dir),
+                "thread",
+                "--month",
+                "2026-08",
+                "--id",
+                "quiet",
+                "--max-comments",
+                "1",
+            ],
+        )
         assert code == 0
         assert "[c3]" not in out
         assert "not shown" in out
 
     def test_json_output(self, data_dir, capsys):
-        code, out, _ = run(capsys, ["--data-dir", str(data_dir), "--json", "thread",
-                                    "--month", "2026-08", "--id", "quiet"])
+        code, out, _ = run(
+            capsys,
+            [
+                "--data-dir",
+                str(data_dir),
+                "--json",
+                "thread",
+                "--month",
+                "2026-08",
+                "--id",
+                "quiet",
+            ],
+        )
         assert code == 0
         doc = json.loads(out)
         assert doc["post"]["id"] == "quiet"
@@ -1743,34 +1877,77 @@ class TestThread:
 
 class TestSearch:
     def test_finds_post_and_comment_across_window(self, data_dir, capsys):
-        code, out, _ = run(capsys, ["--data-dir", str(data_dir), "search",
-                                    "--months", "2026-08:2026-08", "--query", "question"])
+        code, out, _ = run(
+            capsys,
+            [
+                "--data-dir",
+                str(data_dir),
+                "search",
+                "--months",
+                "2026-08:2026-08",
+                "--query",
+                "question",
+            ],
+        )
         assert code == 0
         assert "[post]" in out and "[comment]" in out
 
     def test_author_filter(self, data_dir, capsys):
-        code, out, _ = run(capsys, ["--data-dir", str(data_dir), "search",
-                                    "--months", "2026-08:2026-08", "--query", "verdict",
-                                    "--author", "judge1"])
+        code, out, _ = run(
+            capsys,
+            [
+                "--data-dir",
+                str(data_dir),
+                "search",
+                "--months",
+                "2026-08:2026-08",
+                "--query",
+                "verdict",
+                "--author",
+                "judge1",
+            ],
+        )
         assert code == 0
         assert "[comment]" in out
         assert "[post]" not in out  # the disc post is authored by bigcheese
 
     def test_no_hits_reports(self, data_dir, capsys):
-        code, out, _ = run(capsys, ["--data-dir", str(data_dir), "search",
-                                    "--months", "2026-08:2026-08", "--query", "zzznotfound"])
+        code, out, _ = run(
+            capsys,
+            [
+                "--data-dir",
+                str(data_dir),
+                "search",
+                "--months",
+                "2026-08:2026-08",
+                "--query",
+                "zzznotfound",
+            ],
+        )
         assert code == 0
         assert "No matches" in out
 
     def test_skips_missing_months_with_note(self, data_dir, capsys):
-        code, out, _ = run(capsys, ["--data-dir", str(data_dir), "search",
-                                    "--months", "2026-07:2026-08", "--query", "question"])
+        code, out, _ = run(
+            capsys,
+            [
+                "--data-dir",
+                str(data_dir),
+                "search",
+                "--months",
+                "2026-07:2026-08",
+                "--query",
+                "question",
+            ],
+        )
         assert code == 0
         assert "no community file" in out.lower()
 
     def test_window_start_after_end_exits_1(self, data_dir, capsys):
-        code, _, err = run(capsys, ["--data-dir", str(data_dir), "search",
-                                    "--months", "2026-08:2026-07", "--query", "x"])
+        code, _, err = run(
+            capsys,
+            ["--data-dir", str(data_dir), "search", "--months", "2026-08:2026-07", "--query", "x"],
+        )
         assert code == 1
 ```
 
@@ -1828,8 +2005,7 @@ def cmd_thread(doc: dict, thread_id: str, *, max_comments: int = 50, as_json: bo
             body = _flatten_body(c["body"])[:200]
             op = " (OP)" if c.get("is_submitter") else ""
             lines.append(
-                f"{'  ' * depth}[{c['id']}] u/{c['author']} "
-                f"{c['created_utc'][:10]}{op}: {body}"
+                f"{'  ' * depth}[{c['id']}] u/{c['author']} {c['created_utc'][:10]}{op}: {body}"
             )
             rendered += 1
             walk(c["id"], depth + 1)
@@ -1919,7 +2095,7 @@ def cmd_search(
                 f"{h['created_utc'][:10]}  [comment]  t3_{h['thread_id']}  "
                 f"t1_{h['comment_id']}{who}"
             )
-        lines.append(f"           \"{h['snippet']}\"")
+        lines.append(f'           "{h["snippet"]}"')
     return "\n".join(lines)
 ```
 

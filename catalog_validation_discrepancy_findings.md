@@ -83,7 +83,7 @@ The `_clear_field_cache()` method in `ValidateCorrectMatches` clears the YAML ca
 base_dir = self._data_dir or Path("data")  # Path("data")
 cache_key = str((base_dir / "brushes.yaml").resolve())  # Relative path resolved
 
-# Live API Environment (absolute paths)  
+# Live API Environment (absolute paths)
 base_dir = self._data_dir  # project_root / "data"
 cache_key = str((base_dir / "brushes.yaml").resolve())  # Absolute path resolved
 ```

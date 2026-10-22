@@ -131,21 +131,17 @@ Match extracted product names to known item catalogs to normalize naming:
             "format": "Straight",
             "grind": "Full Hollow",
             "point": "Square",
-            "width": "15/16"
+            "width": "15/16",
         },
         "match_type": "exact",  # From data/correct_matches/*.yaml
-        "pattern": None
+        "pattern": None,
     },
     "blade": {
         "original": "Feather (3)",
-        "matched": {
-            "brand": "Feather",
-            "model": "Hi-Stainless", 
-            "format": "DE"
-        },
+        "matched": {"brand": "Feather", "model": "Hi-Stainless", "format": "DE"},
         "match_type": "regex",  # From regex pattern
-        "pattern": "feather.*hi"
-    }
+        "pattern": "feather.*hi",
+    },
 }
 ```
 

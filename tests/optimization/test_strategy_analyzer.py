@@ -15,8 +15,7 @@ class TestStrategyAnalyzer:
         correct_matches_path = tmp_path / "correct_matches.yaml"
 
         # Create minimal test files
-        config_path.write_text(
-            """
+        config_path.write_text("""
 brush_scoring_weights:
   base_strategies:
     known_brush: 80.0
@@ -24,17 +23,14 @@ brush_scoring_weights:
   strategy_modifiers:
     handle_matching: {}
     knot_matching: {}
-"""
-        )
+""")
 
-        correct_matches_path.write_text(
-            """
+        correct_matches_path.write_text("""
 brush:
   Test Brand:
     Test Model:
       - test brush input
-"""
-        )
+""")
 
         analyzer = StrategyAnalyzer(config_path, correct_matches_path)
 
@@ -49,25 +45,21 @@ brush:
         """Test extraction of complete brush test cases."""
         # Create a minimal config file
         config_path = tmp_path / "config.yaml"
-        config_path.write_text(
-            """
+        config_path.write_text("""
 brush_scoring_weights:
   base_strategies:
     known_brush: 80.0
     automated_split: 60.0
-"""
-        )
+""")
 
         correct_matches_path = tmp_path / "correct_matches.yaml"
-        correct_matches_path.write_text(
-            """
+        correct_matches_path.write_text("""
 brush:
   Test Brand:
     Test Model:
       - test brush input 1
       - test brush input 2
-"""
-        )
+""")
 
         analyzer = StrategyAnalyzer(config_path, correct_matches_path)
 
@@ -81,25 +73,21 @@ brush:
         """Test extraction of composite handle test cases."""
         # Create a minimal config file
         config_path = tmp_path / "config.yaml"
-        config_path.write_text(
-            """
+        config_path.write_text("""
 brush_scoring_weights:
   base_strategies:
     known_brush: 80.0
     automated_split: 60.0
-"""
-        )
+""")
 
         correct_matches_path = tmp_path / "correct_matches.yaml"
-        correct_matches_path.write_text(
-            """
+        correct_matches_path.write_text("""
 handle:
   Test Maker:
     Test Handle:
       - test handle input 1
       - test handle input 2
-"""
-        )
+""")
 
         analyzer = StrategyAnalyzer(config_path, correct_matches_path)
 
@@ -113,25 +101,21 @@ handle:
         """Test extraction of composite knot test cases."""
         # Create a minimal config file
         config_path = tmp_path / "config.yaml"
-        config_path.write_text(
-            """
+        config_path.write_text("""
 brush_scoring_weights:
   base_strategies:
     known_brush: 80.0
     automated_split: 60.0
-"""
-        )
+""")
 
         correct_matches_path = tmp_path / "correct_matches.yaml"
-        correct_matches_path.write_text(
-            """
+        correct_matches_path.write_text("""
 knot:
   Test Brand:
     Test Knot:
       - test knot input 1
       - test knot input 2
-"""
-        )
+""")
 
         analyzer = StrategyAnalyzer(config_path, correct_matches_path)
 
@@ -144,8 +128,7 @@ knot:
     def test_get_strategy_names(self, tmp_path):
         """Test extraction of strategy names from config."""
         config_path = tmp_path / "config.yaml"
-        config_path.write_text(
-            """
+        config_path.write_text("""
 brush_scoring_weights:
   base_strategies:
     known_brush: 80.0
@@ -155,19 +138,16 @@ brush_scoring_weights:
     handle_matching: {}
     knot_matching:
       brand_match: 12.0
-"""
-        )
+""")
 
         # Create a minimal correct_matches.yaml file
         correct_matches_path = tmp_path / "correct_matches.yaml"
-        correct_matches_path.write_text(
-            """
+        correct_matches_path.write_text("""
 brush:
   Test Brand:
     Test Model:
       - test brush input
-"""
-        )
+""")
 
         analyzer = StrategyAnalyzer(config_path, correct_matches_path)
 
@@ -188,22 +168,18 @@ brush:
         correct_matches_path = tmp_path / "correct_matches.yaml"
 
         # Create test files
-        config_path.write_text(
-            """
+        config_path.write_text("""
 brush_scoring_weights:
   base_strategies:
     known_brush: 80.0
-"""
-        )
+""")
 
-        correct_matches_path.write_text(
-            """
+        correct_matches_path.write_text("""
 brush:
   Test Brand:
     Test Model:
       - test brush input
-"""
-        )
+""")
 
         # Mock brush matcher
         mock_result = Mock()
@@ -234,22 +210,18 @@ brush:
         correct_matches_path = tmp_path / "correct_matches.yaml"
 
         # Create test files
-        config_path.write_text(
-            """
+        config_path.write_text("""
 brush_scoring_weights:
   base_strategies:
     known_brush: 80.0
-"""
-        )
+""")
 
-        correct_matches_path.write_text(
-            """
+        correct_matches_path.write_text("""
 brush:
   Test Brand:
     Test Model:
       - test brush input
-"""
-        )
+""")
 
         # Mock brush matcher returning no match
         mock_matcher = Mock()
@@ -269,24 +241,20 @@ brush:
         """Test recommendations generation without analysis."""
         # Create minimal test files
         config_path = tmp_path / "config.yaml"
-        config_path.write_text(
-            """
+        config_path.write_text("""
 brush_scoring_weights:
   base_strategies:
     known_brush: 80.0
     automated_split: 60.0
-"""
-        )
+""")
 
         correct_matches_path = tmp_path / "correct_matches.yaml"
-        correct_matches_path.write_text(
-            """
+        correct_matches_path.write_text("""
 brush:
   Test Brand:
     Test Model:
       - test brush input
-"""
-        )
+""")
 
         analyzer = StrategyAnalyzer(config_path, correct_matches_path)
         recommendations = analyzer.generate_recommendations()
@@ -301,24 +269,20 @@ brush:
         correct_matches_path = tmp_path / "correct_matches.yaml"
 
         # Create test files
-        config_path.write_text(
-            """
+        config_path.write_text("""
 brush_scoring_weights:
   base_strategies:
     known_brush: 80.0
     automated_split: 60.0
-"""
-        )
+""")
 
-        correct_matches_path.write_text(
-            """
+        correct_matches_path.write_text("""
 brush:
   Test Brand:
     Test Model:
       - test brush input 1
       - test brush input 2
-"""
-        )
+""")
 
         # Mock brush matcher
         mock_result = Mock()

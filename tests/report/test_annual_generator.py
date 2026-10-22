@@ -67,8 +67,7 @@ class TestAnnualReportGenerator:
 
         # Create a simplified annual hardware template
         annual_hardware_template = template_dir / "annual_hardware.md"
-        annual_hardware_template.write_text(
-            """# Annual Hardware Report - {{year}}
+        annual_hardware_template.write_text("""# Annual Hardware Report - {{year}}
 
 Welcome to your Annual SOTD Hardware Report for {{year}}
 
@@ -95,8 +94,7 @@ Welcome to your Annual SOTD Hardware Report for {{year}}
 ## Soaps
 
 {{tables.soaps}}
-"""
-        )
+""")
 
         # Generate annual hardware report with custom template
         result = annual_generator.generate_annual_report(
@@ -284,8 +282,7 @@ Welcome to your Annual SOTD Hardware Report for {{year}}
 
         # Create a simplified annual hardware template
         annual_hardware_template = template_dir / "annual_hardware.md"
-        annual_hardware_template.write_text(
-            """# Annual Hardware Report - {{year}}
+        annual_hardware_template.write_text("""# Annual Hardware Report - {{year}}
 
 Welcome to your Annual SOTD Hardware Report for {{year}}
 
@@ -309,8 +306,7 @@ Welcome to your Annual SOTD Hardware Report for {{year}}
 ## Soaps
 
 {{tables.soaps}}
-"""
-        )
+""")
 
         # Generate annual hardware report and measure performance
         import time

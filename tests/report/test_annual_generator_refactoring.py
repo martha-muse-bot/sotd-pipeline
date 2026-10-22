@@ -59,8 +59,7 @@ class TestAnnualGeneratorRefactoring:
 
         # Create a simplified annual hardware template
         annual_hardware_template = template_dir / "annual_hardware.md"
-        annual_hardware_template.write_text(
-            """# Annual Hardware Report - {{year}}
+        annual_hardware_template.write_text("""# Annual Hardware Report - {{year}}
 
 Welcome to your Annual SOTD Hardware Report for {{year}}
 
@@ -72,8 +71,7 @@ Welcome to your Annual SOTD Hardware Report for {{year}}
 ## Razors
 
 {{tables.razors}}
-"""
-        )
+""")
 
         # Test content generation with custom template
         result = generate_annual_report_content(

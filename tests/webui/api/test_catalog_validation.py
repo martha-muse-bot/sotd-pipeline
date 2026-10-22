@@ -412,7 +412,6 @@ class TestCatalogValidationIntegration:
         temp_file.close()
         return Path(temp_file.name)
 
-
     def test_api_issue_type_mapping(self, tmp_path):
         """Test that the API correctly maps issue types and fields from shared validator.
 

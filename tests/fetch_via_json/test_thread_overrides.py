@@ -10,16 +10,14 @@ def test_process_thread_overrides_json_reads_include(tmp_path: Path, monkeypatch
     import sotd.fetch.overrides as overrides_mod
 
     path = tmp_path / "thread_overrides.yaml"
-    path.write_text(
-        """
+    path.write_text("""
 include:
   2025-06-25:
     - https://www.reddit.com/r/Wetshaving/comments/includeid/inc/
 exclude:
   2025-06-25:
     - https://www.reddit.com/r/Wetshaving/comments/excludeid/exc/
-"""
-    )
+""")
     monkeypatch.setattr(overrides_mod, "OVERRIDE_PATH", path)
 
     with patch(
