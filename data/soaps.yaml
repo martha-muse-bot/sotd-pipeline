@@ -1183,7 +1183,7 @@ Barrister and Mann:
       wsdb_slug: barrister-and-mann-o-delight-soap
     Oceana:
       patterns:
-      - oceana
+      - (latha )?.*oceana
       wsdb_slug: barrister-and-mann-oceana-soap
     Orange & Cedarwood:
       patterns:
@@ -1295,7 +1295,7 @@ Barrister and Mann:
       wsdb_slug: barrister-and-mann-sunny-lane-soap
     Taiga:
       patterns:
-      - taiga
+      - (latha )?.*taiga
       wsdb_slug: barrister-and-mann-taiga-soap
     Terror:
       patterns:
@@ -2801,6 +2801,9 @@ Declaration Grooming:
       patterns:
       - cerberus
       wsdb_slug: house-of-mammoth-cerberus-soap
+    Cerberus Fougère:
+      patterns:
+      - cerberus foug[eè]re
     Chaipre:
       patterns:
       - (declaration|\bdg\b).*chaipre
@@ -7064,7 +7067,7 @@ Signature Soaps:
       - signature.*capra
     Capra Insuriam:
       patterns:
-      - capra in?suri\wm
+      - signature.*capra in?suri\wm
     Novus Spice:
       patterns:
       - novu.*spice
@@ -9255,6 +9258,9 @@ Van Yulay:
     Coffee Bay:
       patterns:
       - van yulay.*coffee bay
+    El Barbero de Sevilla:
+      patterns:
+      - van yulay.*barber.*sevil+a
     Egg Cream:
       patterns:
       - van yulay.*egg cream
@@ -9804,11 +9810,13 @@ Wit's End:
       - wit'?s\s*end.*root\s*beer\s*float
 Woolfblades:
   patterns:
-  - woolf( ?blades?)?
+  - woolfblades
+  - ^(?!.*pink).*\bwoolf\b
   scents:
     Shaving Soap:
       patterns:
-      - woolf( ?blades?)?
+      - woolfblades
+      - ^(?!.*pink).*\bwoolf\b
 Wooly Wash Soapery:
   patterns:
   - 'wo+l+y wash(?: soapery)?'
