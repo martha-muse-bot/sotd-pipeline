@@ -25,9 +25,9 @@ The WebUI provides a comprehensive suite of analysis and validation tools:
 6. **Catalog Validator** - Validate catalog entries, identify conflicts, and test regex patterns
 7. **Product Usage** - Explore product usage statistics, user patterns, and yearly summaries with calendar/list views
 8. **Monthly User Posts** - Analyze user posting patterns and activity across months
-9. **Brush Matching Analyzer** - Analyze brush matching strategies and scoring results
+9. **Brush Matching Analyzer** - Analyze brush matching strategies and scoring results (`/brush-matching-analyzer?brush=...` prefills and auto-runs; also linked from the Edit Brush Split modal)
 10. **Format Compatibility Analyzer** - Analyze format compatibility issues (e.g., razor/blade mismatches)
-11. **WSDB Alignment Analyzer** - Compare pipeline soap data with Wet Shaving Database for alignment and validation
+11. **WSDB Alignment Analyzer** - Compare pipeline soap data with Wet Shaving Database for alignment and validation. CLI companion: `scripts/auto_assign_single_100_slugs.py` auto-applies slugs to `data/soaps.yaml` where a soap has exactly one 100% match (run `--dry-run` first to preview).
 
 ### How it works
 

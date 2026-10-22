@@ -229,6 +229,35 @@ describe('BrushSplitModal', () => {
     expect(saveButton).toBeDisabled();
   });
 
+  describe('Analyze matching deep link', () => {
+    it('renders Analyze matching button', () => {
+      render(<BrushSplitModal {...defaultProps} />);
+
+      expect(screen.getByText('Analyze matching')).toBeInTheDocument();
+    });
+
+    it('opens Brush Matching Analyzer in a new tab with encoded original', async () => {
+      const user = userEvent.setup();
+      const openSpy = jest.spyOn(window, 'open').mockReturnValue(null);
+
+      render(
+        <BrushSplitModal {...defaultProps} original='Virginia Cheng - Silvertip Badger' />
+      );
+
+      await act(async () => {
+        await user.click(screen.getByText('Analyze matching'));
+      });
+
+      expect(openSpy).toHaveBeenCalledWith(
+        `/brush-matching-analyzer?brush=${encodeURIComponent('Virginia Cheng - Silvertip Badger')}`,
+        '_blank',
+        'noopener,noreferrer'
+      );
+
+      openSpy.mockRestore();
+    });
+  });
+
   describe('Revert to automatic', () => {
     const existingSplit: BrushSplit = {
       original: 'Declaration Grooming B2 Badger',

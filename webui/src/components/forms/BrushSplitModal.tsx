@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, AlertCircle, CheckCircle, Info, X } from 'lucide-react';
+import { Loader2, AlertCircle, CheckCircle, Info, X, Search } from 'lucide-react';
 import { BrushSplit } from '@/types/brushSplit';
 
 export interface BrushSplitModalProps {
@@ -268,9 +268,26 @@ export const BrushSplitModal: React.FC<BrushSplitModalProps> = ({
           <form onSubmit={handleSubmit} className='space-y-6'>
             {/* Original Brush String */}
             <div className='space-y-2'>
-              <label htmlFor='original' className='block text-sm font-medium text-gray-700'>
-                Original Brush String
-              </label>
+              <div className='flex items-center justify-between gap-2'>
+                <label htmlFor='original' className='block text-sm font-medium text-gray-700'>
+                  Original Brush String
+                </label>
+                <Button
+                  type='button'
+                  variant='outline'
+                  size='sm'
+                  onClick={() => {
+                    window.open(
+                      `/brush-matching-analyzer?brush=${encodeURIComponent(original)}`,
+                      '_blank',
+                      'noopener,noreferrer'
+                    );
+                  }}
+                >
+                  <Search className='mr-1.5 h-3.5 w-3.5' />
+                  Analyze matching
+                </Button>
+              </div>
               <Input
                 id='original'
                 value={original}
@@ -382,6 +399,10 @@ export const BrushSplitModal: React.FC<BrushSplitModalProps> = ({
                     <li>Use "Don't Split" for brushes that shouldn't be separated</li>
                     <li>
                       Use "Revert to automatic" to remove an override and restore default parsing
+                    </li>
+                    <li>
+                      Use "Analyze matching" to open Brush Matching Analyzer on this string (new
+                      tab)
                     </li>
                     <li>Look for delimiters like "w/", "with", "/", or "-"</li>
                     <li>Check for fiber indicators (badger, boar, synthetic)</li>
