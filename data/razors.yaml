@@ -3208,9 +3208,9 @@ Whityle:
     patterns:
       - whityle
 Wilkinson Sword:
-  Butterfly:
+  The Edger:
     patterns:
-      - wil\w+son.*butter
+      - wil\w+son.*(butter|tto|edger)
   Classic:
     patterns:
       - wilk.*sword

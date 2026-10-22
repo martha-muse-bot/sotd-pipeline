@@ -111,7 +111,8 @@ DE:
       patterns:
         - clock.*pla
         - clock.*black
-        - gill.*black
+        - gil+.*black
+        - gil+.*7oc.*plat
         - 7OC.*pla
         - \b7 ?sp\b
         - \b7'o.*black

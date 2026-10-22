@@ -3750,6 +3750,8 @@ Merkur:
   - merkur 45 bakelite
   '510':
   - merkur - 510c
+  - merkur - progress 510
+  - merkur progress 510
   Futur:
   - futur 700
   - mekur future
@@ -3767,7 +3769,6 @@ Merkur:
   - mergress on 3
   - merkur - 500
   - merkur - progress
-  - merkur - progress 510
   - merkur 500c
   - merkur 500c ( progress )
   - merkur mergress - setting 4
@@ -3788,7 +3789,6 @@ Merkur:
   - merkur progress 500 adjustable (setting 1)
   - merkur progress 500 adjustable (setting 2)
   - merkur progress 500 adjustable, setting 2
-  - merkur progress 510
   - merkur progress adjustable
   - merkur progress adjustable (setting 1)
   - 'merkur progress adjustable (setting: 2)'
@@ -5968,26 +5968,26 @@ Whityle:
   - whityle 24t glide pro 4d razor
   - whityle 24ts glide pro 4d
 Wilkinson Sword:
-  Butterfly:
-  - wilerson sword butterfly razor
-  - wilkinson butterfly
-  - wilkinson sword
-  - wilkinson sword - wilkinson razor
-  - wilkinson sword butterfly
-  - wilkinson sword razor (aka sticky)
-  - wilkinson sword the edger
-  - wilkinson sword tto
   Classic:
   - wilkinson black plastic
   - wilkinson classic chrome
+  - wilkinson sword
   - wilkinson sword - black plastic wilkinson sword razor
   - wilkinson sword - classic
+  - wilkinson sword - wilkinson razor
   - wilkinson sword - wilkinson sword de classic (metal version)
   - wilkinson sword black plastic
   - wilkinson sword classic
-  - wilkinson sword classic black metal tto
   - wilkinson sword classic chrome
+  - wilkinson sword razor (aka sticky)
   - wilkinsons sword
+  The Edger:
+  - wilerson sword butterfly razor
+  - wilkinson butterfly
+  - wilkinson sword butterfly
+  - wilkinson sword classic black metal tto
+  - wilkinson sword the edger
+  - wilkinson sword tto
 Wolfman:
   Guerilla:
   - guerilla razors - titanium
