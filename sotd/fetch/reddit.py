@@ -88,8 +88,7 @@ def safe_call(fn, *args, **kwargs):  # type: ignore[no-untyped-def]
             delay = max(RETRY_429_DELAYS[attempt], header_wait)
             mins, secs = divmod(int(delay), 60)
             logger.warning(
-                f"Reddit 429 (attempt {attempt + 1}/{max_retries + 1}); "
-                f"waiting {mins}m {secs}s…"
+                f"Reddit 429 (attempt {attempt + 1}/{max_retries + 1}); waiting {mins}m {secs}s…"
             )
             time.sleep(delay)
 
@@ -127,11 +126,14 @@ def search_threads(
     month_abbr = calendar.month_abbr[month].lower()
     month_name = calendar.month_name[month].lower()
 
-    # Improved search strategy: use day-specific queries to avoid 100-result limit
-    # First try broad searches, then fall back to day-specific if we hit the limit
+    # Broad queries use month abbreviation only. Including the full month name
+    # (e.g. "august") biases Reddit relevance toward titles like "Austere August
+    # SOTD Thread" and can crowd regular "SOTD Thread - Aug NN" results out of
+    # the 100-result window.
+    # Day-specific fallback still uses both abbr and full name below.
     broad_queries = [
-        f"flair:SOTD {month_abbr} {month_name} {year}",
-        f"flair:SOTD {month_abbr} {month_name} {year}SOTD",
+        f"flair:SOTD {month_abbr} {year}",
+        f"flair:SOTD {month_abbr} {year}SOTD",
     ]
 
     all_results = {}
@@ -183,9 +185,16 @@ def search_threads(
         max_threads_per_day = (
             max(len(threads) for threads in threads_by_day.values()) if threads_by_day else 0
         )
+        # Floor at 2 when the broad search was truncated: parallel daily threads
+        # (Austere August + regular SOTD, Theme Thursday, etc.) are often missing
+        # from the top-100 even when every calendar day already has one hit.
+        expected_threads_per_day = max(max_threads_per_day, 2)
 
         if debug:
-            logger.debug(f"Found max {max_threads_per_day} threads per day")
+            logger.debug(
+                f"Found max {max_threads_per_day} threads per day "
+                f"(expecting {expected_threads_per_day} after hit-limit floor)"
+            )
             for day in sorted(threads_by_day.keys()):
                 count = len(threads_by_day[day])
                 logger.debug(f"Day {day}: {count} threads")
@@ -203,13 +212,13 @@ def search_threads(
             1, max_day_to_check + 1
         ):  # Only check up to current date for current month
             current_count = len(threads_by_day[day])
-            if current_count < max_threads_per_day:
-                missing_count = max_threads_per_day - current_count
+            if current_count < expected_threads_per_day:
+                missing_count = expected_threads_per_day - current_count
                 missing_days.append((day, missing_count))
                 if debug:
                     logger.debug(
                         f"Day {day}: missing {missing_count} threads "
-                        f"(has {current_count}, need {max_threads_per_day})"
+                        f"(has {current_count}, need {expected_threads_per_day})"
                     )
 
         # Search for missing threads on specific days

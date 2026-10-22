@@ -1,6 +1,7 @@
 """Comprehensive tests for reddit.py module."""
 
 import os
+import re
 import time
 from unittest.mock import Mock, patch
 
@@ -977,11 +978,80 @@ def test_search_threads_debug_output(caplog):
             search_threads("wetshaving", 2025, 5, debug=True)
 
     log_output = caplog.text
-    assert "Search query: 'flair:SOTD may may 2025'" in log_output
-    assert "Search query: 'flair:SOTD may may 2025SOTD'" in log_output
+    # Broad queries use month abbreviation only — full month names (e.g. "august")
+    # bias Reddit relevance toward "Austere August" titles and crowd out regular SOTDs.
+    assert "Search query: 'flair:SOTD may 2025'" in log_output
+    assert "Search query: 'flair:SOTD may 2025SOTD'" in log_output
+    assert "may may" not in log_output
     assert "PRAW raw results for" in log_output
     assert "Combined raw results (deduped):" in log_output
     assert "Valid threads:" in log_output
+
+
+def test_search_threads_broad_query_omits_full_month_name():
+    """Broad search must not include the full month name (aug not august)."""
+    queries: list[str] = []
+
+    class QueryCaptureSubreddit(MockSubreddit):
+        def search(self, query, sort="relevance", syntax="lucene"):
+            queries.append(query)
+            return iter([])
+
+    mock_reddit = MockReddit(QueryCaptureSubreddit())
+    with patch("sotd.fetch.reddit.get_reddit", return_value=mock_reddit):
+        search_threads("wetshaving", 2025, 8)
+
+    broad = [q for q in queries if " 01 " not in q and " 1 " not in q]
+    assert broad == [
+        "flair:SOTD aug 2025",
+        "flair:SOTD aug 2025SOTD",
+    ]
+    assert all("august" not in q for q in broad)
+
+
+def test_search_threads_hit_limit_still_finds_parallel_daily_threads():
+    """When broad search hits 100 with only one thread/day, still day-search for parallels.
+
+    Austere August: relevance returns only AA threads (max=1/day). Without a floor on
+    expected threads/day, day-specific backfill never runs and regular SOTDs are lost.
+    """
+    aa_threads = [
+        MockSubmission(f"aa{day:02d}", f"Friday Austere August SOTD Thread - Aug {day:02d}, 2025")
+        for day in range(1, 32)
+    ]
+    # Pad to 100 so search_threads treats the broad query as hitting the limit
+    padding = [
+        MockSubmission(
+            f"pad{i}", f"Saturday Austere August SOTD Thread - Aug {i % 28 + 1:02d}, 2026"
+        )
+        for i in range(100 - len(aa_threads))
+    ]
+    broad_batch = aa_threads + padding
+
+    regular_by_day = {
+        day: MockSubmission(f"reg{day:02d}", f"Friday SOTD Thread - Aug {day:02d}, 2025")
+        for day in range(1, 32)
+    }
+
+    class DualThreadSubreddit:
+        def search(self, query, sort="relevance", syntax="lucene"):
+            q = query.lower()
+            day_match = re.search(r"\b(?:aug|august)\s+(\d{1,2})\b", q)
+            if day_match:
+                day = int(day_match.group(1))
+                if 1 <= day <= 31:
+                    return iter([aa_threads[day - 1], regular_by_day[day]])
+            if "aug" in q and "2025" in q:
+                return iter(broad_batch)
+            return iter([])
+
+    mock_reddit = MockReddit(DualThreadSubreddit())
+    with patch("sotd.fetch.reddit.get_reddit", return_value=mock_reddit):
+        result = search_threads("wetshaving", 2025, 8)
+
+    assert any("Austere August" in s.title for s in result)
+    regular = [s for s in result if "Austere" not in s.title]
+    assert len(regular) == 31, f"Expected 31 regular SOTDs; got {len(regular)} of {len(result)}"
 
 
 def test_search_threads_reddit_api_error():
@@ -989,7 +1059,7 @@ def test_search_threads_reddit_api_error():
     mock_subreddit = Mock()
     mock_subreddit.search.side_effect = RequestException(
         Exception("Reddit API Error"),
-        request_args=("flair:SOTD may may 2025",),
+        request_args=("flair:SOTD may 2025",),
         request_kwargs={"sort": "relevance", "syntax": "lucene"},
     )
     mock_reddit = MockReddit(mock_subreddit)

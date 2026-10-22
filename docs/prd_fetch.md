@@ -98,8 +98,8 @@ A rebuild is successful when:
 | ID | Requirement |
 | --- | --- |
 | F1 | Authenticate via PRAW using `praw.ini` in the project root; fail fast if credentials are unusable. |
-| F2 | Search r/wetshaving with Lucene queries combining `flair:SOTD`, month abbreviation/name, and year. |
-| F3 | If search hits the ~100-result cap, run day-specific follow-up searches for under-covered days. For the **current** calendar month, only check through **today**. |
+| F2 | Search r/wetshaving with Lucene queries combining `flair:SOTD`, **month abbreviation only**, and year. Do not include the full month name in broad queries (e.g. use `aug` not `august`) — full names bias relevance toward titles like “Austere August” and can crowd regular SOTD threads out of the 100-result window. |
+| F3 | If search hits the ~100-result cap, run day-specific follow-up searches for under-covered days, using an expected threads-per-day of `max(observed_max, 2)` so parallel daily threads (Austere August + regular SOTD, Theme Thursday, etc.) are still hunted when the truncated broad sample shows only one per day. For the **current** calendar month, only check through **today**. Day-specific queries may use both month abbreviation and full month name. |
 | F4 | Keep threads whose title date parses to the target `YYYY-MM`. Drop unparsable or wrong-month titles, except **include** overrides that may supply a YAML date fallback when the title is unparsable. |
 | F5 | Fetch **top-level (root) comments only**; expand Reddit “more comments” / `MoreComments` objects so the root set is complete. |
 | F6 | Fetch comments in parallel with rate-limit-aware retries; on per-thread failure, return empty comments for that thread rather than failing the whole month. |
@@ -123,7 +123,7 @@ A rebuild is successful when:
 
 **Broad search (example pattern)**
 
-- `flair:SOTD {month_abbr} {month_name} {year}`
+- `flair:SOTD {month_abbr} {year}` (abbreviation only — not full month name)
 - Variant including concatenated `yearSOTD` as used in production search strategy
 
 **Cap recovery**
@@ -131,7 +131,8 @@ A rebuild is successful when:
 1. Deduplicate submissions by Reddit submission id.
 2. Filter to the target year/month via title-date parsing.
 3. Group by day; determine max threads-per-day among days that have threads.
-4. For days below that max (and within the day window for current month), issue day-specific flair+date queries and merge results.
+4. Set expected threads-per-day to `max(observed_max, 2)` so truncated broad results that only contain one series (e.g. Austere August) still trigger day searches for parallel regular SOTD threads.
+5. For days below that expected count (and within the day window for current month), issue day-specific flair+date queries (abbr and full month name) and merge results.
 
 **Validity filter**
 
