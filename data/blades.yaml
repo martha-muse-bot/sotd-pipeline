@@ -179,6 +179,10 @@ DE:
         - astra.*blue(?# PAD FOR PRIORITY LENGTH xxxxxxxxxxxx)
         - astra.*ss(?# PAD FOR PRIORITY LENGTH xxxxxxxxxxxx)
         - blue.*astra
+  Aylsworth:
+    Super Stainless:
+      patterns:
+        - aylsworth
   Baile:
     Platinum:
       patterns:
@@ -219,7 +223,7 @@ DE:
   Bolzano:
     Superinox:
       patterns:
-        - b(o|a)la?z(o|a)n(o|a)
+        - b[oa]la?[sz][oa]n[oa]
   Böker:  
     DE:
       patterns:
@@ -379,7 +383,7 @@ DE:
         - (?:gil)?.*perma.*sharp
     Platinum:
       patterns:
-        - gil.*pla
+        - gil.*plat
         - gil.*\bswede\b
         - plati
         - gil.*prem
@@ -390,7 +394,7 @@ DE:
     Silver Blue:
       patterns:
         - gsb
-        - Gill.*sil.*blue
+        - Gill.*sil.*bl\we
         - silver.*blue
         - gill.*sb
         - gill.*blu.*sil
@@ -527,6 +531,10 @@ DE:
     Double Edge:
       patterns:
         - market.*basket
+  Matgicol:
+    Super Platinum:
+      patterns:
+        - mat?gicol
   Merkur:
     Super Platinum:
       patterns:
@@ -601,7 +609,7 @@ DE:
         - platinum.*isr[ae]{2}l
     Super Stainless:
       patterns:
-        - ^(?!.*(diamond)).*person.*stainless(?# PAD FOR PRIORITY LENGTH xxxxxxxxxxxx)
+        - ^(?!.*(diamond|GEM)).*person.*stainless(?# PAD FOR PRIORITY LENGTH xxxxxxxxxxxx)
         - person.*\bss\b(?# PAD FOR PRIORITY LENGTH xxxxxxxxxxxx)
         - ^(?!.*(comfort|lab|plat|crystal)).*person.*super(?# PAD FOR PRIORITY LENGTH xxxxxxxxxxxx)
     Super+ Platinum:

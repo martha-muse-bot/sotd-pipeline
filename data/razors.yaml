@@ -262,11 +262,6 @@ Benetfink & Co.:
     format: Straight
     patterns:
       - benetfink
-Bengall:
-  Straight:
-    format: Straight
-    patterns:
-      - bengall(?:.*\d{1,2}/(8|16))?
 Bevel:
   Essential Disposable:
     #this is a disposable razor with a preloaded bevel de blade,
@@ -294,7 +289,7 @@ Blackland:
   Batch 004:
     format: GEM
     patterns:
-      - blackland.*batch[0\s-]*4
+      - blackland.*batch.*[0\s-]*4
   Blackbird:
     patterns:
       - 'bb\s*(sb|oc)'
@@ -347,6 +342,10 @@ Bombay Shavimg Company:
     patterns:
       - bombay.*shaving.*company
 Boti:
+  Classic DE:
+    format: DE
+    patterns:
+      - boti
   Vortex:
     patterns:
       - boti.*vortex
@@ -433,7 +432,7 @@ Cartridge/Disposable:
       - (?:sc?hic?k).*(disposable|xtreme 2|skintimate|hydro.*5|pla5tik)
       - (mach.?3|trac.?ii|sensor.?[23])
       - gil.*(cartridge|disposable)
-      - gil.*et.*(labs|fusion|guard|joy|proglide|sensor|venus)
+      - gil.*et.*(labs|fusion|guard|joy|proglide|sensor|venus|body)
       - bic.*(disposable|metal|sensitive)?
       - disposable
       - (gil)?.*\batra\b
@@ -451,6 +450,8 @@ Cartridge/Disposable:
       - twinblade
       - ^(?!.*(tip|silver blue|super blue|lady)).*gil.*blue
       - m[uü]hle.*fusion
+      - sc?hick intuition
+      - billie
 Case:
   Ability:
     format: Straight
@@ -1567,7 +1568,7 @@ Karve:
     patterns:
       - karve
       - (karve)?.*cb
-      - christopher.*brad
+      - christopher.*brad(?# PAD FOR PRIORITY LENGTH xxxxxxxxxxxx)
   Overlander:
     patterns:
       - (over|out)lander
@@ -1657,6 +1658,10 @@ Leaf:
     format: Half DE (multi-blade)
     patterns:
       - leaf
+  Branch:
+    format: Half DE
+    patterns:
+      - leaf.*branch
   Thorn:
     format: Half DE
     patterns:
@@ -1814,15 +1819,18 @@ Merkur:
   41C:
     patterns:
       - (merkur.*)?41c
+  42C:
+    patterns:
+      - (merkur.*)?42c
   43C:
     patterns:
       - (merkur.*)?43c
   45C:
     patterns:
       - (merkur.*)45\b
-  51C:
+  '510':
     patterns:
-      - (merkur.*)?51c
+      - (merkur.*)?51[c0]
   Futur:
     patterns:
       - ^(?!.*\b(?:clone|copy|style)\b).*?(merkur)?.*?futur\b
@@ -1882,7 +1890,7 @@ Mühle:
       - liscio
   Neo:
     patterns:
-      - m[uü]hle neo
+      - m[uü]hle.*neo
   R41:
     patterns:
       - R ?(41|103)
@@ -1972,10 +1980,11 @@ Other DE:
       - generic.*(safety|double)
       - german travel razor
       - pazor.*batch
+      - unbranded.*oc
 Other DE Clone:
   "":
     patterns:
-      - ^(?!.*(futur|eagle|shavette|kami|scales|ibc)).*(knockoff|clone)
+      - ^(?!.*(futur|eagle|shavette|kami|scales|ibc)).*(knockoff|clone\b)
       - merkur.*style
 Other Shavette:
   "":
@@ -1989,6 +1998,7 @@ Other Shavette:
       - chopstick kamisori
       - ice ?pick kamisori
       - "[ck]lon(?:e[nm])?isori"
+      - clone?isori
 Other Shavette (A77):
   "":
     format: Shavette (A77)
@@ -2054,6 +2064,7 @@ Other Straight Razor:
       - tonsorial.*gem
       - cutlery
       - ^perfection razor$
+      - improved eagle
 PAA:
   Alpha Ecliptic:
     patterns:
@@ -2122,7 +2133,7 @@ Paragon:
 Parker:
   111W:
     patterns:
-      - 111W
+      - (parker.*)?111W
   11R:
     patterns:
       - parker.*11r
@@ -2147,6 +2158,9 @@ Parker:
   66R:
     patterns:
       - 66R
+  68S:
+    patterns:
+      - parker.*68S
   78R:
     patterns:
       - 78R
@@ -2345,6 +2359,11 @@ Raw Shaving:
   RS-18:
     patterns:
       - rs-*18
+Razorine:
+  "":
+    format: Shavette (DE)
+    patterns:
+      - razorine(?:.*shavette)?
 RazoRock:
   Baby Smooth:
     patterns:
@@ -2377,6 +2396,7 @@ RazoRock:
   German 37 Slant:
     patterns:
       - 'german.*\b37\b'
+      - (razorock|rr).*german slant
   GOAT:
     patterns:
       - razorock.*goat
@@ -2424,6 +2444,7 @@ RazoRock:
       - razorock.*next ?level
       - rr.*next ?level
       - razorock.*\bnl\b
+      - (razorock|rr).*\bnl
   Old Type:
     patterns:
       - (razorock|\brr\b).*old.*type
@@ -2446,11 +2467,10 @@ RazoRock:
   Wunderbar Slant:
     patterns:
       - wunderbar
-Razorine:
-  "":
-    format: Shavette (DE)
+RazorWorks:
+  "R1 'Hammerhead'":
     patterns:
-      - razorine(?:.*shavette)?
+      - razorworks.*r1
 Red Imp:
   "132":
     format: Straight
@@ -2564,6 +2584,10 @@ Rocnel:
   Sailor:
     patterns:
       - Roc.*sail
+  MC Series:
+    patterns:
+      - rocnel.*\bmc\b
+      - rocnel.*master collection
   SE50:
     format: AC
     patterns:
@@ -2631,6 +2655,7 @@ Schick:
       - sc?hick.*adjustable
       - sc?hick.*\bm(1|2|3)\b
       - sc?hick.*dial
+      - sc?hick.*type m
   Dermaplaner:
     format: Shavette (Disposable)
     patterns:
@@ -2822,13 +2847,16 @@ Steer & Webster:
     patterns:
       - steer.*webster(?:.*\d{1,2}/(8|16))?
 Stirling:
+  Aggressive:
+    patterns:
+      - stirling.*aggressive
   Slant:
     patterns:
       - stirling.*slant
   Stainless Handle DE Razor:
     patterns:
       - st[ei]rling.*stain
-      - st[ei]rling.*(ss|hyper|ha|stai)
+      - st[ei]rling.*(\bss\b|hyper|stai)
       - st[ei]rling
 Sun Moon:
   Straight:
@@ -3090,7 +3118,7 @@ WCS:
       - '(W\.?C\.?S\.?|West Coast Shaving).*titanium'
   Slant:
     patterns:
-      - wcs.*slant
+      - (wcs|west coast).*slant
 Wacker:
   Straight:
     format: Straight
@@ -3182,12 +3210,13 @@ Whityle:
 Wilkinson Sword:
   Butterfly:
     patterns:
-      - wil\w+son.*sword
       - wil\w+son.*butter
   Classic:
     patterns:
+      - wilk.*sword
       - wilk.*classic
       - wil\w+son.*sword.*classic
+      - wilkinson.*(sword.*)?black
 Wizamet:
   Junior P-1:
     patterns:
@@ -3300,6 +3329,7 @@ Yaqi:
   SRH04:
     patterns:
       - yaqi.*srh04(?# PAD FOR PRIORITY LENGTH xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx)
+      - yaqi.*shr04(?# PAD FOR PRIORITY LENGTH xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx)
   Telstar:
     patterns:
       - yaqi.*telstar

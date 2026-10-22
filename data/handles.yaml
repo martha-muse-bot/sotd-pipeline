@@ -178,7 +178,7 @@ artisan_handles:
   Elite:
     Unspecified:
       patterns:
-        - ^(?!.*omega elite).*elite
+        - ^(?!.*omega elite).*\belite
   Envy Shave:
     Unspecified:
       patterns:
@@ -224,6 +224,10 @@ artisan_handles:
     Unspecified:
       patterns:
         - fuller
+    Bakelite:
+      patterns:
+        - fuller.*bakelite
+        - bakelite.*fuller
   GL Customs:
     Unspecified:
       patterns:
@@ -485,6 +489,10 @@ artisan_handles:
     Unspecified:
       patterns:
         - true.*til.*death
+  Tsar Shaving:
+    3D Printed:
+      patterns:
+        - tsar.*prints
   Turn-N-Shave:
     Unspecified:
       patterns:
@@ -883,7 +891,7 @@ manufacturer_handles:
   The Razor Company:
     Unspecified:
       patterns:
-        - razor.*co
+        - razor.*\bco
         - trc
   Van der Hagen:
     Unspecified:

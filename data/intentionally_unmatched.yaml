@@ -192,17 +192,41 @@ blade:
       id: mxd8vix
       source: user
 brush:
+  '[na]':
+    added_date: '2026-10-18'
+    comment_ids:
+    - file: 2026-09.json
+      id: pegafbh
+      source: user
+  a rag from my kids bathroom:
+    added_date: '2026-10-18'
+    comment_ids:
+    - file: 2026-09.json
+      id: phjb2dq
+      source: user
   banana:
     added_date: '2025-07-28'
     comment_ids:
     - file: 2025-06.json
       id: mxbcgzq
       source: user
+  bit o' sponge:
+    added_date: '2026-10-18'
+    comment_ids:
+    - file: 2026-09.json
+      id: phj84xi
+      source: user
   brandless green boar brush:
     added_date: '2025-08-09'
     comment_ids:
     - file: 2025-06.json
       id: mxi9gdw
+      source: user
+  brokenjaw622 my right hand:
+    added_date: '2026-10-18'
+    comment_ids:
+    - file: 2026-09.json
+      id: pfar898
       source: user
   chronnocrafts english lavender:
     added_date: '2025-08-10'
@@ -215,6 +239,12 @@ brush:
     comment_ids:
     - file: 2025-06.json
       id: myfjfm9
+      source: user
+  coconut:
+    added_date: '2026-10-18'
+    comment_ids:
+    - file: 2026-09.json
+      id: pf2f14x
       source: user
   do:
     added_date: '2025-07-28'
@@ -264,11 +294,35 @@ brush:
     - file: 2025-06.json
       id: mx0f6ht
       source: user
+  impressive donut cornshucker:
+    added_date: '2026-10-19'
+    comment_ids:
+    - file: 2026-10.json
+      id: phk6dvr
+      source: user
+  left hand:
+    added_date: '2026-10-18'
+    comment_ids:
+    - file: 2026-09.json
+      id: pfeevgd
+      source: user
+  loofa sponge:
+    added_date: '2026-10-18'
+    comment_ids:
+    - file: 2026-09.json
+      id: phi8pr4
+      source: user
   manos de tetriside:
     added_date: '2025-07-28'
     comment_ids:
     - file: 2025-06.json
       id: myhyv77
+      source: user
+  mr greenj33p:
+    added_date: '2026-10-18'
+    comment_ids:
+    - file: 2026-09.json
+      id: pd6jucx
       source: user
   muh hands:
     added_date: '2025-07-28'
@@ -300,11 +354,35 @@ brush:
     - file: 2025-09.json
       id: nevccp5
       source: user
+  my hands. apparently, this is what the world has come to:
+    added_date: '2026-10-20'
+    comment_ids:
+    - file: 2026-10.json
+      id: phm8sc7
+      source: user
+  my own two hands:
+    added_date: '2026-10-18'
+    comment_ids:
+    - file: 2026-10.json
+      id: phjfb97
+      source: user
+  my right hand:
+    added_date: '2026-10-18'
+    comment_ids:
+    - file: 2026-09.json
+      id: phjx72g
+      source: user
   n/a:
     added_date: '2025-08-10'
     comment_ids:
     - file: 2025-06.json
       id: myha7z7
+      source: user
+  ninja coffee maker milk frother attachment:
+    added_date: '2026-10-18'
+    comment_ids:
+    - file: 2026-09.json
+      id: phk230o
       source: user
   no brush needed for goop!:
     added_date: '2025-07-28'
@@ -336,6 +414,12 @@ brush:
     - file: mxit7rm.json
       id: mxit7rm
       source: user
+  none because our shaving overlords said so:
+    added_date: '2026-10-18'
+    comment_ids:
+    - file: 2026-09.json
+      id: pf7vjrp
+      source: user
   not applicable:
     added_date: '2025-07-28'
     comment_ids:
@@ -347,6 +431,18 @@ brush:
     comment_ids:
     - file: 2026-07.json
       id: oufz592
+      source: user
+  nutribullet immersion blender / hand:
+    added_date: '2026-10-20'
+    comment_ids:
+    - file: 2026-10.json
+      id: phmsori
+      source: user
+  oxo - good grips microfiber hand duster 51mm synthetic:
+    added_date: '2026-10-20'
+    comment_ids:
+    - file: 2026-10.json
+      id: phndcm7
       source: user
   palm 190mm:
     added_date: '2026-01-08'
@@ -360,6 +456,12 @@ brush:
     - file: 2025-06.json
       id: mx75a02
       source: user
+  recommended:
+    added_date: '2026-10-20'
+    comment_ids:
+    - file: 2026-10.json
+      id: phn5uri
+      source: user
   right hand:
     added_date: '2025-07-28'
     comment_ids:
@@ -372,17 +474,41 @@ brush:
     - file: 2025-02.json
       id: myf7jya
       source: user
+  ryobi one+ hp brushless impact driver - grant's 4" flat soft bristle brush:
+    added_date: '2026-10-18'
+    comment_ids:
+    - file: 2026-10.json
+      id: pe086i6
+      source: user
   see below:
     added_date: '2025-07-28'
     comment_ids:
     - file: 2025-06.json
       id: mw88dgo
       source: user
+  shower net:
+    added_date: '2026-10-20'
+    comment_ids:
+    - file: 2026-10.json
+      id: phne7m3
+      source: user
+  silicon face scrubbie:
+    added_date: '2026-10-18'
+    comment_ids:
+    - file: 2026-09.json
+      id: pe5nm2s
+      source: user
   snoo-ting - hands:
     added_date: '2026-01-10'
     comment_ids:
     - file: 2025-06.json
       id: mykp03w
+      source: user
+  sock of unknown brand:
+    added_date: '2026-10-18'
+    comment_ids:
+    - file: 2026-10.json
+      id: phjvwd5
       source: user
   talk to ze hand:
     added_date: '2026-07-15'
@@ -396,6 +522,12 @@ brush:
     - file: 2025-06.json
       id: mxz7bbg
       source: user
+  the hands of the tsar:
+    added_date: '2026-10-18'
+    comment_ids:
+    - file: 2026-09.json
+      id: pf928cy
+      source: user
   the tsar - hands:
     added_date: '2026-01-05'
     comment_ids:
@@ -408,11 +540,41 @@ brush:
     - file: 2025-06.json
       id: mx6lwpn
       source: user
+  unlabeled - old wash cloth:
+    added_date: '2026-10-19'
+    comment_ids:
+    - file: 2026-10.json
+      id: phipm9r
+      source: user
   unmarked mystery brush:
     added_date: '2025-10-02'
     comment_ids:
     - file: 2025-09.json
       id: ndxp6mm
+      source: user
+  wash cloth:
+    added_date: '2026-10-20'
+    comment_ids:
+    - file: 2026-10.json
+      id: phlz358
+      source: user
+  whatever brush was closest. it doesn't matter:
+    added_date: '2026-10-18'
+    comment_ids:
+    - file: 2026-09.json
+      id: pd6juky
+      source: user
+  'yes':
+    added_date: '2026-10-18'
+    comment_ids:
+    - file: 2026-09.json
+      id: pcm7052
+      source: user
+  zulay kitchen milk frother:
+    added_date: '2026-10-18'
+    comment_ids:
+    - file: 2026-09.json
+      id: phla1nu
       source: user
 razor:
   .:
@@ -471,6 +633,12 @@ razor:
     comment_ids:
     - file: 2025-02.json
       id: mfn1cig
+      source: user
+  unknown - garden shears:
+    added_date: '2026-10-20'
+    comment_ids:
+    - file: 2026-10.json
+      id: pgnbws3
       source: user
   'yes':
     added_date: '2025-09-01'

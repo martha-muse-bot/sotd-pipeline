@@ -107,6 +107,19 @@
 2026-09:
   p7eaxrl:
     soap: Mashup
+  p8s0mpr:
+    razor: Yaqi SHR04
+  pacaf3e:
+    brush: Omega 11047 - Mixed Miget Boar n Badger
+  pbmoxub:
+    soap: E&S Rasage Barber
+  pc2irjp:
+    soap: u/ArcadeRehab - Vetiver Puck
+  pc6r4fd:
+    soap: u/ArcadeRehab - Azzurro Puck
 2026-10:
   pggo7e7:
-    soap: Unknown - Blind Date
+    # Survives extract normalization (unlike "Unknown - Smush", which strips to "Unknown")
+    soap: Unknown Mystery
+  phnejcv:
+    razor: Wilkinson black plastic

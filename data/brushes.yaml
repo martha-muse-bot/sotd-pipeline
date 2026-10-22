@@ -582,6 +582,7 @@ known_brushes:
       knot_size_mm: 24
       patterns:
         - omega.*11126
+        - omega 26
     "11137":
       knot_size_mm: 24
       patterns:
@@ -823,15 +824,24 @@ known_brushes:
       patterns:
         - power.*rangers?.*syn
   Rad Dinosaur Creations x Summer Break Soaps:
+    Authenticity:
+      patterns:
+        - r\wd.*dinosaur.*authenticity
+      knot:
+        brand: Rad Dinosaur Creations
+        fiber: Badger
+        knot_size_mm: 26
+      handle:
+        brand: Summer Break Soaps
     Optimism:
       patterns:
         - rad.*dinosaur.*optimism
       knot:
         brand: Rad Dinosaur Creations
         fiber: Badger
-        knot_size_mm: 28
+        knot_size_mm: 26
       handle:
-        brand: Rad Dinosaur Creations
+        brand: Summer Break Soaps
   Razor Emporium:
     Best Badger:
       fiber: Badger
@@ -959,6 +969,13 @@ known_brushes:
       fiber: Boar
       patterns:
         - rubberset.*travel.*brush
+  Savile Row:
+    '3824':
+      fiber: Badger
+      knot_size_mm: 24
+      knot_loft_mm: 52
+      patterns:
+        - savile.*row.*3824
   Semogue:
     fiber: Boar
     "1250":
@@ -1335,6 +1352,14 @@ known_brushes:
       knot_size_mm: 24
       patterns:
         - 'supply(?: silvertip)? synthetic'
+  St. James of London:
+    Ivory Super Badger:
+      fiber: Badger
+      knot_size_mm: 24
+      knot_loft_mm: 58
+      patterns:
+        - james.*london.*ivory
+        - london stubby badger #https://www.reddit.com/r/Wetshaving/comments/1wpoiur/friday_sotd_thread_sep_25_2026/pc34ejx/
   Stirling:
     2-Band Synthetic:
       fiber: Synthetic
@@ -1495,6 +1520,11 @@ known_brushes:
         - wcs.*honeycomb
         - honeycomb badger
   Yaqi:
+    M150801-B1:
+      fiber: Badger
+      knot_size_mm: 24
+      patterns:
+        - yaqi.*m150801-b1
     Cashmere:
       fiber: Synthetic
       patterns:
@@ -1504,6 +1534,7 @@ known_brushes:
       knot_size_mm: 26
       patterns:
         - yaqi.*ferrari
+        - 26mm.*ferrari
     Synbad:
       fiber: Synthetic
       patterns:
@@ -1698,6 +1729,7 @@ known_brushes:
     r/wetshaving MOAR BOAR:
       patterns:
         - moar(.*boar)?
+        - moar ?boar(?# PAD FOR PRIORITY LENGTH xxxxxxxxxxxx)
         - 508\s*xl
         - wetshaving.*exc
         - maor boar
@@ -2184,6 +2216,9 @@ known_knot_based_brushes:
     V30:
       patterns:
         - grizz.*v30\b
+    V31:
+      patterns:
+        - grizz.*v31\b
   Long Shaving:
     Reserve:
       fiber: Badger
@@ -2672,7 +2707,7 @@ other_brushes:
     default: Badger
     patterns:
       - bristle.*brush ?w[eo]rks?
-      - huck
+      - \bhuck
   Brushcraft:
     default: Synthetic
     patterns:
@@ -3041,6 +3076,10 @@ other_brushes:
     default: Badger
     patterns:
       - maseto
+  Master Barber:
+    default: Badger
+    patterns:
+      - master.*barber
   Mistic Brush:
     default: Synthetic
     patterns:
@@ -3107,6 +3146,10 @@ other_brushes:
     default: Synthetic
     patterns:
       - \bnom\b
+  Oliworks:
+    default: Synthetic
+    patterns:
+      - oliworks
   Omega:
     default: Boar
     patterns:
@@ -3193,6 +3236,7 @@ other_brushes:
       - rad ?dino(saur)?
       - priusaurus
       - rdc
+      - \bdino\b
   RazoRock:
     default: Synthetic
     patterns:
@@ -3363,7 +3407,7 @@ other_brushes:
   The Razor Company:
     default: Synthetic
     patterns:
-      - razor.*co
+      - razor.*\bco
       - trc
   The Rustic Bee:
     default: Badger

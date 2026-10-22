@@ -348,7 +348,7 @@ known_knots:
     fiber: Badger
     B1:
       patterns:
-        - \bb1\b
+        - ^(?!.*M150801).*\bb1\b
     B2:
       patterns:
         - ^(?!.*zen).*\bb2\b
@@ -482,11 +482,15 @@ known_knots:
     V28:
       patterns:
         - grizz.*v28\b
-  Long Shaving:
-    Reserve:
-      fiber: Badger
+    V29:
       patterns:
-        - reserve (v|vi*|i*)
+        - grizz.*v29\b
+    V30:
+      patterns:
+        - grizz.*v30\b
+    V31:
+      patterns:
+        - grizz.*v31\b
   Maggard:
     2-Band Badger:
       fiber: Badger
