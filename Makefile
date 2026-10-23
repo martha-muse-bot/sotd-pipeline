@@ -1,4 +1,8 @@
-.PHONY: all lint format typecheck test coverage fetch extract match enrich aggregate pipeline performance-test install install-dev preprocess test-all test-python test-react test-e2e test-watch test-coverage test-parallel test-slow test-fast test-unit test-integration test-api start-servers stop-servers server-status restart-servers lint-count lint-e501 lint-f401 lint-f841 lint-auto-fix lint-format lint-systematic publish-data build-public build-images
+.PHONY: all lint format typecheck test coverage fetch extract match enrich aggregate pipeline performance-test install install-dev preprocess test-all test-python test-react test-e2e test-watch test-coverage test-parallel test-slow test-fast test-unit test-integration test-api start-servers stop-servers server-status restart-servers lint-count lint-e501 lint-f401 lint-f841 lint-auto-fix lint-format lint-systematic publish-data build-public build-images help
+
+# List available targets (those with ## help comments)
+help:  ## list available make targets
+	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}'
 
 all: preprocess lint format typecheck test
 

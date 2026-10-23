@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 # Publish the slim public data bundle to the NAS (or any rsync target).
 # Usage: scripts/publish-public-data.sh [TARGET]
-#   TARGET default: nas:sotd-public/data   (ssh alias + path; can be a local dir)
+#   TARGET default: nas:/volume1/docker/sotd-public/data  (ABSOLUTE — a relative
+#   path resolves to the ssh login's HOME on the NAS, which is not the share)
 # Env: SOTD_PUBLIC_DATA_TARGET overrides the default target.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-TARGET="${1:-${SOTD_PUBLIC_DATA_TARGET:-nas:sotd-public/data}}"
+TARGET="${1:-${SOTD_PUBLIC_DATA_TARGET:-nas:/volume1/docker/sotd-public/data}}"
 
 echo "==> verifying bundle completeness"
 python scripts/publish_public_data.py --check --data-dir data
