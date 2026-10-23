@@ -81,7 +81,7 @@ export default function App() {
             </div>
           )}
         </header>
-        <main className='max-w-7xl mx-auto px-4 py-6'>
+        <main className='max-w-7xl mx-auto px-2 py-3 sm:px-4 sm:py-6'>
           <Routes>
             <Route path='/' element={<PublicHome />} />
             <Route path='/product-usage' element={<ProductUsage />} />

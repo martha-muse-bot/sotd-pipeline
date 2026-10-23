@@ -394,7 +394,7 @@ const ReportPlacementOverTime: React.FC = () => {
   }, [series]);
 
   return (
-    <div className="w-full p-4 max-w-full overflow-x-hidden">
+    <div className="w-full p-0 sm:p-4 max-w-full overflow-x-hidden">
       <div className="mb-4">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Rankings over time</h1>
         <p className="text-gray-600">

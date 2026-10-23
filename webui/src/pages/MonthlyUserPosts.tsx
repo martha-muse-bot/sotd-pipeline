@@ -1311,7 +1311,7 @@ const MonthlyUserPosts: React.FC = () => {
 
   try {
     return (
-    <div className='container mx-auto p-4 sm:p-6 space-y-6'>
+    <div className='container mx-auto p-0 sm:p-6 space-y-6'>
       <div className='flex flex-wrap items-center justify-between gap-2'>
         <div>
           <h1 className='text-2xl sm:text-3xl font-bold'>Monthly User Posts</h1>
