@@ -13,3 +13,5 @@ pydantic
 python-multipart
 httpx
 rapidfuzz>=3.0.0
+prometheus-fastapi-instrumentator
+prometheus-client

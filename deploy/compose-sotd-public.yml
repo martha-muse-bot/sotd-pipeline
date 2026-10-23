@@ -9,6 +9,8 @@
 # Networking: npm-bridge so nginx-proxy-manager routes the public hostname to
 # sotd-public-frontend (and /api through the same host → frontend proxies to the
 # API service); cf_tunnel_net so the cloudflared tunnel can route it.
+# metrics-net: internal-only scrape network (Prometheus pulls the API's /metrics
+# here; the API stays OFF cf_tunnel_net).
 #
 # NOTE: do NOT set a `cpus:` limit — Synology's cgroup v1 rejects it.
 services:
@@ -25,6 +27,7 @@ services:
       - /volume1/docker/sotd-public/data:/data:ro
     networks:
       - sotd-internal
+      - metrics-net
 
   sotd-public-frontend:
     image: ghcr.io/nmrs/sotd-pipeline-public-frontend:latest
@@ -41,6 +44,8 @@ services:
 networks:
   sotd-internal:
     driver: bridge
+  metrics-net:
+    external: true
   npm-bridge:
     external: true
   cf_tunnel_net:

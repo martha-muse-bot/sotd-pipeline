@@ -50,3 +50,16 @@ def test_no_admin_router_prefixes():
 def test_health_endpoint():
     resp = client.get("/api/product-usage/health")
     assert resp.status_code == 200
+
+
+def test_metrics_endpoint_exposed():
+    # Not publicly routed (only the frontend container is), so no Host guard here.
+    resp = client.get("/metrics")
+    assert resp.status_code == 200
+    assert resp.headers["content-type"].startswith("text/plain")
+    assert "http_requests_total" in resp.text
+
+
+def test_metrics_not_in_openapi_schema():
+    schema = client.get("/openapi.json").json()
+    assert "/metrics" not in schema["paths"]

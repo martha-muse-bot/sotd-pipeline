@@ -11,9 +11,11 @@ import os
 import sys
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from prometheus_client import CONTENT_TYPE_LATEST, REGISTRY, generate_latest
+from prometheus_fastapi_instrumentator import Instrumentator
 
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
@@ -35,6 +37,15 @@ app = FastAPI(
 app.include_router(product_usage_router)
 app.include_router(monthly_user_posts_router)
 app.include_router(report_rankings_router)
+
+# Metrics middleware records every request; /metrics is served by the guarded
+# route below (NOT Instrumentator.expose — it has no auth hook we control).
+Instrumentator(excluded_handlers=["/metrics", "/api/product-usage/health"]).instrument(app)
+
+
+@app.get("/metrics", include_in_schema=False)
+def metrics():
+    return Response(generate_latest(REGISTRY), media_type=CONTENT_TYPE_LATEST)
 
 _allowed_origin = os.getenv("PUBLIC_ALLOWED_ORIGIN", "http://localhost:3000")
 app.add_middleware(
