@@ -1096,8 +1096,17 @@ const ProductUsage: React.FC = () => {
 
           return (
             <div key={month} className='space-y-4'>
-              <div className='text-center relative'>
-                <div className='flex items-center justify-center gap-2 mt-2 sm:mt-0 sm:absolute sm:top-0 sm:right-0'>
+              <div className='text-center'>
+                <h3 className='text-lg font-semibold'>
+                  {new Date(year, monthNum - 1).toLocaleDateString('en-US', {
+                    month: 'long',
+                    year: 'numeric',
+                  })}
+                </h3>
+                <p className='text-sm text-muted-foreground'>
+                  Total Usage: {monthAnalysis.total_usage} times by {monthAnalysis.unique_users} users
+                </p>
+                <div className='flex flex-wrap items-center justify-center gap-2 mt-2'>
                   <Button
                     variant='outline'
                     size='sm'
@@ -1131,15 +1140,6 @@ const ProductUsage: React.FC = () => {
                     {copySuccess[`calendar-${month}-no-urls`] ? 'Copied!' : 'Copy (no URLs)'}
                   </Button>
                 </div>
-                <h3 className='text-lg font-semibold'>
-                  {new Date(year, monthNum - 1).toLocaleDateString('en-US', {
-                    month: 'long',
-                    year: 'numeric',
-                  })}
-                </h3>
-                <p className='text-sm text-muted-foreground'>
-                  Total Usage: {monthAnalysis.total_usage} times by {monthAnalysis.unique_users} users
-                </p>
               </div>
 
               <div className='grid grid-cols-7 gap-1'>
@@ -1220,8 +1220,12 @@ const ProductUsage: React.FC = () => {
       <div className='space-y-8'>
         {/* Aggregated summary when multiple months */}
         {selectedMonths.length > 1 && aggregatedAnalysis && (
-          <div className='text-center mb-4 relative'>
-            <div className='flex items-center justify-center gap-2 mt-2 sm:mt-0 sm:absolute sm:top-0 sm:right-0'>
+          <div className='text-center mb-4'>
+            <h3 className='text-lg font-semibold'>{selectedMonths.length} months selected</h3>
+            <p className='text-sm text-muted-foreground'>
+              Total Usage: {aggregatedAnalysis.total_usage} times by {aggregatedAnalysis.unique_users} users
+            </p>
+            <div className='flex flex-wrap items-center justify-center gap-2 mt-2'>
               <Button
                 variant='outline'
                 size='sm'
@@ -1255,10 +1259,6 @@ const ProductUsage: React.FC = () => {
                 {copySuccess['list-view-no-urls'] ? 'Copied!' : 'Copy (no URLs)'}
               </Button>
             </div>
-            <h3 className='text-lg font-semibold'>{selectedMonths.length} months selected</h3>
-            <p className='text-sm text-muted-foreground'>
-              Total Usage: {aggregatedAnalysis.total_usage} times by {aggregatedAnalysis.unique_users} users
-            </p>
           </div>
         )}
 
@@ -1331,8 +1331,17 @@ const ProductUsage: React.FC = () => {
 
           return (
             <div key={month} className='space-y-4'>
-              <div className='text-center mb-4 relative'>
-                <div className='flex items-center justify-center gap-2 mt-2 sm:mt-0 sm:absolute sm:top-0 sm:right-0'>
+              <div className='text-center mb-4'>
+                <h3 className='text-lg font-semibold'>
+                  {new Date(year, monthNum - 1).toLocaleDateString('en-US', {
+                    month: 'long',
+                    year: 'numeric',
+                  })}
+                </h3>
+                <p className='text-sm text-muted-foreground'>
+                  Total Usage: {monthAnalysis.total_usage} times by {monthAnalysis.unique_users} users
+                </p>
+                <div className='flex flex-wrap items-center justify-center gap-2 mt-2'>
                   <Button
                     variant='outline'
                     size='sm'
@@ -1366,15 +1375,6 @@ const ProductUsage: React.FC = () => {
                     {copySuccess[`list-view-${month}-no-urls`] ? 'Copied!' : 'Copy (no URLs)'}
                   </Button>
                 </div>
-                <h3 className='text-lg font-semibold'>
-                  {new Date(year, monthNum - 1).toLocaleDateString('en-US', {
-                    month: 'long',
-                    year: 'numeric',
-                  })}
-                </h3>
-                <p className='text-sm text-muted-foreground'>
-                  Total Usage: {monthAnalysis.total_usage} times by {monthAnalysis.unique_users} users
-                </p>
               </div>
 
               <div className='space-y-2'>
