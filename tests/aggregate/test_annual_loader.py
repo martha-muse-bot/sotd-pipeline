@@ -6,8 +6,9 @@ This module tests the functionality for loading 12 months of aggregated data
 for a given year, including handling missing months and data validation.
 """
 
+import json
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -67,9 +68,14 @@ class TestAnnualDataLoader:
 
     def test_load_monthly_file_missing(self):
         """Test loading a missing monthly file."""
-        with patch("builtins.open", create=True) as mock_open:
-            mock_open.side_effect = FileNotFoundError("File not found")
-
+        # Mock load_json_data (not builtins.open): the loader uses
+        # file_path.exists()/open(), so a builtins.open mock also intercepts
+        # unrelated opens (e.g. stdlib lazy data reads on CI runners) and its
+        # FileNotFoundError escapes the loader's try block.
+        with patch(
+            "sotd.aggregate.annual_loader.load_json_data",
+            side_effect=FileNotFoundError("File not found"),
+        ):
             loader = AnnualDataLoader("2024", Path("/data"))
             result = loader.load_monthly_file(Path("/data/2024-01.json"))
 
@@ -77,9 +83,10 @@ class TestAnnualDataLoader:
 
     def test_load_monthly_file_corrupted(self):
         """Test loading a corrupted monthly file."""
-        with patch("builtins.open", create=True) as mock_open:
-            mock_open.return_value.__enter__.return_value.read.return_value = "invalid json"
-
+        with patch(
+            "sotd.aggregate.annual_loader.load_json_data",
+            side_effect=json.JSONDecodeError("Invalid JSON", "invalid json", 0),
+        ):
             loader = AnnualDataLoader("2024", Path("/data"))
 
             result = loader.load_monthly_file(Path("/data/2024-01.json"))
