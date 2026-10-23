@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, NavLink, Link } from 'react-router-dom';
 import ProductUsage from '../pages/ProductUsage';
 import MonthlyUserPosts from '../pages/MonthlyUserPosts';
 import ReportPlacementOverTime from '../pages/ReportPlacementOverTime';
@@ -25,7 +25,9 @@ export default function App() {
       <div className='min-h-screen bg-gray-900 text-white'>
         <header className='bg-gray-800 shadow'>
           <nav className='max-w-7xl mx-auto px-4 h-14 flex items-center justify-between sm:justify-start sm:gap-2'>
-            <span className='font-bold mr-4'>SOTD Analytics</span>
+            <Link to='/' className='font-bold mr-4 text-white hover:text-gray-300'>
+              SOTD Analytics
+            </Link>
             {/* Desktop links */}
             <div className='hidden sm:flex items-center gap-2'>
               {navLinks.map(l => (
