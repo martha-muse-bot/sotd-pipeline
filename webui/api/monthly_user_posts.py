@@ -10,6 +10,8 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
+from .utils.data_dir import get_enriched_dir, get_user_analysis_dir  # noqa: E402
+
 # Add the project root to the path to import from sotd
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
@@ -53,35 +55,53 @@ class MonthData(BaseModel):
 async def get_available_months() -> List[MonthData]:
     """Get list of available months with data."""
     try:
-        # Get project root directory (3 levels up from this file)
-        project_root = Path(__file__).parent.parent.parent
-        enriched_dir = project_root / "data" / "enriched"
-
-        if not enriched_dir.exists():
-            return []
-
+        # Primary source: pre-computed user_analysis aggregates (present in the
+        # public bundle, which has no enriched/).
+        user_analysis_dir = get_user_analysis_dir()
         months = []
-        for file_path in enriched_dir.glob("*.json"):
-            month = file_path.stem
-            if month and len(month) == 7 and month[4] == "-":  # YYYY-MM format
-                # Check if file has data
-                try:
-                    import json
-
-                    with open(file_path, "r", encoding="utf-8") as f:
-                        data = json.load(f)
-                        user_count = len(
-                            set(
-                                record.get("author")
-                                for record in data.get("data", [])
-                                if record.get("author")
+        if user_analysis_dir.exists():
+            for file_path in user_analysis_dir.glob("*.json"):
+                month = file_path.stem
+                if month and len(month) == 7 and month[4] == "-":  # YYYY-MM format
+                    try:
+                        with file_path.open("r", encoding="utf-8") as f:
+                            data = json.load(f)
+                        months.append(
+                            MonthData(
+                                month=month,
+                                has_data=True,
+                                user_count=len(data.get("users", {})),
                             )
                         )
+                    except Exception as e:
+                        logger.warning(f"Error reading {file_path}: {e}")
+                        months.append(MonthData(month=month, has_data=False, user_count=0))
 
-                    months.append(MonthData(month=month, has_data=True, user_count=user_count))
-                except Exception as e:
-                    logger.warning(f"Error reading {file_path}: {e}")
-                    months.append(MonthData(month=month, has_data=False, user_count=0))
+        # Fallback: scan enriched/ only when user_analysis yielded nothing.
+        if not months:
+            enriched_dir = get_enriched_dir()
+            if enriched_dir.exists():
+                for file_path in enriched_dir.glob("*.json"):
+                    month = file_path.stem
+                    if month and len(month) == 7 and month[4] == "-":  # YYYY-MM format
+                        # Check if file has data
+                        try:
+                            with file_path.open("r", encoding="utf-8") as f:
+                                data = json.load(f)
+                                user_count = len(
+                                    set(
+                                        record.get("author")
+                                        for record in data.get("data", [])
+                                        if record.get("author")
+                                    )
+                                )
+
+                            months.append(
+                                MonthData(month=month, has_data=True, user_count=user_count)
+                            )
+                        except Exception as e:
+                            logger.warning(f"Error reading {file_path}: {e}")
+                            months.append(MonthData(month=month, has_data=False, user_count=0))
 
         # Sort by month (newest first)
         months.sort(key=lambda x: x.month, reverse=True)
@@ -98,12 +118,8 @@ async def get_users_for_month(
 ) -> List[Dict[str, Any]]:
     """Get list of users who posted in a specific month."""
     try:
-        project_root = Path(__file__).parent.parent.parent
-
         # Try to load from pre-computed user analysis file
-        user_analysis_file = (
-            project_root / "data" / "aggregated" / "user_analysis" / f"{month}.json"
-        )
+        user_analysis_file = get_user_analysis_dir() / f"{month}.json"
 
         if user_analysis_file.exists():
             try:
@@ -133,7 +149,7 @@ async def get_users_for_month(
 
         # Fallback: Load enriched data and process on-demand
         try:
-            enriched_file = project_root / "data" / "enriched" / f"{month}.json"
+            enriched_file = get_enriched_dir() / f"{month}.json"
 
             if not enriched_file.exists():
                 return []
@@ -171,12 +187,8 @@ async def get_users_for_month(
 async def get_user_posting_analysis(month: str, username: str) -> UserPostingAnalysis:
     """Get posting analysis for a specific user in a specific month."""
     try:
-        project_root = Path(__file__).parent.parent.parent
-
         # Try to load from pre-computed user analysis file
-        user_analysis_file = (
-            project_root / "data" / "aggregated" / "user_analysis" / f"{month}.json"
-        )
+        user_analysis_file = get_user_analysis_dir() / f"{month}.json"
 
         if user_analysis_file.exists():
             try:
@@ -204,7 +216,7 @@ async def get_user_posting_analysis(month: str, username: str) -> UserPostingAna
 
         # Fallback: Load enriched data and process on-demand
         try:
-            enriched_file = project_root / "data" / "enriched" / f"{month}.json"
+            enriched_file = get_enriched_dir() / f"{month}.json"
 
             if not enriched_file.exists():
                 raise HTTPException(status_code=404, detail=f"No data available for {month}")

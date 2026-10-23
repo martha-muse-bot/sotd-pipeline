@@ -134,6 +134,7 @@ src/
 ### Development
 - `npm run dev` - Start frontend development server (Vite on port 3000)
 - `npm run build` - Build for production
+- `npm run build:public` - Build the public frontend (see [Public build](#public-build))
 - `npm run preview` - Preview production build
 
 ### Code Quality
@@ -193,6 +194,27 @@ npm run format:check
 - **Formatting**: ✅ All files are properly formatted
 - **Linting**: ⚠️ 286 issues remaining (mostly TypeScript `any` types and React imports)
 - **Auto-fix**: Most formatting issues can be auto-fixed
+
+## Public build
+
+The repo ships **two frontend builds**:
+
+- **Admin** (default): `npm run build` — the full operator app with all
+  analyzers, served by the FastAPI backend or the dev server.
+- **Public**: `npm run build:public` (`vite build --config
+  vite.config.public.ts`) — a read-only analytics subset built from
+  `src/public/`, output to `dist-public/`. It contains three pages:
+  Product Usage (`/product-usage`), Monthly User Posts
+  (`/monthly-user-posts`), and Report Placement Over Time
+  (`/report-placement`), plus a public home page.
+
+The public build talks to the public API (`webui/api/public_main.py`),
+which exposes only the read-only routers those pages need
+(product_usage, monthly_user_posts, report_rankings). The container
+images build and serve both halves — see `deploy/README.md` for the NAS
+deployment runbook, and
+`docs/superpowers/specs/2026-10-22-webui-containerization-public-admin-split-design.md`
+for the design.
 
 ## Backend Integration
 

@@ -1,10 +1,8 @@
 """Tests for non-matches utility module."""
 
 import os
-import yaml
-from pathlib import Path
 
-import pytest
+import yaml
 
 from webui.api.utils.non_matches import (
     get_non_matches_dir,
@@ -29,7 +27,7 @@ class TestGetNonMatchesDir:
         os.environ["SOTD_DATA_DIR"] = str(tmp_path)
         try:
             result = get_non_matches_dir()
-            assert result == tmp_path / "data" / "overrides"
+            assert result == tmp_path / "overrides"
         finally:
             os.environ.pop("SOTD_DATA_DIR", None)
 
@@ -41,7 +39,7 @@ class TestLoadNonMatches:
         """Test loading all three non-match files."""
         os.environ["SOTD_DATA_DIR"] = str(tmp_path)
         try:
-            overrides_dir = tmp_path / "data" / "overrides"
+            overrides_dir = tmp_path / "overrides"
             overrides_dir.mkdir(parents=True)
 
             # Create test files
@@ -72,7 +70,7 @@ class TestLoadNonMatches:
         """Test graceful handling of missing files."""
         os.environ["SOTD_DATA_DIR"] = str(tmp_path)
         try:
-            overrides_dir = tmp_path / "data" / "overrides"
+            overrides_dir = tmp_path / "overrides"
             overrides_dir.mkdir(parents=True)
 
             result = load_non_matches()
@@ -94,7 +92,7 @@ class TestSaveBrandNonMatch:
         """Test saving a new brand non-match."""
         os.environ["SOTD_DATA_DIR"] = str(tmp_path)
         try:
-            overrides_dir = tmp_path / "data" / "overrides"
+            overrides_dir = tmp_path / "overrides"
             overrides_dir.mkdir(parents=True)
 
             result = save_brand_non_match("Brand A", "Brand B")
@@ -117,7 +115,7 @@ class TestSaveBrandNonMatch:
         """Test that duplicate brand non-matches are not saved twice."""
         os.environ["SOTD_DATA_DIR"] = str(tmp_path)
         try:
-            overrides_dir = tmp_path / "data" / "overrides"
+            overrides_dir = tmp_path / "overrides"
             overrides_dir.mkdir(parents=True)
 
             # Save first time
@@ -141,7 +139,7 @@ class TestSaveBrandNonMatch:
         """Test that brand non-matches are saved in alphabetical order."""
         os.environ["SOTD_DATA_DIR"] = str(tmp_path)
         try:
-            overrides_dir = tmp_path / "data" / "overrides"
+            overrides_dir = tmp_path / "overrides"
             overrides_dir.mkdir(parents=True)
 
             # Add non-matches in non-alphabetical order
@@ -171,7 +169,7 @@ class TestSaveScentNonMatch:
         """Test saving a new scent non-match."""
         os.environ["SOTD_DATA_DIR"] = str(tmp_path)
         try:
-            overrides_dir = tmp_path / "data" / "overrides"
+            overrides_dir = tmp_path / "overrides"
             overrides_dir.mkdir(parents=True)
 
             result = save_scent_non_match("Brand A", "Scent 1", "Scent 2")
@@ -194,7 +192,7 @@ class TestSaveScentNonMatch:
         """Test that scent non-matches are saved in alphabetical order."""
         os.environ["SOTD_DATA_DIR"] = str(tmp_path)
         try:
-            overrides_dir = tmp_path / "data" / "overrides"
+            overrides_dir = tmp_path / "overrides"
             overrides_dir.mkdir(parents=True)
 
             # Add non-matches in non-alphabetical order
@@ -229,7 +227,7 @@ class TestSaveCrossBrandScentNonMatch:
         """Test saving a new cross-brand scent non-match."""
         os.environ["SOTD_DATA_DIR"] = str(tmp_path)
         try:
-            overrides_dir = tmp_path / "data" / "overrides"
+            overrides_dir = tmp_path / "overrides"
             overrides_dir.mkdir(parents=True)
 
             result = save_cross_brand_scent_non_match("Brand A", "Lavender", "Brand B", "Lavender")
@@ -254,7 +252,7 @@ class TestSaveCrossBrandScentNonMatch:
         """Test that cross-brand scent non-matches are saved in alphabetical order."""
         os.environ["SOTD_DATA_DIR"] = str(tmp_path)
         try:
-            overrides_dir = tmp_path / "data" / "overrides"
+            overrides_dir = tmp_path / "overrides"
             overrides_dir.mkdir(parents=True)
 
             # Add non-matches in non-alphabetical order
@@ -280,7 +278,7 @@ class TestSaveCrossBrandScentNonMatch:
         """Test that atomic write pattern is used (temp file then replace)."""
         os.environ["SOTD_DATA_DIR"] = str(tmp_path)
         try:
-            overrides_dir = tmp_path / "data" / "overrides"
+            overrides_dir = tmp_path / "overrides"
             overrides_dir.mkdir(parents=True)
 
             # Save a non-match
@@ -303,7 +301,7 @@ class TestCanonicalStorage:
         """Test that brand non-matches are saved with canonical key (alphabetically first)."""
         os.environ["SOTD_DATA_DIR"] = str(tmp_path)
         try:
-            overrides_dir = tmp_path / "data" / "overrides"
+            overrides_dir = tmp_path / "overrides"
             overrides_dir.mkdir(parents=True)
 
             # Save A != B (A is alphabetically first)
@@ -337,7 +335,7 @@ class TestCanonicalStorage:
         """Test that scent non-matches are saved with canonical key (alphabetically first)."""
         os.environ["SOTD_DATA_DIR"] = str(tmp_path)
         try:
-            overrides_dir = tmp_path / "data" / "overrides"
+            overrides_dir = tmp_path / "overrides"
             overrides_dir.mkdir(parents=True)
 
             # Save A != B (A is alphabetically first)
@@ -363,7 +361,7 @@ class TestCanonicalStorage:
         """Test that cross-brand scent non-matches use canonical key (alphabetically first)."""
         os.environ["SOTD_DATA_DIR"] = str(tmp_path)
         try:
-            overrides_dir = tmp_path / "data" / "overrides"
+            overrides_dir = tmp_path / "overrides"
             overrides_dir.mkdir(parents=True)
 
             # Save Leather != Heather (Heather is alphabetically first)
@@ -393,7 +391,7 @@ class TestCanonicalStorage:
         """Test that loading canonicalizes and dedupes entries."""
         os.environ["SOTD_DATA_DIR"] = str(tmp_path)
         try:
-            overrides_dir = tmp_path / "data" / "overrides"
+            overrides_dir = tmp_path / "overrides"
             overrides_dir.mkdir(parents=True)
 
             # Manually create duplicate/non-canonical YAML (B -> A and A -> B)
@@ -426,7 +424,7 @@ class TestCanonicalStorage:
         """Test that existing duplicate/non-canonical data is fixed."""
         os.environ["SOTD_DATA_DIR"] = str(tmp_path)
         try:
-            overrides_dir = tmp_path / "data" / "overrides"
+            overrides_dir = tmp_path / "overrides"
             overrides_dir.mkdir(parents=True)
 
             # Create duplicate scent data (both A -> B and B -> A)

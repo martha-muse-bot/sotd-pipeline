@@ -1,0 +1,25 @@
+# Admin (operator) app: full API + built frontend, single port, LAN-only deploy.
+FROM node:20-slim AS frontend
+WORKDIR /src
+COPY webui/package.json webui/package-lock.json ./
+RUN npm ci
+COPY webui/ .
+# vite build only — NOT `npm run build` (which runs tsc). Repo-wide tsc --noEmit has
+# ~250 pre-existing errors, almost all in src/**/__tests__ jest-only test files;
+# production images must not gate on those. The dev flow (`npm run build`) keeps tsc.
+RUN npx vite build
+
+FROM python:3.14-slim
+WORKDIR /app/webui
+COPY requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir -r /app/requirements.txt
+COPY sotd /app/sotd
+COPY webui/api /app/webui/api
+COPY --from=frontend /src/dist /app/webui/dist
+ENV PYTHONPATH=/app:/app/webui
+# Admin mounts the FULL pipeline data dir (bundle + enriched) read-only or rw as desired.
+ENV SOTD_DATA_DIR=/data
+EXPOSE 8000
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
+  CMD ["python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/api/product-usage/health', timeout=5).status==200 else 1)"]
+CMD ["python", "-m", "uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]

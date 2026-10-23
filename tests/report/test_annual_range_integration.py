@@ -70,11 +70,13 @@ class TestAnnualRangeProcessing:
 
     @patch("sotd.report.annual_generator.create_annual_report_generator")
     @patch("sotd.report.annual_run.save_annual_report")
-    def test_run_annual_range_single_year(self, mock_save, mock_create_generator):
+    def test_run_annual_range_single_year(self, mock_save, mock_create_generator, tmp_path):
         """Test processing a single year range."""
         parser = get_parser()
         args = parser.parse_args(["--annual", "--range", "2023:2023", "--type", "hardware"])
         args.format = "markdown"  # Set format explicitly
+
+        args.data_dir = tmp_path
 
         # Create a mock generator instance
         mock_generator_instance = Mock()
@@ -83,7 +85,9 @@ class TestAnnualRangeProcessing:
         mock_save.return_value = Path("data/report/annual/2023-hardware.md")
 
         # Need to create the data file for the test
-        data_dir = Path("data") / "aggregated" / "annual"
+        # tmp_path-rooted data dir: never touch the real data/ tree (a crashed
+        # run once displaced the real annual file to "2023 2.json")
+        data_dir = tmp_path / "aggregated" / "annual"
         data_dir.mkdir(parents=True, exist_ok=True)
         annual_file = data_dir / "2023.json"
         with open(annual_file, "w") as f:
@@ -118,11 +122,12 @@ class TestAnnualRangeProcessing:
 
     @patch("sotd.report.annual_generator.create_annual_report_generator")
     @patch("sotd.report.annual_run.save_annual_report")
-    def test_run_annual_range_multiple_years(self, mock_save, mock_create_generator):
+    def test_run_annual_range_multiple_years(self, mock_save, mock_create_generator, tmp_path):
         """Test processing multiple years in range."""
         parser = get_parser()
         args = parser.parse_args(["--annual", "--range", "2021:2023", "--type", "hardware"])
         args.format = "markdown"
+        args.data_dir = tmp_path
 
         # Create mock generator instances for each year
         mock_generator_instances = []
@@ -135,7 +140,9 @@ class TestAnnualRangeProcessing:
         mock_save.return_value = Path("data/report/annual/2021-hardware.md")
 
         # Create data files for all years
-        data_dir = Path("data") / "aggregated" / "annual"
+        # tmp_path-rooted data dir: never touch the real data/ tree (a crashed
+        # run once displaced the real annual file to "2023 2.json")
+        data_dir = tmp_path / "aggregated" / "annual"
         data_dir.mkdir(parents=True, exist_ok=True)
         annual_files = []
         try:
@@ -175,13 +182,14 @@ class TestAnnualRangeProcessing:
 
     @patch("sotd.report.annual_generator.create_annual_report_generator")
     @patch("sotd.report.annual_run.save_annual_report")
-    def test_run_annual_range_with_debug(self, mock_save, mock_create_generator):
+    def test_run_annual_range_with_debug(self, mock_save, mock_create_generator, tmp_path):
         """Test range processing with debug output."""
         parser = get_parser()
         args = parser.parse_args(
             ["--annual", "--range", "2022:2023", "--type", "hardware", "--debug"]
         )
         args.format = "markdown"
+        args.data_dir = tmp_path
 
         # Create mock generator instances
         mock_generator_instances = []
@@ -194,7 +202,9 @@ class TestAnnualRangeProcessing:
         mock_save.return_value = Path("data/report/annual/2022-hardware.md")
 
         # Create data files
-        data_dir = Path("data") / "aggregated" / "annual"
+        # tmp_path-rooted data dir: never touch the real data/ tree (a crashed
+        # run once displaced the real annual file to "2023 2.json")
+        data_dir = tmp_path / "aggregated" / "annual"
         data_dir.mkdir(parents=True, exist_ok=True)
         annual_files = []
         try:
@@ -234,13 +244,14 @@ class TestAnnualRangeProcessing:
 
     @patch("sotd.report.annual_generator.create_annual_report_generator")
     @patch("sotd.report.annual_run.save_annual_report")
-    def test_run_annual_range_with_force(self, mock_save, mock_create_generator):
+    def test_run_annual_range_with_force(self, mock_save, mock_create_generator, tmp_path):
         """Test range processing with force flag."""
         parser = get_parser()
         args = parser.parse_args(
             ["--annual", "--range", "2022:2023", "--type", "hardware", "--force"]
         )
         args.format = "markdown"
+        args.data_dir = tmp_path
 
         # Create mock generator instances
         mock_generator_instances = []
@@ -253,7 +264,9 @@ class TestAnnualRangeProcessing:
         mock_save.return_value = Path("data/report/annual/2022-hardware.md")
 
         # Create data files
-        data_dir = Path("data") / "aggregated" / "annual"
+        # tmp_path-rooted data dir: never touch the real data/ tree (a crashed
+        # run once displaced the real annual file to "2023 2.json")
+        data_dir = tmp_path / "aggregated" / "annual"
         data_dir.mkdir(parents=True, exist_ok=True)
         annual_files = []
         try:
@@ -291,11 +304,12 @@ class TestAnnualRangeProcessing:
                     annual_file.unlink()
 
     @patch("sotd.report.annual_generator.create_annual_report_generator")
-    def test_run_annual_range_generation_failure(self, mock_create_generator):
+    def test_run_annual_range_generation_failure(self, mock_create_generator, tmp_path):
         """Test handling of generation failure in range processing."""
         parser = get_parser()
         args = parser.parse_args(["--annual", "--range", "2022:2023", "--type", "hardware"])
         args.format = "markdown"
+        args.data_dir = tmp_path
 
         # Create mock generator instances - one will fail
         mock_instance_2022 = Mock()
@@ -306,7 +320,9 @@ class TestAnnualRangeProcessing:
         mock_create_generator.side_effect = [mock_instance_2022, mock_instance_2023]
 
         # Create data files
-        data_dir = Path("data") / "aggregated" / "annual"
+        # tmp_path-rooted data dir: never touch the real data/ tree (a crashed
+        # run once displaced the real annual file to "2023 2.json")
+        data_dir = tmp_path / "aggregated" / "annual"
         data_dir.mkdir(parents=True, exist_ok=True)
         annual_files = []
         try:
@@ -344,11 +360,12 @@ class TestAnnualRangeProcessing:
 
     @patch("sotd.report.annual_generator.create_annual_report_generator")
     @patch("sotd.report.annual_run.save_annual_report")
-    def test_run_annual_range_save_failure(self, mock_save, mock_create_generator):
+    def test_run_annual_range_save_failure(self, mock_save, mock_create_generator, tmp_path):
         """Test handling of save failure in range processing."""
         parser = get_parser()
         args = parser.parse_args(["--annual", "--range", "2022:2023", "--type", "hardware"])
         args.format = "markdown"
+        args.data_dir = tmp_path
 
         # Create mock generator instances
         mock_generator_instances = []
@@ -368,7 +385,9 @@ class TestAnnualRangeProcessing:
         mock_save.side_effect = mock_save_side_effect
 
         # Create data files
-        data_dir = Path("data") / "aggregated" / "annual"
+        # tmp_path-rooted data dir: never touch the real data/ tree (a crashed
+        # run once displaced the real annual file to "2023 2.json")
+        data_dir = tmp_path / "aggregated" / "annual"
         data_dir.mkdir(parents=True, exist_ok=True)
         annual_files = []
         try:
@@ -445,11 +464,12 @@ class TestAnnualRangePerformance:
 
     @patch("sotd.report.annual_generator.create_annual_report_generator")
     @patch("sotd.report.annual_run.save_annual_report")
-    def test_annual_range_large_range_performance(self, mock_save, mock_create_generator):
+    def test_annual_range_large_range_performance(self, mock_save, mock_create_generator, tmp_path):
         """Test performance with large year ranges."""
         parser = get_parser()
         args = parser.parse_args(["--annual", "--range", "2015:2024", "--type", "hardware"])
         args.format = "markdown"
+        args.data_dir = tmp_path
 
         # Create mock generator instances for all years
         mock_generator_instances = []
@@ -462,7 +482,9 @@ class TestAnnualRangePerformance:
         mock_save.return_value = Path("data/report/annual/2015-hardware.md")
 
         # Create data files for all years
-        data_dir = Path("data") / "aggregated" / "annual"
+        # tmp_path-rooted data dir: never touch the real data/ tree (a crashed
+        # run once displaced the real annual file to "2023 2.json")
+        data_dir = tmp_path / "aggregated" / "annual"
         data_dir.mkdir(parents=True, exist_ok=True)
         annual_files = []
         try:
@@ -500,11 +522,12 @@ class TestAnnualRangePerformance:
 
     @patch("sotd.report.annual_generator.create_annual_report_generator")
     @patch("sotd.report.annual_run.save_annual_report")
-    def test_annual_range_memory_usage(self, mock_save, mock_create_generator):
+    def test_annual_range_memory_usage(self, mock_save, mock_create_generator, tmp_path):
         """Test memory usage during range processing."""
         parser = get_parser()
         args = parser.parse_args(["--annual", "--range", "2020:2024", "--type", "hardware"])
         args.format = "markdown"
+        args.data_dir = tmp_path
 
         # Create mock generator instances for all years
         mock_generator_instances = []
@@ -517,7 +540,9 @@ class TestAnnualRangePerformance:
         mock_save.return_value = Path("data/report/annual/2020-hardware.md")
 
         # Create data files for all years
-        data_dir = Path("data") / "aggregated" / "annual"
+        # tmp_path-rooted data dir: never touch the real data/ tree (a crashed
+        # run once displaced the real annual file to "2023 2.json")
+        data_dir = tmp_path / "aggregated" / "annual"
         data_dir.mkdir(parents=True, exist_ok=True)
         annual_files = []
         try:

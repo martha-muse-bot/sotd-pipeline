@@ -1,0 +1,26 @@
+# Public read-only API. Serves ONLY product_usage, monthly_user_posts, report_rankings.
+# Data comes from the published bundle mounted read-only at /data (SOTD_DATA_DIR=/data).
+#
+# webui/api is copied selectively: only the files public_main's import closure needs.
+# Admin-only routers (analysis, validation, wsdb_alignment, brush_*, soap_analyzer,
+# extract_overrides, files, filtered, catalogs, queue_manager, ...) must NOT ship in
+# this image. If you add an import to public_main/product_usage/monthly_user_posts/
+# report_rankings, add the file here too — verify with:
+#   python -c "import api.public_main"  from an image-like tree.
+FROM python:3.14-slim
+WORKDIR /app/webui
+COPY requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir -r /app/requirements.txt
+COPY sotd /app/sotd
+COPY webui/api/__init__.py /app/webui/api/__init__.py
+COPY webui/api/utils/ /app/webui/api/utils/
+COPY webui/api/public_main.py /app/webui/api/public_main.py
+COPY webui/api/product_usage.py /app/webui/api/product_usage.py
+COPY webui/api/monthly_user_posts.py /app/webui/api/monthly_user_posts.py
+COPY webui/api/report_rankings.py /app/webui/api/report_rankings.py
+ENV PYTHONPATH=/app:/app/webui
+ENV SOTD_DATA_DIR=/data
+EXPOSE 8000
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
+  CMD ["python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/api/product-usage/health', timeout=5).status==200 else 1)"]
+CMD ["python", "-m", "uvicorn", "api.public_main:app", "--host", "0.0.0.0", "--port", "8000"]

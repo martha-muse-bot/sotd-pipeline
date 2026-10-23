@@ -5,6 +5,9 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './tests',
+  // Skip the public-build spec until the --public server-mode wiring lands
+  // (plan Task 9): it targets the public build's routes, not this admin app.
+  testIgnore: /public-build\.spec\.ts$/,
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */

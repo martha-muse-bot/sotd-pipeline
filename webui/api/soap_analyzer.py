@@ -1,14 +1,13 @@
 import json
 import logging
-import os
 from collections import defaultdict
-from pathlib import Path
 from typing import Any, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
 # Import non-matches loading function and normalization
+from webui.api.utils.data_dir import get_matched_dir
 from webui.api.utils.non_matches import (
     _canonicalize_brand_pair,
     _canonicalize_cross_brand_scent_key,
@@ -84,12 +83,8 @@ async def get_soap_duplicates(
 
         # Load data from all specified months
         all_matches = []
-        # Allow override of data directory via environment variable for testing
-        sotd_data_dir = os.environ.get("SOTD_DATA_DIR")
-        if sotd_data_dir:
-            data_dir = Path(sotd_data_dir) / "data" / "matched"
-        else:
-            data_dir = Path(__file__).parent.parent.parent / "data" / "matched"
+        # SOTD_DATA_DIR is the data dir (data-dir convention); falls back to project data/
+        data_dir = get_matched_dir()
 
         for month in month_list:
             month_file = data_dir / f"{month}.json"
@@ -148,12 +143,8 @@ async def get_soap_pattern_suggestions(
 
         # Load data from all specified months
         all_matches = []
-        # Allow override of data directory via environment variable for testing
-        sotd_data_dir = os.environ.get("SOTD_DATA_DIR")
-        if sotd_data_dir:
-            data_dir = Path(sotd_data_dir) / "data" / "matched"
-        else:
-            data_dir = Path(__file__).parent.parent.parent / "data" / "matched"
+        # SOTD_DATA_DIR is the data dir (data-dir convention); falls back to project data/
+        data_dir = get_matched_dir()
 
         for month in month_list:
             month_file = data_dir / f"{month}.json"
@@ -235,12 +226,8 @@ async def get_soap_neighbor_similarity(
 
         # Load data from all specified months
         all_matches = []
-        # Allow override of data directory via environment variable for testing
-        sotd_data_dir = os.environ.get("SOTD_DATA_DIR")
-        if sotd_data_dir:
-            data_dir = Path(sotd_data_dir) / "data" / "matched"
-        else:
-            data_dir = Path(__file__).parent.parent.parent / "data" / "matched"
+        # SOTD_DATA_DIR is the data dir (data-dir convention); falls back to project data/
+        data_dir = get_matched_dir()
 
         for month in month_list:
             month_file = data_dir / f"{month}.json"
@@ -1064,10 +1051,10 @@ async def get_soap_group_by_matched(
 
         # Load soap match data for the specified months
         matches = []
-        # Get the project root directory (3 levels up from this file)
-        project_root = Path(__file__).parent.parent.parent
+        # data-dir convention: SOTD_DATA_DIR is the data dir; falls back to project data/
+        data_dir = get_matched_dir()
         for month in month_list:
-            month_file = project_root / "data" / "matched" / f"{month}.json"
+            month_file = data_dir / f"{month}.json"
             if not month_file.exists():
                 logger.warning(f"Month file not found: {month_file}")
                 continue

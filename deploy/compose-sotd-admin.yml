@@ -1,0 +1,30 @@
+# SOTD admin (operator) stack — LAN ONLY. No npm-bridge, no cf_tunnel_net:
+# no external route exists to it. Reachable at the macvlan static IP.
+# Mounts the FULL pipeline data dir (bundle + enriched) read-write: the admin
+# app is the operator WebUI and its mutating endpoints write into the data tree.
+# (The public stack mounts its bundle :ro; admin must stay rw.)
+#
+# Image is PRIVATE on ghcr (unlike the public stack's images): Portainer pulls
+# it with the registry credential ghcr-nmrs (classic read:packages PAT) —
+# the same credential myacuright uses.
+#
+# NOTE: do NOT set a `cpus:` limit — Synology's cgroup v1 rejects it.
+services:
+  sotd-admin:
+    image: ghcr.io/nmrs/sotd-pipeline-admin:latest
+    restart: unless-stopped
+    mem_limit: 1g
+    pull_policy: always
+    environment:
+      - TZ=America/Chicago
+      - SOTD_DATA_DIR=/data
+    volumes:
+      # rw (not :ro) — admin mutates the data tree (mark-correct, brush splits, overrides, wsdb non-matches)
+      - /volume1/docker/sotd-admin/data:/data
+    networks:
+      macvlan_lan:
+        ipv4_address: 192.168.2.23
+
+networks:
+  macvlan_lan:
+    external: true

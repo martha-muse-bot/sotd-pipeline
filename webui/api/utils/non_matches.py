@@ -7,33 +7,28 @@ with support for recursive alphabetical sorting and atomic file writes.
 
 import copy
 import logging
-import os
 from pathlib import Path
 from typing import Any
 
 import yaml
 
 # Import normalization function from wsdb_alignment
+from webui.api.utils.data_dir import get_overrides_dir
 from webui.api.wsdb_alignment import normalize_for_matching
 
 logger = logging.getLogger(__name__)
-
-# Project root directory
-# __file__ is webui/api/utils/non_matches.py
-# Go up: utils -> api -> webui -> project_root
-PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 
 
 def get_non_matches_dir() -> Path:
     """Get non-matches directory with SOTD_DATA_DIR support.
 
+    Uses the data-dir convention: SOTD_DATA_DIR IS the data dir (as in
+    containers, where the data tree is mounted at /data).
+
     Returns:
         Path to data/overrides/ directory
     """
-    sotd_data_dir = os.environ.get("SOTD_DATA_DIR")
-    if sotd_data_dir:
-        return Path(sotd_data_dir) / "data" / "overrides"
-    return PROJECT_ROOT / "data" / "overrides"
+    return get_overrides_dir()
 
 
 def _sort_brand_non_matches(data: dict[str, list[str]]) -> dict[str, list[str]]:
