@@ -39,7 +39,21 @@ jobs:
           black --check sotd webui/api
       - name: Python tests (scoped to CI-verifiable suites)
         run: |
-          PYTHONPATH=. pytest tests/ -q -n auto \
+          # --dist loadfile: tests/report/test_annual_range_integration.py writes real
+          # files under data/aggregated/annual/ (shared across workers under plain -n auto,
+          # causing flaky cross-worker races); loadfile pins a file to one worker.
+          # Excluded webui/api suites (data-dependent, run locally where data/ exists):
+          #   webui/api/tests/test_validation_router.py (11 tests read data/ rejections/proposals)
+          #   webui/api/__tests__/test_wsdb_alignment.py (18 tests read data/ match files)
+          #   webui/api/__tests__/test_report_rankings.py::test_report_rankings_series_requires_items
+          # Included webui/api suites are tmp_path-based and data-independent.
+          PYTHONPATH=. pytest tests/ \
+            webui/api/__tests__/test_public_main.py \
+            webui/api/__tests__/test_data_dir.py \
+            webui/api/__tests__/test_monthly_user_posts_months.py \
+            webui/api/__tests__/test_admin_static.py \
+            webui/api/tests/test_catalog_updater.py \
+            -q -n auto --dist loadfile \
             --deselect tests/fetch/test_reddit.py::TestThreadOverrides::test_search_threads_with_overrides_integration \
             --deselect tests/fetch/test_reddit.py::TestThreadOverrides::test_search_threads_with_overrides_deduplication \
             --deselect tests/fetch/test_reddit.py::TestThreadOverrides::test_search_threads_applies_excludes \
