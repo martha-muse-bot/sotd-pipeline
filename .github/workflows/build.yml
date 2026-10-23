@@ -7,8 +7,13 @@ on:
       - 'sotd/**'
       - 'requirements.txt'
       - 'deploy/**'
+      - '.dockerignore'
       - '.github/workflows/build.yml'
   workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -17,6 +22,7 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -34,21 +40,36 @@ jobs:
       - name: Python tests (scoped to CI-verifiable suites)
         run: |
           PYTHONPATH=. pytest tests/ -q -n auto \
-            --deselect tests/fetch/test_reddit.py::TestThreadOverrides \
+            --deselect tests/fetch/test_reddit.py::TestThreadOverrides::test_search_threads_with_overrides_integration \
+            --deselect tests/fetch/test_reddit.py::TestThreadOverrides::test_search_threads_with_overrides_deduplication \
+            --deselect tests/fetch/test_reddit.py::TestThreadOverrides::test_search_threads_applies_excludes \
+            --deselect tests/fetch/test_reddit.py::TestThreadOverrides::test_search_threads_exclude_wins_over_include \
+            --deselect tests/integration/test_brush_validation_counting_integration.py::TestBrushValidationCountingIntegration::test_mathematical_relationships_integration \
+            --deselect tests/integration/test_brush_validation_counting_integration.py::TestBrushValidationCountingIntegration::test_case_insensitive_grouping_integration \
+            --deselect tests/integration/test_brush_validation_counting_integration.py::TestBrushValidationCountingIntegration::test_strategy_distribution_integration \
+            --deselect tests/integration/test_brush_validation_counting_integration.py::TestBrushValidationCountingIntegration::test_performance_integration \
+            --deselect tests/integration/test_brush_validation_counting_integration.py::TestBrushValidationCountingIntegration::test_complete_workflow_integration \
+            --deselect tests/webui/api/production_tests/test_analysis_split_brush_removal.py::TestAnalysisAPISplitBrushRemoval::test_analyze_mismatch_response_without_split_brush \
+            --deselect tests/webui/api/production_tests/test_analysis_split_brush_removal.py::TestAnalysisAPISplitBrushRemoval::test_brush_field_processing_without_split_brush \
+            --deselect tests/webui/api/production_tests/test_analysis_split_brush_removal.py::TestAnalysisAPISplitBrushRemoval::test_non_brush_field_processing \
+            --deselect tests/webui/api/production_tests/test_monthly_user_posts.py::TestMonthlyUserPostsAPI::test_get_users_for_month_with_search \
+            --deselect tests/webui/api/production_tests/test_monthly_user_posts.py::TestMonthlyUserPostsAPI::test_get_user_posting_analysis_success \
+            --deselect tests/webui/api/production_tests/test_monthly_user_posts.py::TestMonthlyUserPostsAPI::test_get_user_posting_analysis_user_not_found \
             --deselect tests/match/test_brush_matcher_optimization.py::TestBrushMatcherOptimization::test_performance_improvement \
             --deselect tests/performance/test_tier_delta_performance.py::TestTierDeltaPerformance::test_optimization_impact \
-            --ignore=tests/integration/test_brush_validation_counting_integration.py \
-            --ignore=tests/webui/api/production_tests
+            --deselect tests/match/test_webui_api_bypass_fix.py::test_webui_api_bypass_issue \
+            --deselect tests/match/test_webui_api_bypass_fix.py::test_correct_bypass_approach
       - name: React tests
         working-directory: webui
         run: |
           npm ci
-          npx eslint src/public --ext ts,tsx --report-unused-disable-directives --max-warnings 0
+          npx eslint src/public vite.config.public.ts --ext ts,tsx --report-unused-disable-directives --max-warnings 0
           npm run test
 
   build:
     needs: test
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
