@@ -19,6 +19,12 @@ The React/TypeScript WebUI is optional; see `webui/README.md`. Test targets wrap
 - `make test-e2e` - Playwright end-to-end tests
 - `make start-servers` / `make stop-servers` / `make server-status` - Manage test servers
 
+The WebUI ships as two builds: the admin app (default `npm run build`) and the public
+analytics site (`npm run build:public`, `--config vite.config.public.ts`, output
+`dist-public/`). Both deploy as containers — images built by `.github/workflows/build.yml`,
+compose stacks in `deploy/` (see `deploy/README.md` for the NAS runbook). Publish the
+public data bundle with `make publish-data` (slim aggregated slices; `enriched/` stays local).
+
 ### Pipeline Execution
 The pipeline can be run using the unified `run.py` orchestration script:
 
