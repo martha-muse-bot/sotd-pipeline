@@ -47,6 +47,7 @@ Instrumentator(excluded_handlers=["/metrics", "/api/product-usage/health"]).inst
 def metrics():
     return Response(generate_latest(REGISTRY), media_type=CONTENT_TYPE_LATEST)
 
+
 _allowed_origin = os.getenv("PUBLIC_ALLOWED_ORIGIN", "http://localhost:3000")
 app.add_middleware(
     CORSMiddleware,
