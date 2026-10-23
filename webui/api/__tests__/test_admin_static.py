@@ -27,7 +27,8 @@ def test_admin_serves_index_html_when_dist_exists(tmp_path, monkeypatch):
     test_app = FastAPI()
     if main_mod._frontend_dist.is_dir():
         test_app.mount(
-            "/", StaticFiles(directory=str(main_mod._frontend_dist), html=True),
+            "/",
+            StaticFiles(directory=str(main_mod._frontend_dist), html=True),
             name="frontend",
         )
     resp = TestClient(test_app).get("/")
