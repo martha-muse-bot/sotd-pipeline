@@ -25,5 +25,13 @@ def get_aggregated_dir() -> Path:
     return get_data_dir() / "aggregated"
 
 
+def get_matched_dir() -> Path:
+    return get_data_dir() / "matched"
+
+
+def get_overrides_dir() -> Path:
+    return get_data_dir() / "overrides"
+
+
 def get_user_analysis_dir() -> Path:
     return get_aggregated_dir() / "user_analysis"

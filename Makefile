@@ -1,4 +1,4 @@
-.PHONY: all lint format typecheck test coverage fetch extract match enrich aggregate pipeline performance-test install install-dev preprocess test-all test-python test-react test-e2e test-watch test-coverage test-parallel test-slow test-fast test-unit test-integration test-api start-servers stop-servers server-status restart-servers lint-count lint-e501 lint-f401 lint-f841 lint-auto-fix lint-format lint-systematic publish-data
+.PHONY: all lint format typecheck test coverage fetch extract match enrich aggregate pipeline performance-test install install-dev preprocess test-all test-python test-react test-e2e test-watch test-coverage test-parallel test-slow test-fast test-unit test-integration test-api start-servers stop-servers server-status restart-servers lint-count lint-e501 lint-f401 lint-f841 lint-auto-fix lint-format lint-systematic publish-data build-public build-images
 
 all: preprocess lint format typecheck test
 
@@ -364,6 +364,16 @@ dev-webui:
 # Build webui for production
 build-webui:
 	cd webui && npm run build
+
+# Build public frontend bundle (vite public entry)
+build-public:
+	cd webui && npm run build:public
+
+# Build container images locally (requires Docker)
+build-images:  ## build public-api/public-frontend/admin images, :local tags
+	docker build -f webui/Dockerfile.public-api -t ghcr.io/nmrs/sotd-pipeline-public-api:local .
+	docker build -f webui/Dockerfile.public-frontend -t ghcr.io/nmrs/sotd-pipeline-public-frontend:local .
+	docker build -f webui/Dockerfile.admin -t ghcr.io/nmrs/sotd-pipeline-admin:local .
 
 # Lint webui
 lint-webui:

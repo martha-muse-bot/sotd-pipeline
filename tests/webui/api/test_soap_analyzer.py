@@ -55,7 +55,7 @@ class TestSoapAnalyzerAPI:
     def test_neighbor_similarity_brands_mode_success(self, tmp_path):
         """Test successful brands-only neighbor similarity analysis."""
         # Create isolated test data in temporary directory
-        matched_dir = tmp_path / "data" / "matched"
+        matched_dir = tmp_path / "matched"
         matched_dir.mkdir(parents=True)
 
         test_data = {
@@ -141,7 +141,7 @@ class TestSoapAnalyzerAPI:
     def test_neighbor_similarity_brand_scent_mode_success(self, tmp_path):
         """Test successful brand-scent neighbor similarity analysis."""
         # Create isolated test data in temporary directory
-        matched_dir = tmp_path / "data" / "matched"
+        matched_dir = tmp_path / "matched"
         matched_dir.mkdir(parents=True)
 
         test_data = {
@@ -200,7 +200,7 @@ class TestSoapAnalyzerAPI:
     def test_neighbor_similarity_scents_mode_success(self, tmp_path):
         """Test successful scents-only neighbor similarity analysis."""
         # Create isolated test data in temporary directory
-        matched_dir = tmp_path / "data" / "matched"
+        matched_dir = tmp_path / "matched"
         matched_dir.mkdir(parents=True)
 
         test_data = {
@@ -756,11 +756,11 @@ class TestNeighborSimilarityWithNonMatches:
     def test_neighbor_similarity_with_scent_non_matches(self, tmp_path):
         """Test that known scent non-matches don't appear as similar neighbors."""
         # Create isolated test data in temporary directory
-        matched_dir = tmp_path / "data" / "matched"
+        matched_dir = tmp_path / "matched"
         matched_dir.mkdir(parents=True)
 
         # Create overrides directory and non-matches file
-        overrides_dir = tmp_path / "data" / "overrides"
+        overrides_dir = tmp_path / "overrides"
         overrides_dir.mkdir(parents=True)
 
         # Create test data with Seaforth! Leather and Seaforth! Heather (known non-matches)
@@ -847,7 +847,7 @@ class TestSoapNonMatchEndpoint:
 
     def test_add_brand_non_match(self, tmp_path):
         """Test adding a brand non-match."""
-        overrides_dir = tmp_path / "data" / "overrides"
+        overrides_dir = tmp_path / "overrides"
         overrides_dir.mkdir(parents=True)
 
         # Create empty brand non-matches file
@@ -898,7 +898,7 @@ class TestSoapNonMatchEndpoint:
 
     def test_add_scent_non_match_same_brand(self, tmp_path):
         """Test adding a scent non-match with same brand."""
-        overrides_dir = tmp_path / "data" / "overrides"
+        overrides_dir = tmp_path / "overrides"
         overrides_dir.mkdir(parents=True)
 
         # Create empty files
@@ -952,7 +952,7 @@ class TestSoapNonMatchEndpoint:
 
     def test_add_scent_non_match_different_brands(self, tmp_path):
         """Test adding a scent non-match with different brands (cross-brand)."""
-        overrides_dir = tmp_path / "data" / "overrides"
+        overrides_dir = tmp_path / "overrides"
         overrides_dir.mkdir(parents=True)
 
         # Create empty files
@@ -1004,7 +1004,7 @@ class TestSoapNonMatchEndpoint:
 
     def test_add_brand_scent_non_match(self, tmp_path):
         """Test adding a brand_scent non-match."""
-        overrides_dir = tmp_path / "data" / "overrides"
+        overrides_dir = tmp_path / "overrides"
         overrides_dir.mkdir(parents=True)
 
         # Create empty files

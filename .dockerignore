@@ -35,6 +35,13 @@ tests/
 # --- pipeline data (never bake into images) ---
 data/
 
+# --- secrets (defense in depth for local builds; runtime uses env/mounts) ---
+praw.ini
+.env
+.env.*
+token.json
+credentials.json
+
 # --- tooling/docs not needed at runtime ---
 docs/
 *.md
