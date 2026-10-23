@@ -31,9 +31,10 @@ rejects it (`mem_limit` only).
 
 ## First-time NAS setup
 
-**Shipped state (2026-10-22): the public stack IS deployed and live at
-http://sotd.jmoore.org** — this section is the record of how it was done
-(and what to redo on a new NAS).
+**Shipped state (2026-10-22): the public stack IS deployed and live**
+(the deployed hostname is in the operator's private notes — the site
+itself is the public advertisement) — this section is the record of how
+it was done (and what to redo on a new NAS).
 
 0. **rsync prerequisites on the Mac + NAS** (each cost debugging time —
    all required):
