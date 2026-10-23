@@ -20,8 +20,7 @@ every push to `master` (paths: `webui/`, `sotd/`, `requirements.txt`,
 | `ghcr.io/nmrs/sotd-pipeline-admin` | `webui/Dockerfile.admin` | Full admin app (API + built frontend from `webui/dist`) |
 
 Stack compose files live in this repo and are deployed via Portainer
-(gitops source pointing at this repository, same pattern as
-`myacuright/deploy/compose-myacuright.yml`):
+(gitops source pointing at this repository):
 
 - `deploy/compose-sotd-public.yml` — public stack (API + frontend)
 - `deploy/compose-sotd-admin.yml` — admin stack, LAN-only
@@ -31,6 +30,25 @@ Both stacks mount their data directory **read-only** and locate it via
 rejects it (`mem_limit` only).
 
 ## First-time NAS setup
+
+**Shipped state (2026-10-22): the public stack IS deployed and live at
+http://sotd.jmoore.org** — this section is the record of how it was done
+(and what to redo on a new NAS).
+
+0. **rsync prerequisites on the Mac + NAS** (each cost debugging time —
+   all required):
+   - `nas` ssh alias in `~/.ssh/config` on the Mac
+     (`Host nas` / `HostName <nas-host>` / `User <ssh-user>`).
+   - **Homebrew rsync** on the Mac — `/usr/bin/rsync` is openrsync
+     (protocol 29) and cannot talk to the NAS's rsync 3.1.2; install
+     `brew install rsync` (script uses whatever `rsync` resolves to).
+   - **DSM: Control Panel → File Services → rsync → Enable rsync
+     service** (the "Enable rsync account" checkbox is NOT needed —
+     that's only for external unencrypted daemon-mode clients).
+   - **Pre-create the nested dirs** — rsync won't `mkdir -p`:
+     `ssh nas 'mkdir -p /volume1/docker/sotd-public/data/aggregated/{product_usage,user_analysis,annual}'`
+     (without this, publishing fails with "file IO (code 11) on
+     Receiver").
 
 1. **Create the data directories** on the NAS:
 
@@ -79,16 +97,24 @@ rejects it (`mem_limit` only).
    no external route exists. Reach it at `http://192.168.2.23:8000` from
    the LAN only.
 
-5. **Create the redeploy webhooks** — in Portainer, create a webhook for
-   each stack (Stack → Webhooks), then add them as GitHub secrets in this
-   repo:
+5. **Create the redeploy webhooks** — in Portainer, per stack:
+   Edit stack settings → toggle **Create a Webhook** → save → copy the
+   webhook URL from the stack details page. Add to this repo as GitHub
+   secrets (`gh secret set`):
 
-   - `PORTAINER_WEBHOOK_PUBLIC` → public stack
-   - `PORTAINER_WEBHOOK_ADMIN` → admin stack
+   - `PORTAINER_WEBHOOK_PUBLIC` → public stack (**set 2026-10-22**; the
+     curl POST returns 204 and redeploys)
+   - `PORTAINER_WEBHOOK_ADMIN` → admin stack (not needed while the admin
+     stack stays undeployed — see the YAGNI note below)
 
    CI calls them after pushing images; a secret left unset is skipped
-   with a notice in the workflow log (deploy simply doesn't happen until
-   you set it or pull manually).
+   with a notice in the workflow log.
+
+**Admin image is intentionally idle (YAGNI, 2026-10-22 ruling)**: the
+admin app mutates the data tree, which buys nothing without a full
+pipeline on/near the NAS. The image builds and sits in GHCR (private);
+the compose stack and runbook are here for the day that changes. Do not
+deploy the admin stack without an explicit decision.
 
 ## Update loop
 
@@ -99,7 +125,8 @@ images. Nothing to do on the NAS.
 
 **Data changes** (after a pipeline run): from the Mac, run
 `make publish-data` (or `scripts/publish-public-data.sh [TARGET]`;
-default target `nas:sotd-public/data`, override via
+default target `nas:/volume1/docker/sotd-public/data` — absolute path on
+purpose, a relative one lands in the ssh login's home dir — override via
 `SOTD_PUBLIC_DATA_TARGET` or the first argument). The script first
 verifies the bundle (fails on an empty bundle or a month gap across the
 three slices), then rsyncs with `--delete`. **No container redeploy is
@@ -120,15 +147,12 @@ when `webui/dist` exists (it does in the container image).
 
 ## Troubleshooting
 
-- **Stack won't start / 404 on images**: verify GHCR package visibility
-  after the first CI run. The two public images
-  (`sotd-pipeline-public-api`, `sotd-pipeline-public-frontend`) must be
-  **public** — first pushes create packages private; flip them in the
-  package settings. The admin image (`sotd-pipeline-admin`) is **private
-  by design**: Portainer pulls it with the `ghcr-nmrs` registry
-  credential (classic read:packages PAT, the same one myacuright uses)
-  — add that credential to the sotd-admin stack in Portainer. Also
-  confirm the NAS can reach `ghcr.io`.
+- **Stack won't start / 404 on images**: GHCR packages inherit the
+  repo's visibility — this repo is public, so the public images are
+  pullable without credentials (verified by `docker pull` on the NAS).
+  The admin image is kept private deliberately (the NAS pulls it with
+  a read:packages registry credential). Also confirm the NAS can reach
+  `ghcr.io`.
 - **CORS errors in the browser**: `SOTD_PUBLIC_ORIGIN` on the public
   stack doesn't match the actual origin.
 - **Publish fails with a bundle error**: run the pipeline's aggregate

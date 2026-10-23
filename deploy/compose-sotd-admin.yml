@@ -4,9 +4,9 @@
 # app is the operator WebUI and its mutating endpoints write into the data tree.
 # (The public stack mounts its bundle :ro; admin must stay rw.)
 #
-# Image is PRIVATE on ghcr (unlike the public stack's images): Portainer pulls
-# it with the registry credential ghcr-nmrs (classic read:packages PAT) —
-# the same credential myacuright uses.
+# Image is PRIVATE on ghcr (unlike the public stack's images): Portainer
+# pulls it with a read:packages registry credential configured in the
+# Portainer UI.
 #
 # NOTE: do NOT set a `cpus:` limit — Synology's cgroup v1 rejects it.
 services:
