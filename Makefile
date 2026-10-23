@@ -1,4 +1,4 @@
-.PHONY: all lint format typecheck test coverage fetch extract match enrich aggregate pipeline performance-test install install-dev preprocess test-all test-python test-react test-e2e test-watch test-coverage test-parallel test-slow test-fast test-unit test-integration test-api start-servers stop-servers server-status restart-servers lint-count lint-e501 lint-f401 lint-f841 lint-auto-fix lint-format lint-systematic
+.PHONY: all lint format typecheck test coverage fetch extract match enrich aggregate pipeline performance-test install install-dev preprocess test-all test-python test-react test-e2e test-watch test-coverage test-parallel test-slow test-fast test-unit test-integration test-api start-servers stop-servers server-status restart-servers lint-count lint-e501 lint-f401 lint-f841 lint-auto-fix lint-format lint-systematic publish-data
 
 all: preprocess lint format typecheck test
 
@@ -421,3 +421,11 @@ test-dev: test-python
 	@echo "Running React tests in watch mode..."
 	@echo "Press Ctrl+C to stop the development test suite"
 	cd webui && npm run test:watch
+
+# =============================================================================
+# DATA PUBLISHING
+# =============================================================================
+
+# Publish the slim public data bundle (aggregated slices) to the NAS
+publish-data:  ## rsync the slim public data bundle to the NAS
+	./scripts/publish-public-data.sh
