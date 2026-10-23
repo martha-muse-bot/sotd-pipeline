@@ -120,9 +120,15 @@ when `webui/dist` exists (it does in the container image).
 
 ## Troubleshooting
 
-- **Stack won't start / 404 on images**: verify the GHCR packages are
-  public after the first CI run (make them public if the first push
-  created them private) and the NAS can reach `ghcr.io`.
+- **Stack won't start / 404 on images**: verify GHCR package visibility
+  after the first CI run. The two public images
+  (`sotd-pipeline-public-api`, `sotd-pipeline-public-frontend`) must be
+  **public** — first pushes create packages private; flip them in the
+  package settings. The admin image (`sotd-pipeline-admin`) is **private
+  by design**: Portainer pulls it with the `ghcr-nmrs` registry
+  credential (classic read:packages PAT, the same one myacuright uses)
+  — add that credential to the sotd-admin stack in Portainer. Also
+  confirm the NAS can reach `ghcr.io`.
 - **CORS errors in the browser**: `SOTD_PUBLIC_ORIGIN` on the public
   stack doesn't match the actual origin.
 - **Publish fails with a bundle error**: run the pipeline's aggregate

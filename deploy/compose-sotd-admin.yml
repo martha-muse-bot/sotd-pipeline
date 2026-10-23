@@ -4,6 +4,10 @@
 # app is the operator WebUI and its mutating endpoints write into the data tree.
 # (The public stack mounts its bundle :ro; admin must stay rw.)
 #
+# Image is PRIVATE on ghcr (unlike the public stack's images): Portainer pulls
+# it with the registry credential ghcr-nmrs (classic read:packages PAT) —
+# the same credential myacuright uses.
+#
 # NOTE: do NOT set a `cpus:` limit — Synology's cgroup v1 rejects it.
 services:
   sotd-admin:
