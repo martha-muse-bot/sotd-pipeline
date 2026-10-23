@@ -2,8 +2,14 @@
 
 import time
 import statistics
+
+import pytest
+
 from sotd.report.delta_calculator import DeltaCalculator
 from sotd.report.annual_delta_calculator import AnnualDeltaCalculator
+
+# Wall-clock threshold asserts are load-sensitive; excluded in CI via `-m "not perf"`.
+pytestmark = pytest.mark.perf
 
 
 class TestTierDeltaPerformance:

@@ -25,6 +25,7 @@ markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests (require external services)",
     "production: marks tests as production catalog integration tests (run with 'make test-production')",
+    "perf: wall-clock performance-threshold tests; load-sensitive, excluded in CI ('-m \"not perf\"')",
 ]
 
 [tool.coverage.run]

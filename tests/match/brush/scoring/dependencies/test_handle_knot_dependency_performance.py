@@ -14,6 +14,9 @@ from sotd.match.brush.scoring.dependencies.strategy_dependency_manager import (
     DependencyType,
 )
 
+# Wall-clock threshold asserts are load-sensitive; excluded in CI via `-m "not perf"`.
+pytestmark = pytest.mark.perf
+
 
 class TestHandleKnotDependencyPerformance:
     """Test performance impact of handle/knot dependencies."""

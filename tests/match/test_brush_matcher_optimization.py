@@ -7,7 +7,12 @@ for correct_matches.yaml after our optimization.
 
 import time
 
+import pytest
+
 from sotd.match.brush_matcher import BrushMatcher
+
+# Wall-clock threshold asserts are load-sensitive; excluded in CI via `-m "not perf"`.
+pytestmark = pytest.mark.perf
 
 
 class TestBrushMatcherOptimization:

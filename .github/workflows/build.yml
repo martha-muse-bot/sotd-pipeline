@@ -39,6 +39,9 @@ jobs:
           black --check sotd webui/api
       - name: Python tests (scoped to CI-verifiable suites)
         run: |
+          # -m "not perf": wall-clock performance-threshold tests are load-sensitive on
+          # shared runners and flake CI; they carry pytest.mark.perf and still run via
+          # local `make test`.
           # --dist loadfile: tests/report/test_annual_range_integration.py writes real
           # files under data/aggregated/annual/ (shared across workers under plain -n auto,
           # causing flaky cross-worker races); loadfile pins a file to one worker.
@@ -53,7 +56,7 @@ jobs:
             webui/api/__tests__/test_monthly_user_posts_months.py \
             webui/api/__tests__/test_admin_static.py \
             webui/api/tests/test_catalog_updater.py \
-            -q -n auto --dist loadfile \
+            -q -n auto --dist loadfile -m "not perf" \
             --deselect tests/fetch/test_reddit.py::TestThreadOverrides::test_search_threads_with_overrides_integration \
             --deselect tests/fetch/test_reddit.py::TestThreadOverrides::test_search_threads_with_overrides_deduplication \
             --deselect tests/fetch/test_reddit.py::TestThreadOverrides::test_search_threads_applies_excludes \
@@ -61,21 +64,17 @@ jobs:
             --deselect tests/integration/test_brush_validation_counting_integration.py::TestBrushValidationCountingIntegration::test_mathematical_relationships_integration \
             --deselect tests/integration/test_brush_validation_counting_integration.py::TestBrushValidationCountingIntegration::test_case_insensitive_grouping_integration \
             --deselect tests/integration/test_brush_validation_counting_integration.py::TestBrushValidationCountingIntegration::test_strategy_distribution_integration \
-            --deselect tests/integration/test_brush_validation_counting_integration.py::TestBrushValidationCountingIntegration::test_performance_integration \
             --deselect tests/integration/test_brush_validation_counting_integration.py::TestBrushValidationCountingIntegration::test_complete_workflow_integration \
+            --deselect tests/match/brush/strategies/test_structure_preservation_tdd.py::TestStructurePreservationTDD::test_composite_brush_structure_preservation \
+            --deselect tests/match/brush/strategies/test_structure_preservation_tdd.py::TestStructurePreservationTDD::test_summer_break_soaps_structure_preservation \
+            --deselect tests/match/brush/strategies/test_structure_preservation_tdd.py::TestStructurePreservationTDD::test_simpson_chubby_2_complete_brush_rehydration \
+            --deselect tests/match/brush/strategies/test_structure_preservation_tdd.py::TestStructurePreservationTDD::test_bfm_complex_complete_brush_rehydration \
             --deselect tests/webui/api/production_tests/test_analysis_split_brush_removal.py::TestAnalysisAPISplitBrushRemoval::test_analyze_mismatch_response_without_split_brush \
             --deselect tests/webui/api/production_tests/test_analysis_split_brush_removal.py::TestAnalysisAPISplitBrushRemoval::test_brush_field_processing_without_split_brush \
             --deselect tests/webui/api/production_tests/test_analysis_split_brush_removal.py::TestAnalysisAPISplitBrushRemoval::test_non_brush_field_processing \
             --deselect tests/webui/api/production_tests/test_monthly_user_posts.py::TestMonthlyUserPostsAPI::test_get_users_for_month_with_search \
             --deselect tests/webui/api/production_tests/test_monthly_user_posts.py::TestMonthlyUserPostsAPI::test_get_user_posting_analysis_success \
             --deselect tests/webui/api/production_tests/test_monthly_user_posts.py::TestMonthlyUserPostsAPI::test_get_user_posting_analysis_user_not_found \
-            --deselect tests/match/test_brush_matcher_optimization.py::TestBrushMatcherOptimization::test_performance_improvement \
-            --deselect tests/performance/test_tier_delta_performance.py::TestTierDeltaPerformance::test_optimization_impact \
-            --deselect tests/match/test_pattern_cache_performance.py::test_brush_matcher_initialization_performance \
-            --deselect tests/match/brush/strategies/test_structure_preservation_tdd.py::TestStructurePreservationTDD::test_composite_brush_structure_preservation \
-            --deselect tests/match/brush/strategies/test_structure_preservation_tdd.py::TestStructurePreservationTDD::test_summer_break_soaps_structure_preservation \
-            --deselect tests/match/brush/strategies/test_structure_preservation_tdd.py::TestStructurePreservationTDD::test_simpson_chubby_2_complete_brush_rehydration \
-            --deselect tests/match/brush/strategies/test_structure_preservation_tdd.py::TestStructurePreservationTDD::test_bfm_complex_complete_brush_rehydration \
             --deselect tests/match/test_validate_correct_matches_bypass.py::TestValidateCorrectMatchesBypass::test_test_brush_pattern_bypass_validation \
             --deselect tests/match/test_validate_correct_matches_bypass.py::TestValidateCorrectMatchesBypass::test_validate_field_brush_bypass \
             --deselect tests/match/test_webui_api_bypass_fix.py::test_webui_api_bypass_issue \

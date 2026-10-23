@@ -8,6 +8,9 @@ import pytest
 
 from sotd.enrich.brush_enricher import BrushEnricher
 
+# Wall-clock threshold asserts are load-sensitive; excluded in CI via `-m "not perf"`.
+pytestmark = pytest.mark.perf
+
 
 class TestBrushEnricherPerformance:
     """Test performance characteristics of user intent detection."""

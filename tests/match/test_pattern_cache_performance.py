@@ -20,6 +20,9 @@ from sotd.match.brush.strategies.utils.pattern_cache import (
     get_cache_stats,
 )
 
+# Wall-clock threshold asserts are load-sensitive; excluded in CI via `-m "not perf"`.
+pytestmark = pytest.mark.perf
+
 
 class MockKnownBrushMatchingStrategy(BaseKnownBrushMatchingStrategy):
     """Mock implementation of BaseKnownBrushMatchingStrategy for testing."""

@@ -270,6 +270,7 @@ class TestDualSingleComponentOptimization:
         print(f"Dual Component: position {dual_index}")
         print(f"Single Component: position {single_index}")
 
+    @pytest.mark.perf
     def test_optimization_performance_impact(self, scoring_matcher):
         """Test that the optimization reduces redundant work."""
         # Test with a case that should trigger both dual and single component strategies

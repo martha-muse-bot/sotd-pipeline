@@ -13,6 +13,9 @@ from pathlib import Path
 
 from sotd.match.razor_matcher import RazorMatcher
 
+# Wall-clock threshold asserts are load-sensitive; excluded in CI via `-m "not perf"`.
+pytestmark = pytest.mark.perf
+
 
 class TestRazorMatcherPerformance:
     """Test performance characteristics of the optimized RazorMatcher."""

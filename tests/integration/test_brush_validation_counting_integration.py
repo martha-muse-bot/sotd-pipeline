@@ -168,6 +168,7 @@ class TestBrushValidationCountingIntegration:
                 "month" in str(e).lower() or "invalid" in str(e).lower()
             ), f"Unexpected error: {e}"
 
+    @pytest.mark.perf
     def test_performance_integration(self, cli):
         """Test performance characteristics with real data."""
         month = "2025-06"
