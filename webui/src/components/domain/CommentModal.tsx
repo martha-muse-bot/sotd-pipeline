@@ -177,7 +177,7 @@ const CommentModal: React.FC<CommentModalProps> = ({
 
   return (
     <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'>
-      <div className='bg-white rounded-lg shadow-xl max-w-5xl w-full mx-4 max-h-[90vh] overflow-hidden'>
+      <div className='bg-white rounded-lg shadow-xl max-w-5xl w-full mx-2 sm:mx-4 max-h-[90vh] overflow-hidden flex flex-col'>
         {/* Header */}
         <div className='flex items-center justify-between p-4 border-b border-gray-200'>
           <div className='flex items-center space-x-4'>
@@ -234,7 +234,7 @@ const CommentModal: React.FC<CommentModalProps> = ({
         </div>
 
         {/* Content */}
-        <div className='p-4 overflow-y-auto max-h-[calc(90vh-120px)]'>
+        <div className='p-4 overflow-y-auto flex-1 min-h-0'>
           {/* Comment Info */}
           <div className='mb-4 p-3 bg-gray-50 rounded-lg'>
             <div className='grid grid-cols-1 md:grid-cols-2 gap-3 text-sm'>

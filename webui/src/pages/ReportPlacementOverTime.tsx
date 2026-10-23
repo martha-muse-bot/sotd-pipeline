@@ -396,7 +396,7 @@ const ReportPlacementOverTime: React.FC = () => {
   return (
     <div className="w-full p-4 max-w-full overflow-x-hidden">
       <div className="mb-4">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Rankings over time</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Rankings over time</h1>
         <p className="text-gray-600">
           Choose an aggregation and one or more items to see how they ranked month over month.
         </p>

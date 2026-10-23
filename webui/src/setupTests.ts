@@ -52,3 +52,7 @@ if (typeof global.TextEncoder === 'undefined') {
 
 // This file is automatically loaded by Jest before running tests
 // Add any global test setup here
+
+// Public-build flag default for tests (vite.config.public.ts sets it to true
+// via Vite `define` in real public bundles; tests can flip it per-test).
+(globalThis as any).__PUBLIC_BUILD__ = false;

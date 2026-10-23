@@ -19,6 +19,7 @@ import { getCommentDetail, CommentDetail } from '@/services/api';
 import { getProductsForMonth, getProductUsageAnalysis, getProductYearlySummary } from '@/services/api';
 import { Product, ProductUsageAnalysis, ProductYearlySummary } from '@/types/productUsage';
 import MonthSelector from '@/components/forms/MonthSelector';
+import { isPublicBuild } from '@/lib/buildMode';
 import axios from 'axios';
 
 const ProductUsage: React.FC = () => {
@@ -437,6 +438,18 @@ const ProductUsage: React.FC = () => {
     return urlMap;
   };
 
+  // Public build: open the Reddit URL of the first comment that has one.
+  const openFirstCommentUrl = (commentIds: string[]) => {
+    if (!isPublicBuild()) return;
+    for (const id of commentIds) {
+      const url = commentUrls[id];
+      if (url) {
+        window.open(url, '_blank', 'noopener,noreferrer');
+        return;
+      }
+    }
+  };
+
   // Helper function to copy text to clipboard
   const copyToClipboard = async (text: string): Promise<boolean> => {
     try {
@@ -450,6 +463,16 @@ const ProductUsage: React.FC = () => {
 
   // Comment modal handlers
   const handleCommentClick = async (commentId: string, allCommentIds?: string[]) => {
+    // Public build: the comment-detail API is admin-only, so link straight to
+    // Reddit when the URL is known and do nothing when it isn't.
+    if (isPublicBuild()) {
+      const url = commentUrls[commentId];
+      if (url) {
+        window.open(url, '_blank', 'noopener,noreferrer');
+      }
+      return;
+    }
+
     try {
       setCommentLoading(true);
 
@@ -976,14 +999,14 @@ const ProductUsage: React.FC = () => {
           </Button>
         </div>
         <div className='overflow-x-auto'>
-          <table className='w-full border-collapse border border-border'>
+          <table className='w-full min-w-[768px] border-collapse border border-border'>
             <thead>
               <tr className='bg-muted'>
                 <th className='border border-border p-2 text-center'>#</th>
                 <th className='border border-border p-2 text-left'>Username</th>
                 <th className='border border-border p-2 text-center'>Usage Count</th>
                 <th className='border border-border p-2 text-left'>Usage Dates</th>
-                <th className='border border-border p-2 text-left'>Comment IDs</th>
+                <th className='hidden md:table-cell border border-border p-2 text-left'>Comment IDs</th>
               </tr>
             </thead>
             <tbody>
@@ -1007,7 +1030,7 @@ const ProductUsage: React.FC = () => {
                         onExpandChange={expanded => handleUserExpandChange(user.username, expanded)}
                       />
                     </td>
-                    <td className='border border-border p-2'>
+                    <td className='hidden md:table-cell border border-border p-2'>
                       <CommentDisplay
                         commentIds={ordered.commentIds}
                         onCommentClick={commentId => handleCommentClick(commentId, user.comment_ids)}
@@ -1086,7 +1109,7 @@ const ProductUsage: React.FC = () => {
           return (
             <div key={month} className='space-y-4'>
               <div className='text-center relative'>
-                <div className='absolute top-0 right-0 flex items-center gap-2'>
+                <div className='flex items-center justify-center gap-2 mt-2 sm:mt-0 sm:absolute sm:top-0 sm:right-0'>
                   <Button
                     variant='outline'
                     size='sm'
@@ -1156,11 +1179,16 @@ const ProductUsage: React.FC = () => {
                   return (
                     <div
                       key={day}
-                      className={`p-2 text-center border rounded-md min-h-[80px] flex flex-col items-center justify-center ${
+                      onClick={
+                        isPublicBuild() && isUsed && dayCommentIds.length > 0
+                          ? () => openFirstCommentUrl(dayCommentIds)
+                          : undefined
+                      }
+                      className={`p-2 text-center border rounded-md min-h-[56px] sm:min-h-[80px] flex flex-col items-center justify-center ${
                         isUsed
                           ? 'bg-green-100 border-green-300 text-green-800'
                           : 'bg-gray-100 border-gray-300 text-gray-400'
-                      }`}
+                      } ${isPublicBuild() && isUsed && dayCommentIds.length > 0 ? 'cursor-pointer' : ''}`}
                     >
                       <span className='text-sm font-medium'>{day}</span>
                       {isUsed && dailyUses > 0 && (
@@ -1171,12 +1199,14 @@ const ProductUsage: React.FC = () => {
                           <div className='text-xs'>
                             {distinctUsers} {distinctUsers === 1 ? 'user' : 'users'}
                           </div>
-                          <div className='mt-1'>
-                            <CommentDisplay
-                              commentIds={dayCommentIds}
-                              onCommentClick={commentId => handleCommentClick(commentId, dayCommentIds)}
-                            />
-                          </div>
+                          {!isPublicBuild() && (
+                            <div className='mt-1'>
+                              <CommentDisplay
+                                commentIds={dayCommentIds}
+                                onCommentClick={commentId => handleCommentClick(commentId, dayCommentIds)}
+                              />
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -1204,7 +1234,7 @@ const ProductUsage: React.FC = () => {
         {/* Aggregated summary when multiple months */}
         {selectedMonths.length > 1 && aggregatedAnalysis && (
           <div className='text-center mb-4 relative'>
-            <div className='absolute top-0 right-0 flex items-center gap-2'>
+            <div className='flex items-center justify-center gap-2 mt-2 sm:mt-0 sm:absolute sm:top-0 sm:right-0'>
               <Button
                 variant='outline'
                 size='sm'
@@ -1315,7 +1345,7 @@ const ProductUsage: React.FC = () => {
           return (
             <div key={month} className='space-y-4'>
               <div className='text-center mb-4 relative'>
-                <div className='absolute top-0 right-0 flex items-center gap-2'>
+                <div className='flex items-center justify-center gap-2 mt-2 sm:mt-0 sm:absolute sm:top-0 sm:right-0'>
                   <Button
                     variant='outline'
                     size='sm'
@@ -1447,7 +1477,7 @@ const ProductUsage: React.FC = () => {
         </div>
 
         <div className='overflow-x-auto'>
-          <table className='w-full border-collapse border border-border'>
+          <table className='w-full min-w-[768px] border-collapse border border-border'>
             <thead>
               <tr className='bg-muted'>
                 <th className='border border-border p-2 text-left'>Month</th>
@@ -1496,10 +1526,10 @@ const ProductUsage: React.FC = () => {
   };
 
   return (
-    <div className='container mx-auto p-6 space-y-6'>
-      <div className='flex items-center justify-between'>
+    <div className='container mx-auto p-4 sm:p-6 space-y-6'>
+      <div className='flex flex-wrap items-center justify-between gap-2'>
         <div>
-          <h1 className='text-3xl font-bold'>Product Usage</h1>
+          <h1 className='text-2xl sm:text-3xl font-bold'>Product Usage</h1>
           <p className='text-muted-foreground'>Analyze which users used a specific product in any month</p>
         </div>
       </div>
@@ -1655,7 +1685,7 @@ const ProductUsage: React.FC = () => {
       {aggregatedAnalysis && (
         <Card>
           <CardHeader>
-            <div className='flex items-center justify-between'>
+            <div className='flex flex-wrap items-center justify-between gap-2'>
               <div>
                 <CardTitle>
                   Usage Analysis for {aggregatedAnalysis.product.brand} {aggregatedAnalysis.product.model} -{' '}
@@ -1671,7 +1701,7 @@ const ProductUsage: React.FC = () => {
               </div>
 
               {/* View Toggle */}
-              <div className='flex items-center space-x-2'>
+              <div className='flex flex-wrap items-center gap-2'>
                 <Button
                   variant={viewMode === 'calendar' ? 'default' : 'outline'}
                   size='sm'
@@ -1736,7 +1766,7 @@ const ProductUsage: React.FC = () => {
       {aggregatedAnalysis && aggregatedAnalysis.users.length > 0 && (
         <Card>
           <CardHeader>
-            <div className='flex items-center justify-between'>
+            <div className='flex flex-wrap items-center justify-between gap-2'>
               <CardTitle>Users Who Used This Product</CardTitle>
               <div className='flex items-center gap-2'>
                 <Button
@@ -1776,14 +1806,14 @@ const ProductUsage: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className='overflow-x-auto'>
-              <table className='w-full border-collapse border border-border'>
+              <table className='w-full min-w-[768px] border-collapse border border-border'>
                 <thead>
                   <tr className='bg-muted'>
                     <th className='border border-border p-2 text-center'>#</th>
                     <th className='border border-border p-2 text-left'>Username</th>
                     <th className='border border-border p-2 text-center'>Usage Count</th>
                     <th className='border border-border p-2 text-left'>Usage Dates</th>
-                    <th className='border border-border p-2 text-left'>Comment IDs</th>
+                    <th className='hidden md:table-cell border border-border p-2 text-left'>Comment IDs</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1821,7 +1851,7 @@ const ProductUsage: React.FC = () => {
                             }
                           />
                         </td>
-                        <td className='border border-border p-2'>
+                        <td className='hidden md:table-cell border border-border p-2'>
                           <CommentDisplay
                             commentIds={ordered.commentIds}
                             onCommentClick={commentId =>

@@ -23,6 +23,9 @@ const renameIndex = (from: string, to: string): Plugin => ({
 // Public build: curated analytics-only entry. Serves behind nginx with /api proxied.
 export default defineConfig({
   plugins: [react(), renameIndex('public.html', 'index.html')],
+  // Flag for src/lib/buildMode.ts: public builds link comments straight to
+  // Reddit instead of opening the admin-only comment-detail modal.
+  define: { __PUBLIC_BUILD__: 'true' },
   resolve: {
     alias: { '@': path.resolve(__dirname, './src') },
   },

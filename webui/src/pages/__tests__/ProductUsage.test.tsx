@@ -362,5 +362,47 @@ describe('ProductUsage Component Tests', () => {
     // This is tested through integration when yearly summary data is available
     expect(screen.getByText('Product Usage')).toBeInTheDocument();
   });
+
+  describe('public build comment links', () => {
+    const originalFlag = (globalThis as any).__PUBLIC_BUILD__;
+
+    afterEach(() => {
+      (globalThis as any).__PUBLIC_BUILD__ = originalFlag;
+      jest.restoreAllMocks();
+    });
+
+    test('opens the Reddit comment URL in a new tab instead of the modal', async () => {
+      (globalThis as any).__PUBLIC_BUILD__ = true;
+      const openSpy = jest.spyOn(window, 'open').mockImplementation(() => null);
+
+      await act(async () => {
+        render(
+          <MemoryRouter
+            initialEntries={[
+              '/product-usage?months=2025-06&productType=razor&brand=Gillette&model=Tech',
+            ]}
+          >
+            <ProductUsage />
+          </MemoryRouter>
+        );
+      });
+
+      // Wait for the deep-linked product analysis to load and dates to render
+      await waitFor(
+        () => {
+          expect(screen.getAllByText('Jun 1').length).toBeGreaterThan(0);
+        },
+        { timeout: 5000 }
+      );
+
+      fireEvent.click(screen.getAllByText('Jun 1')[0]);
+
+      expect(openSpy).toHaveBeenCalledWith('https://reddit.com/test', '_blank', 'noopener,noreferrer');
+      // The comment-detail modal must not open on the public site
+      await waitFor(() => {
+        expect(screen.queryByText('Comment Details')).not.toBeInTheDocument();
+      });
+    });
+  });
 });
 

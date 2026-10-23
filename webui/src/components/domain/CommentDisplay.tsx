@@ -122,7 +122,7 @@ export const CommentDisplay: React.FC<CommentDisplayProps> = ({
           key={commentId}
           onClick={() => onCommentClick(commentId)}
           disabled={commentLoading}
-          className='block text-blue-600 hover:text-blue-800 hover:underline cursor-pointer text-left text-sm'
+          className='block py-0.5 text-blue-600 hover:text-blue-800 hover:underline cursor-pointer text-left text-sm'
         >
           {getDisplayText(index)}
         </button>
