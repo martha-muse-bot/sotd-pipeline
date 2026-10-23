@@ -465,18 +465,6 @@ const MonthlyUserPosts: React.FC = () => {
     return urlMap;
   };
 
-  // Public build: open the Reddit URL of the first comment that has one.
-  const openFirstCommentUrl = (commentIds: string[]) => {
-    if (!isPublicBuild()) return;
-    for (const id of commentIds) {
-      const url = commentUrls[id];
-      if (url) {
-        window.open(url, '_blank', 'noopener,noreferrer');
-        return;
-      }
-    }
-  };
-
   // Helper function to copy text to clipboard
   const copyToClipboard = async (text: string): Promise<boolean> => {
     try {
@@ -1083,32 +1071,32 @@ const MonthlyUserPosts: React.FC = () => {
                   const dateStr = `${year}-${String(monthNum).padStart(2, '0')}-${String(day).padStart(2, '0')}`;                  const dayCommentIds = monthAnalysis.comments_by_date[dateStr] || [];                  return (
                     <div
                       key={day}
-                      onClick={
-                        isPublicBuild() && isPosted && dayCommentIds.length > 0
-                          ? () => openFirstCommentUrl(dayCommentIds)
-                          : undefined
-                      }
                       className={`p-2 text-center border rounded-md min-h-[48px] sm:min-h-[60px] flex flex-col items-center justify-center ${
                         isPosted
                           ? 'bg-green-100 border-green-300 text-green-800'
                           : 'bg-red-100 border-red-300 text-red-800'
-                      } ${isPublicBuild() && isPosted && dayCommentIds.length > 0 ? 'cursor-pointer' : ''}`}
+                      }`}
                     >
                       <span className='text-sm font-medium'>{day}</span>
                       {isPosted && dayCommentIds.length > 0 && (
                         <div className='mt-1'>
-                          {!isPublicBuild() &&
-                            (() => {
-                              try {
-                                return (
+                          {/* Public desktop: IDs link to Reddit; public mobile: no IDs (cell too
+                              tight). Admin: modal. */}
+                          {(() => {
+                            try {
+                              return (
+                                <div
+                                  className={isPublicBuild() ? 'hidden md:block' : undefined}
+                                >
                                   <CommentDisplay
                                     commentIds={dayCommentIds}
                                     onCommentClick={commentId => handleCommentClick(commentId, dayCommentIds)}
                                   />
-                                );
-                              } catch (error) {                                return <span className='text-xs text-red-500'>Error</span>;
-                              }
-                            })()}
+                                </div>
+                              );
+                            } catch (error) {                              return <span className='text-xs text-red-500'>Error</span>;
+                            }
+                          })()}
                         </div>
                       )}
                     </div>

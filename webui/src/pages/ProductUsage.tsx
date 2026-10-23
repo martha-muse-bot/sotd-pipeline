@@ -438,18 +438,6 @@ const ProductUsage: React.FC = () => {
     return urlMap;
   };
 
-  // Public build: open the Reddit URL of the first comment that has one.
-  const openFirstCommentUrl = (commentIds: string[]) => {
-    if (!isPublicBuild()) return;
-    for (const id of commentIds) {
-      const url = commentUrls[id];
-      if (url) {
-        window.open(url, '_blank', 'noopener,noreferrer');
-        return;
-      }
-    }
-  };
-
   // Helper function to copy text to clipboard
   const copyToClipboard = async (text: string): Promise<boolean> => {
     try {
@@ -1179,16 +1167,11 @@ const ProductUsage: React.FC = () => {
                   return (
                     <div
                       key={day}
-                      onClick={
-                        isPublicBuild() && isUsed && dayCommentIds.length > 0
-                          ? () => openFirstCommentUrl(dayCommentIds)
-                          : undefined
-                      }
                       className={`p-2 text-center border rounded-md min-h-[56px] sm:min-h-[80px] flex flex-col items-center justify-center ${
                         isUsed
                           ? 'bg-green-100 border-green-300 text-green-800'
                           : 'bg-gray-100 border-gray-300 text-gray-400'
-                      } ${isPublicBuild() && isUsed && dayCommentIds.length > 0 ? 'cursor-pointer' : ''}`}
+                      }`}
                     >
                       <span className='text-sm font-medium'>{day}</span>
                       {isUsed && dailyUses > 0 && (
@@ -1199,14 +1182,18 @@ const ProductUsage: React.FC = () => {
                           <div className='text-xs'>
                             {distinctUsers} {distinctUsers === 1 ? 'user' : 'users'}
                           </div>
-                          {!isPublicBuild() && (
-                            <div className='mt-1'>
-                              <CommentDisplay
-                                commentIds={dayCommentIds}
-                                onCommentClick={commentId => handleCommentClick(commentId, dayCommentIds)}
-                              />
-                            </div>
-                          )}
+                          {/* Public desktop: IDs link to Reddit; public mobile: no IDs (cell too
+                              tight) — counts above stay non-clickable labels. Admin: modal. */}
+                          <div
+                            className={
+                              isPublicBuild() ? 'hidden md:block mt-1' : 'mt-1'
+                            }
+                          >
+                            <CommentDisplay
+                              commentIds={dayCommentIds}
+                              onCommentClick={commentId => handleCommentClick(commentId, dayCommentIds)}
+                            />
+                          </div>
                         </div>
                       )}
                     </div>
