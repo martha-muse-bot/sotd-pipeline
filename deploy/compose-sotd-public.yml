@@ -13,6 +13,8 @@
 # here; the API stays OFF cf_tunnel_net).
 #
 # NOTE: do NOT set a `cpus:` limit — Synology's cgroup v1 rejects it.
+name: sotd-public
+
 services:
   sotd-public-api:
     image: ghcr.io/nmrs/sotd-pipeline-public-api:latest
