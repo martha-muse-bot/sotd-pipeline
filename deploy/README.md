@@ -1,9 +1,17 @@
 # SOTD Public + Admin Containers — NAS Deployment Runbook
 
 The SOTD web UI ships as three container images, built by GitHub Actions on
-every push to `master` (paths: `webui/`, `sotd/`, `requirements*.txt`,
+every push to `master` (paths: `webui/`, `sotd/`, `requirements.txt`,
 `deploy/`, `.dockerignore`, this workflow) and published to GHCR
 (`ghcr.io/nmrs`, public packages — no registry credential needed on the NAS):
+
+> **Prerequisite — `nas` ssh alias**: the publish commands below use
+> `nas:<path>` targets, where `nas` is an **ssh alias you must configure**
+> in `~/.ssh/config` on the Mac (or pass any rsync target instead —
+> `SOTD_PUBLIC_DATA_TARGET` env var or the script's first positional
+> argument overrides the default). The remote path is relative to the ssh
+> login's home directory: if that home is not `/volume1/docker`, use an
+> absolute path such as `nas:/volume1/docker/sotd-public/data`.
 
 | Image | Built from | Runs |
 |---|---|---|
@@ -99,7 +107,7 @@ needed** — the API reads the mounted share on each request. For the admin
 stack, rsync the full `data/` copy separately as in first-time setup.
 
 The public API serves only read-only GET routes (guarded by a route test
-in CI). The admin app serves its built frontend via a StaticFiles mount
+in `webui/api/__tests__/test_public_main.py`, wired into CI). The admin app serves its built frontend via a StaticFiles mount
 when `webui/dist` exists (it does in the container image).
 
 ## Verification after deploy
@@ -112,9 +120,9 @@ when `webui/dist` exists (it does in the container image).
 
 ## Troubleshooting
 
-- **Stack won't start / 404 on images**: confirm the GHCR packages are
-  public (they are, per the repo's public visibility) and the NAS can
-  reach `ghcr.io`.
+- **Stack won't start / 404 on images**: verify the GHCR packages are
+  public after the first CI run (make them public if the first push
+  created them private) and the NAS can reach `ghcr.io`.
 - **CORS errors in the browser**: `SOTD_PUBLIC_ORIGIN` on the public
   stack doesn't match the actual origin.
 - **Publish fails with a bundle error**: run the pipeline's aggregate
