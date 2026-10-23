@@ -82,13 +82,13 @@ ENVIRONMENT=test DEBUG=true PYTHONPATH=. python -m uvicorn api.main:app --host 0
 The recommended way to manage WebUI servers is using the `manage-servers.sh` script:
 
 ```bash
-# Start both servers
+# Start all servers (admin frontend, backend, and the public site)
 ./scripts/manage-servers.sh start
 
-# Stop both servers
+# Stop all servers
 ./scripts/manage-servers.sh stop
 
-# Restart both servers
+# Restart all servers
 ./scripts/manage-servers.sh restart
 
 # Check server status
@@ -97,6 +97,7 @@ The recommended way to manage WebUI servers is using the `manage-servers.sh` scr
 # View logs
 ./scripts/manage-servers.sh logs frontend   # Frontend server logs
 ./scripts/manage-servers.sh logs backend   # Backend server logs
+./scripts/manage-servers.sh logs public    # Public site server logs
 ./scripts/manage-servers.sh logs api-debug # API debug logs
 ./scripts/manage-servers.sh logs api-errors # API error logs
 
@@ -105,6 +106,16 @@ The recommended way to manage WebUI servers is using the `manage-servers.sh` scr
 
 # Force start (kills external processes using ports)
 ./scripts/manage-servers.sh start --force
+```
+
+The public analytics site runs alongside the admin frontend at
+http://localhost:3200 — it serves the built `dist-public/` bundle
+(built automatically on first start if missing) and proxies `/api/` to the
+same backend on :8000. To pick up frontend changes in the public site,
+rebuild and it serves the new bundle immediately:
+
+```bash
+npm run build:public   # ~2s; server keeps serving the fresh bundle
 ```
 
 See [`scripts/README.md`](scripts/README.md) for detailed server management documentation.

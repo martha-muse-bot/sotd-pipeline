@@ -7,6 +7,8 @@
         "dev": "vite --port 3000 --strictPort",
         "build": "tsc && vite build",
         "build:public": "vite build --config vite.config.public.ts",
+        "serve:public": "node scripts/serve-public.mjs",
+        "dev:public": "npm run build:public && npm run serve:public",
         "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
         "lint:fix": "eslint . --ext ts,tsx --fix",
         "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",

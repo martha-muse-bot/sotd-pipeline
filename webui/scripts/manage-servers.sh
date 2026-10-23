@@ -15,6 +15,7 @@ NC='\033[0m' # No Color
 # Configuration
 FRONTEND_PORT=3000
 BACKEND_PORT=8000
+PUBLIC_PORT=3200
 FRONTEND_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BACKEND_DIR="$FRONTEND_DIR/api"
 PID_DIR="$FRONTEND_DIR/.pids"
@@ -25,10 +26,12 @@ mkdir -p "$PID_DIR"
 # PID files
 FRONTEND_PID_FILE="$PID_DIR/frontend.pid"
 BACKEND_PID_FILE="$PID_DIR/backend.pid"
+PUBLIC_PID_FILE="$PID_DIR/public.pid"
 
 # Log files
 FRONTEND_LOG_FILE="$PID_DIR/frontend.log"
 BACKEND_LOG_FILE="$PID_DIR/backend.log"
+PUBLIC_LOG_FILE="$PID_DIR/public.log"
 
 # Function to print colored output
 print_status() {
@@ -112,6 +115,52 @@ start_frontend() {
         return 0
     else
         print_status $RED "Failed to start frontend server"
+        return 1
+    fi
+}
+
+# Function to start the public site server (built bundle + /api proxy)
+start_public() {
+    local force=${1:-false}
+
+    if check_process "$PUBLIC_PID_FILE" "public"; then
+        print_status $YELLOW "Public site server is already running (PID: $(cat $PUBLIC_PID_FILE))"
+        return 0
+    fi
+
+    if check_port $PUBLIC_PORT; then
+        if [[ "$force" == "true" ]]; then
+            kill_external_process $PUBLIC_PORT "public"
+        else
+            print_status $RED "Port $PUBLIC_PORT is already in use by another process"
+            print_status $YELLOW "Use --force flag to kill external processes and start anyway"
+            return 1
+        fi
+    fi
+
+    # The server serves the built bundle; build it if missing.
+    if [[ ! -f "$FRONTEND_DIR/dist-public/index.html" ]]; then
+        print_status $BLUE "dist-public/ missing - building public bundle..."
+        cd "$FRONTEND_DIR"
+        npm run build:public > "$PUBLIC_LOG_FILE" 2>&1
+    fi
+
+    print_status $BLUE "Starting public site server on port $PUBLIC_PORT..."
+
+    cd "$FRONTEND_DIR"
+    node scripts/serve-public.mjs > "$PUBLIC_LOG_FILE" 2>&1 &
+    local pid=$!
+    echo $pid > "$PUBLIC_PID_FILE"
+
+    # Wait a moment for server to start
+    sleep 1
+
+    if check_process "$PUBLIC_PID_FILE" "public"; then
+        print_status $GREEN "Public site server started successfully (PID: $pid)"
+        print_status $BLUE "Public URL: http://localhost:$PUBLIC_PORT"
+        return 0
+    else
+        print_status $RED "Failed to start public site server (see $PUBLIC_LOG_FILE)"
         return 1
     fi
 }
@@ -209,6 +258,14 @@ check_status() {
     else
         print_status $RED "Backend (FastAPI): STOPPED"
     fi
+
+    # Check public site
+    if check_process "$PUBLIC_PID_FILE" "public"; then
+        local pid=$(cat "$PUBLIC_PID_FILE")
+        print_status $GREEN "Public site: RUNNING (PID: $pid, Port: $PUBLIC_PORT)"
+    else
+        print_status $RED "Public site: STOPPED"
+    fi
     
     # Check ports
     if check_port $FRONTEND_PORT; then
@@ -245,6 +302,14 @@ show_logs() {
                 print_status $RED "No backend log file found"
             fi
             ;;
+        public)
+            if [[ -f "$PUBLIC_LOG_FILE" ]]; then
+                print_status $BLUE "=== Public Site Logs ==="
+                tail -f "$PUBLIC_LOG_FILE"
+            else
+                print_status $RED "No public log file found"
+            fi
+            ;;
         api-debug)
             local api_debug_log="$FRONTEND_DIR/logs/api_debug.log"
             if [[ -f "$api_debug_log" ]]; then
@@ -277,11 +342,11 @@ show_help() {
     echo "Usage: $0 [COMMAND] [OPTIONS]"
     echo ""
     echo "Commands:"
-    echo "  start       Start both frontend and backend servers"
-    echo "  stop        Stop both frontend and backend servers"
+    echo "  start       Start frontend, backend, and public site servers"
+    echo "  stop        Stop all servers"
     echo "  restart     Restart both servers"
     echo "  status      Show status of both servers"
-    echo "  logs [server] Show logs for specified server (frontend|backend|api-debug|api-errors)"
+    echo "  logs [server] Show logs for specified server (frontend|backend|public|api-debug|api-errors)"
     echo "  clean       Clean up PID files and logs"
     echo "  help        Show this help message"
     echo ""
@@ -289,9 +354,9 @@ show_help() {
     echo "  --force     Kill external processes using required ports before starting"
     echo ""
     echo "Examples:"
-    echo "  $0 start          # Start both servers"
+    echo "  $0 start          # Start all servers"
     echo "  $0 start --force  # Start servers, killing external processes if needed"
-    echo "  $0 stop           # Stop both servers"
+    echo "  $0 stop           # Stop all servers"
     echo "  $0 status         # Check server status"
     echo "  $0 logs frontend  # Show frontend logs"
     echo "  $0 logs backend   # Show backend logs"
@@ -299,15 +364,16 @@ show_help() {
     echo "  $0 logs api-errors # Show API error logs"
     echo ""
     echo "Server URLs:"
-    echo "  Frontend: http://localhost:$FRONTEND_PORT"
-    echo "  Backend:  http://localhost:$BACKEND_PORT"
+    echo "  Frontend (admin dev): http://localhost:$FRONTEND_PORT"
+    echo "  Public site:          http://localhost:$PUBLIC_PORT"
+    echo "  Backend:              http://localhost:$BACKEND_PORT"
 }
 
 # Function to clean up
 cleanup() {
     print_status $BLUE "Cleaning up PID files and logs..."
-    rm -f "$FRONTEND_PID_FILE" "$BACKEND_PID_FILE"
-    rm -f "$FRONTEND_LOG_FILE" "$BACKEND_LOG_FILE"
+    rm -f "$FRONTEND_PID_FILE" "$BACKEND_PID_FILE" "$PUBLIC_PID_FILE"
+    rm -f "$FRONTEND_LOG_FILE" "$BACKEND_LOG_FILE" "$PUBLIC_LOG_FILE"
     print_status $GREEN "Cleanup complete"
 }
 
@@ -329,14 +395,17 @@ case "$COMMAND" in
         fi
         start_frontend "$FORCE"
         start_backend "$FORCE"
+        start_public "$FORCE"
         print_status $GREEN "All servers started!"
-        print_status $BLUE "Frontend: http://localhost:$FRONTEND_PORT"
-        print_status $BLUE "Backend:  http://localhost:$BACKEND_PORT"
+        print_status $BLUE "Frontend (admin dev): http://localhost:$FRONTEND_PORT"
+        print_status $BLUE "Public site:          http://localhost:$PUBLIC_PORT"
+        print_status $BLUE "Backend:              http://localhost:$BACKEND_PORT"
         ;;
     stop)
         print_status $BLUE "Stopping SOTD Pipeline WebUI servers..."
         stop_server "$FRONTEND_PID_FILE" "frontend" $FRONTEND_PORT
         stop_server "$BACKEND_PID_FILE" "backend" $BACKEND_PORT
+        stop_server "$PUBLIC_PID_FILE" "public" $PUBLIC_PORT
         print_status $GREEN "All servers stopped!"
         ;;
     restart)
@@ -346,9 +415,11 @@ case "$COMMAND" in
         fi
         stop_server "$FRONTEND_PID_FILE" "frontend" $FRONTEND_PORT
         stop_server "$BACKEND_PID_FILE" "backend" $BACKEND_PORT
+        stop_server "$PUBLIC_PID_FILE" "public" $PUBLIC_PORT
         sleep 2
         start_frontend "$FORCE"
         start_backend "$FORCE"
+        start_public "$FORCE"
         print_status $GREEN "All servers restarted!"
         ;;
     status)
