@@ -46,6 +46,20 @@ def test_annual_dir_optional_but_no_enriched_ever(tmp_path):
     assert any("enriched" in p for p in problems)
 
 
+def test_empty_aggregated_dir_fails(tmp_path):
+    # An empty bundle would make the wrapper's --delete rsyncs wipe the target.
+    (tmp_path / "aggregated").mkdir()
+    problems = check_bundle(tmp_path)
+    assert problems and any("empty" in p for p in problems)
+
+
+def test_missing_aggregated_dir_fails(tmp_path):
+    # Same guard when aggregated/ doesn't exist at all (typo'd --data-dir, stale
+    # checkout).
+    problems = check_bundle(tmp_path)
+    assert problems and any("empty" in p for p in problems)
+
+
 def test_top_level_enriched_sibling_does_not_block(tmp_path):
     # The pipeline data root legitimately keeps enriched/ next to aggregated/;
     # the rsync selection never publishes it, so it must not fail the check.

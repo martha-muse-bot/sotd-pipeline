@@ -28,6 +28,14 @@ def check_bundle(data_dir: Path) -> list:
     ua = _months_in(agg / "user_analysis")
     pu = _months_in(agg / "product_usage")
 
+    # Guard: an empty/missing aggregated dir would make the wrapper's --delete
+    # rsyncs wipe every published month on the target. Refuse to publish.
+    if not (month_files | ua | pu):
+        problems.append(
+            "aggregated/ is empty or missing — refusing to publish an empty bundle "
+            "(would --delete the target)"
+        )
+
     for m in sorted(month_files | ua | pu):
         if m not in month_files:
             problems.append(f"{m}: missing aggregated/{m}.json (rank tables)")
