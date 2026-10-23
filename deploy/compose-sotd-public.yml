@@ -36,6 +36,10 @@ services:
     pull_policy: always
     depends_on:
       - sotd-public-api
+    volumes:
+      # access log on the NAS so the monitoring stack's nginxlog-exporter can
+      # count UI visits (nginx writes /var/log/nginx/access.log — see public.conf)
+      - /volume1/docker/sotd-public/logs:/var/log/nginx
     networks:
       - sotd-internal
       - npm-bridge
