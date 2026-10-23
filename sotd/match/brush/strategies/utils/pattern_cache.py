@@ -11,10 +11,10 @@ import json
 from typing import Any, Callable, Dict, List
 
 # Module-level cache (per process)
-# Use object identity as primary key for fast lookup, fallback to content hash
-_pattern_cache_by_id: Dict[tuple, List[Dict[str, Any]]] = (
-    {}
-)  # (id(catalog), pattern_type) -> patterns
+# By-id fast path holds (catalog_ref, compiled) so the catalog dict stays alive:
+# a live object's address can never be reused by a different object, so a stale
+# id-keyed entry (freed catalog, address recycled by a new dict) is impossible.
+_pattern_cache_by_id: Dict[tuple, tuple] = {}  # (id(catalog), pattern_type) -> (catalog, patterns)
 _pattern_cache_by_hash: Dict[str, List[Dict[str, Any]]] = {}  # hash_key -> patterns
 
 
@@ -54,23 +54,29 @@ def get_compiled_patterns(
     Returns:
         List of compiled patterns with metadata
     """
-    # Fast path: Check cache by object identity first (O(1) dict lookup, no hashing)
+    # Fast path: Check cache by object identity first (O(1) dict lookup, no hashing).
+    # The entry holds the catalog dict itself; require identity before serving so a
+    # foreign/stale entry keyed by a reused address is never mistaken for a hit.
     id_key = (id(catalog_data), pattern_type)
-    if id_key in _pattern_cache_by_id:
-        return _pattern_cache_by_id[id_key]
+    cached_entry = _pattern_cache_by_id.get(id_key)
+    if cached_entry is not None and cached_entry[0] is catalog_data:
+        return cached_entry[1]
+    if cached_entry is not None:
+        del _pattern_cache_by_id[id_key]
 
     # Slow path: Generate hash key and check content-based cache
     # (needed when same catalog data is passed as different dict objects)
     cache_key = _generate_cache_key(catalog_data, pattern_type)
-    if cache_key in _pattern_cache_by_hash:
+    cached_patterns = _pattern_cache_by_hash.get(cache_key)
+    if cached_patterns is not None:
         # Also cache by ID for future fast lookups
-        _pattern_cache_by_id[id_key] = _pattern_cache_by_hash[cache_key]
-        return _pattern_cache_by_hash[cache_key]
+        _pattern_cache_by_id[id_key] = (catalog_data, cached_patterns)
+        return cached_patterns
 
     # Cache miss: Compile patterns and cache them
     compiled = compile_func(catalog_data)
     _pattern_cache_by_hash[cache_key] = compiled
-    _pattern_cache_by_id[id_key] = compiled
+    _pattern_cache_by_id[id_key] = (catalog_data, compiled)
     return compiled
 
 
