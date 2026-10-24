@@ -1,7 +1,7 @@
 import subprocess
 from pathlib import Path
 
-from sotd.pipeline_supervisor.loop import run_nightly
+from sotd.pipeline_supervisor.loop import run_nightly, sync_match_inputs
 
 
 def fake_runner_ok(cmd, **kw):
@@ -14,7 +14,12 @@ def setup_dirs(tmp_path: Path):
     bundle = tmp_path / "bundle"
     for d in (repo, data, bundle):
         d.mkdir()
-    (data / "soaps.yaml").write_text("a: 1\n")
+    # Operator-authored match inputs in the checkout (/app/data)
+    app_data = repo / "data"
+    app_data.mkdir()
+    (app_data / "soaps.yaml").write_text("a: 1\n")
+    (app_data / "correct_matches").mkdir()
+    (app_data / "correct_matches" / "soap.yaml").write_text("m: [x]\n")
     # Bundle source the real publish verifier accepts (happy path + catch-up publish).
     agg = data / "aggregated"
     for sub in ("product_usage", "user_analysis", "annual"):
@@ -38,16 +43,99 @@ def test_run_nightly_happy_path_no_catchup(tmp_path, monkeypatch):
     )
     assert result.published is True
     assert result.catchup_ran is False
+    assert result.phases["pull"] is True
     assert result.phases["fetch"] is True
+    assert result.phases["publish"] is True
+    # months_processed counts MONTHS (2 on a 2-month night), not phase-runs
+    assert result.months_processed == 2
+
+
+def test_single_monthly_command_per_month(tmp_path, monkeypatch):
+    repo, data, bundle = setup_dirs(tmp_path)
+    (data / ".catalog_hash").write_text("h1")
+    monkeypatch.setattr("sotd.pipeline_supervisor.loop.catalog_hash", lambda d: "h1")
+    calls = []
+
+    def runner(cmd, **kw):
+        calls.append(cmd)
+        return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+
+    run_nightly(
+        repo_dir=repo,
+        data_dir=data,
+        bundle_dir=bundle,
+        runner=runner,
+        months=("2026-10", "2026-09"),
+        all_months=("2026-10", "2026-05"),
+    )
+    pipeline_calls = [c for c in calls if c[:2] == ["python", "run.py"]]
+    assert pipeline_calls == [
+        ["python", "run.py", "--month", "2026-10", "--force", "fetch:aggregate"],
+        ["python", "run.py", "--month", "2026-09", "--force", "fetch:aggregate"],
+    ]
+
+
+def test_sync_copies_catalog_updates_into_data_volume(tmp_path, monkeypatch):
+    repo, data, bundle = setup_dirs(tmp_path)
+    (data / ".catalog_hash").write_text("old")
+    # Catalog update arrives via git pull: /app/data/soaps.yaml changed
+    (repo / "data" / "soaps.yaml").write_text("a: 2\n")
+    monkeypatch.setattr(
+        "sotd.pipeline_supervisor.loop.catalog_hash",
+        lambda d: catalog_hash_of({"soaps.yaml": "a: 2\n"}),
+    )
+    result = run_nightly(
+        repo_dir=repo,
+        data_dir=data,
+        bundle_dir=bundle,
+        runner=fake_runner_ok,
+        months=("2026-10", "2026-09"),
+        all_months=("2026-10", "2016-05"),
+    )
+    assert result.catchup_ran is True  # hash differs from stored -> catch-up fires
+
+
+def catalog_hash_of(files: dict) -> str:
+    import hashlib
+
+    digest = hashlib.sha256()
+    for rel in sorted(files):
+        fhash = hashlib.sha256(files[rel].encode()).hexdigest()
+        digest.update(f"{rel}:{fhash}\n".encode())
+    return digest.hexdigest()
+
+
+def test_code_only_pull_yields_identical_hash_no_catchup(tmp_path):
+    repo, data, bundle = setup_dirs(tmp_path)
+    # First night: sync runs, hash saved over the synced volume
+    from sotd.pipeline_supervisor.catalog_hash import catalog_hash
+
+    run_nightly(
+        repo_dir=repo,
+        data_dir=data,
+        bundle_dir=bundle,
+        runner=fake_runner_ok,
+        months=("2026-10", "2026-09"),
+        all_months=("2026-10", "2016-05"),
+    )
+    stored = (data / ".catalog_hash").read_text()
+    # Code-only pull (no catalog change in /app/data): hash is identical
+    run_nightly(
+        repo_dir=repo,
+        data_dir=data,
+        bundle_dir=bundle,
+        runner=fake_runner_ok,
+        months=("2026-10", "2026-09"),
+        all_months=("2026-10", "2016-05"),
+    )
+    assert (data / ".catalog_hash").read_text() == stored
+    assert catalog_hash(data) == stored
 
 
 def test_hash_not_saved_on_catchup_failure(tmp_path, monkeypatch):
     repo, data, bundle = setup_dirs(tmp_path)
 
-    calls = []
-
     def runner(cmd, **kw):
-        calls.append(cmd)
         # fail the all-months pass (identified by --range in cmd)
         if "--range" in cmd:
             return subprocess.CompletedProcess(cmd, 1, stdout="", stderr="boom")
@@ -101,10 +189,73 @@ def test_supervisor_survives_phase_crash(tmp_path, monkeypatch):
     )
     assert result.published is False
     assert result.phases["pull"] is True
-    assert any(v is False for v in result.phases.values())
+    assert result.phases["fetch"] is False
+    assert result.months_processed == 0
     assert result.catchup_ran is True  # drift branch still runs (per-brief order)
     assert result.catchup_ok is False  # catch-up crashes too -> hash not saved
     assert not (data / ".catalog_hash").exists()
+
+
+def test_any_month_failure_masks_fetch_label(tmp_path, monkeypatch):
+    """A failed month must not be overwritten by a later successful month."""
+    repo, data, bundle = setup_dirs(tmp_path)
+    (data / ".catalog_hash").write_text("h1")
+    monkeypatch.setattr("sotd.pipeline_supervisor.loop.catalog_hash", lambda d: "h1")
+
+    def runner(cmd, **kw):
+        if "--month" in cmd and cmd[cmd.index("--month") + 1] == "2026-10":
+            return subprocess.CompletedProcess(cmd, 1, stdout="", stderr="boom")
+        return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+
+    result = run_nightly(
+        repo_dir=repo,
+        data_dir=data,
+        bundle_dir=bundle,
+        runner=runner,
+        months=("2026-10", "2026-09"),
+        all_months=("2026-10", "2026-05"),
+    )
+    assert result.phases["fetch"] is False  # any-failure across months
+    assert result.months_processed == 0  # not all months succeeded
+    assert result.phases["publish"] is False  # nothing published on a failed night
+
+
+def test_sync_match_inputs_scopes_to_match_consumed_set(tmp_path: Path):
+    src = tmp_path / "appdata"
+    dst = tmp_path / "data"
+    src.mkdir()
+    dst.mkdir()
+    (src / "soaps.yaml").write_text("a: 1\n")
+    (src / "blades.yaml").write_text("b: 1\n")
+    (src / "correct_matches").mkdir()
+    (src / "correct_matches" / "razor.yaml").write_text("r: [x]\n")
+    (src / "thread_overrides.yaml").write_text("include: {}\n")
+    # NOT in the sync set: aggregated output, wsdb, backups
+    (src / "aggregated").mkdir()
+    (src / "aggregated" / "2026-10.json").write_text("{}")
+    (src / "wsdb").mkdir()
+    (src / "wsdb" / "software.json").write_text("{}")
+    (src / "razors.yaml.backup").write_text("junk\n")
+    copied = sync_match_inputs(src, dst)
+    assert copied == 4
+    assert (dst / "soaps.yaml").read_text() == "a: 1\n"
+    assert (dst / "correct_matches" / "razor.yaml").exists()
+    assert not (dst / "aggregated").exists()
+    assert not (dst / "wsdb").exists()
+    assert not (dst / "razors.yaml.backup").exists()
+
+
+def test_sync_match_inputs_creates_dirs_and_skips_absent(tmp_path: Path):
+    src = tmp_path / "appdata"
+    dst = tmp_path / "data"
+    src.mkdir()
+    dst.mkdir()
+    (src / "correct_matches").mkdir()
+    (src / "correct_matches" / "soap.yaml").write_text("m: [x]\n")
+    assert sync_match_inputs(src, dst) == 1
+    assert (dst / "correct_matches" / "soap.yaml").exists()
+    # Patterns with no source file are simply skipped (volume may hold more)
+    assert not (dst / "soaps.yaml").exists()
 
 
 def test_once_flag_exists():
@@ -113,6 +264,18 @@ def test_once_flag_exists():
     from sotd.pipeline_supervisor import loop
 
     assert "once" in inspect.getsource(loop.main)
+
+
+def test_once_mode_skips_metrics_server(monkeypatch):
+    """--once must not bind the metrics port (owned by the running loop)."""
+    import inspect
+
+    from sotd.pipeline_supervisor import loop
+
+    src = inspect.getsource(loop.main)
+    assert "start_metrics_server" in src
+    # the call is guarded by the once check
+    assert "if not args.once:" in src
 
 
 def test_git_pull_failure_skips_run(tmp_path, monkeypatch):
@@ -133,3 +296,4 @@ def test_git_pull_failure_skips_run(tmp_path, monkeypatch):
         all_months=("2026-10", "2016-05"),
     )
     assert result.published is False
+    assert result.phases["pull"] is False

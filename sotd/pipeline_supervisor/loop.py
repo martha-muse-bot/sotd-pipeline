@@ -1,9 +1,10 @@
-"""Nightly supervisor loop: pull, hash, run phases, publish, catch-up."""
+"""Nightly supervisor loop: pull, sync catalogs, hash, run phases, publish, catch-up."""
 
 from __future__ import annotations
 
 import argparse
 import logging
+import shutil
 import subprocess
 import sys
 import time
@@ -27,6 +28,29 @@ SCHEDULE_HOUR = 2
 TZ = ZoneInfo("America/Chicago")
 HASH_FILE = ".catalog_hash"
 
+# Operator-authored match inputs synced from the repo checkout (/app/data)
+# into the data volume (/data) after each successful git pull. This is the
+# set match actually consumes: the catalogs its loaders open, correct_matches
+# (pre-validated matches, checked first), and the operator override files
+# (thread_overrides feeds fetch; extract/enrichment_overrides and
+# intentionally_unmatched feed extract/match). Anything else in the checkout
+# (aggregated output, wsdb, non-match yamls) never reaches /data via the
+# supervisor — it arrives only through the one-time seed.
+MATCH_INPUT_PATTERNS = (
+    "blades.yaml",
+    "razors.yaml",
+    "soaps.yaml",
+    "brushes.yaml",
+    "handles.yaml",
+    "knots.yaml",
+    "brush_scoring_config.yaml",
+    "correct_matches/*.yaml",
+    "thread_overrides.yaml",
+    "extract_overrides.yaml",
+    "enrichment_overrides.yaml",
+    "intentionally_unmatched.yaml",
+)
+
 
 @dataclass
 class RunResult:
@@ -35,6 +59,26 @@ class RunResult:
     catchup_ran: bool = False
     catchup_ok: bool = False
     published: bool = False
+
+
+def sync_match_inputs(src_dir: Path, data_dir: Path) -> int:
+    """Copy operator-authored match inputs from the checkout into the data volume.
+
+    Only files present in the source are copied (the volume may hold more);
+    target directories are created as needed. Returns the number of files
+    copied. A copy failure raises and aborts the night before the hash is
+    computed — a half-synced volume must never look converged.
+    """
+    copied = 0
+    for pattern in MATCH_INPUT_PATTERNS:
+        for src in sorted(src_dir.glob(pattern)):
+            if not src.is_file():
+                continue
+            dst = data_dir / src.relative_to(src_dir)
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src, dst)
+            copied += 1
+    return copied
 
 
 def run_nightly(
@@ -56,17 +100,28 @@ def run_nightly(
     last_run_status.labels(phase="pull").set(1)
     result.phases["pull"] = True
 
+    # Catalog delivery: the pull updated /app/data only; match reads /data.
+    # Sync the operator-authored match inputs, THEN hash the volume.
+    sync_match_inputs(repo_dir / "data", data_dir)
+
     stored = _read_hash(data_dir)
     new_hash = catalog_hash(data_dir)
     hash_changed = stored is None or stored != new_hash
 
-    ok = True
+    # One command per month: fetch through aggregate. A failed fetch fails
+    # the whole month before match ever runs on stale data (user ruling
+    # 2026-10-24) — intra-month ordering is delegated to run.py.
+    monthly: dict[str, bool] = {}
     for month in months:
-        for phase_range in ("fetch:extract", "match:aggregate"):
-            ok &= _run_phase(runner, repo_dir, month, phase_range, result)
-
+        monthly[month] = _run_monthly(runner, repo_dir, month)
+    _set_phase_status(result, "fetch", monthly)
+    ok = bool(monthly) and all(monthly.values())
     if ok:
+        result.months_processed = len(monthly)
+        # Phase failure aborts before publish — the public data keeps the
+        # last good bundle, never a hole.
         result.published = publish_bundle(data_dir, bundle_dir)
+    _set_phase_status(result, "publish", {"daily": result.published})
 
     if hash_changed:
         result.catchup_ran = True
@@ -91,27 +146,32 @@ def run_nightly(
                 catalog_catchup_success.set(time.time())
             else:
                 result.catchup_ok = False  # publish failed: retry hash next night
+                _set_phase_status(result, "publish", {"daily": result.published, "catchup": False})
     months_processed.set(result.months_processed)
     return result
 
 
-def _run_phase(runner, repo_dir: Path, month: str, phase_range: str, result: RunResult) -> bool:
-    phase = phase_range.split(":")[0]
+def _run_monthly(runner, repo_dir: Path, month: str) -> bool:
     proc = _subprocess(
         runner,
-        ["python", "run.py", "--month", month, "--force", phase_range],
+        ["python", "run.py", "--month", month, "--force", "fetch:aggregate"],
         repo_dir,
     )
     ok = proc is not None and proc.returncode == 0
     if proc is None:
-        logger.exception("%s crashed for %s", phase_range, month)
+        logger.exception("fetch:aggregate crashed for %s", month)
     elif not ok:
-        logger.error("%s failed for %s: %s", phase_range, month, proc.stderr)
+        logger.error("fetch:aggregate failed for %s: %s", month, proc.stderr)
+    return ok
+
+
+def _set_phase_status(result: RunResult, phase: str, outcomes: dict) -> None:
+    """Any-failure semantics: a phase label ends 0 if ANY month failed, else 1."""
+    if not outcomes:
+        return
+    ok = all(outcomes.values())
     result.phases[phase] = ok
     last_run_status.labels(phase=phase).set(1 if ok else 0)
-    if ok:
-        result.months_processed += 1
-    return ok
 
 
 def _read_hash(data_dir: Path) -> str | None:
@@ -143,9 +203,12 @@ def main() -> None:
     )
     args = parser.parse_args(sys.argv[1:])
 
-    from sotd.pipeline_supervisor.metrics import start_metrics_server
+    if not args.once:
+        # The metrics port belongs to the long-running loop process; a --once
+        # smoke run inside the same container must not try to take it.
+        from sotd.pipeline_supervisor.metrics import start_metrics_server
 
-    start_metrics_server(8000)
+        start_metrics_server(8000)
     data_dir = Path("/data")
     repo_dir = Path("/app")
     bundle_dir = Path("/bundle")
