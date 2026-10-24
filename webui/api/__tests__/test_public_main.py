@@ -25,7 +25,7 @@ def test_only_get_routes_exposed():
 def test_expected_router_prefixes_present():
     schema = client.get("/openapi.json").json()
     paths = list(schema["paths"])
-    for prefix in ("/api/product-usage", "/api/monthly-user-posts", "/api/report-rankings"):
+    for prefix in ("/api/product-usage", "/api/monthly-user-posts", "/api/report-rankings", "/api/home"):
         assert any(p.startswith(prefix) for p in paths), f"missing {prefix}"
 
 

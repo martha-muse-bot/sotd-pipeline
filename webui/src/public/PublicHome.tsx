@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import HomeDashboard from './HomeDashboard';
 
 const cards = [
   {
@@ -25,7 +26,8 @@ export default function PublicHome() {
       <p className='text-gray-400 mb-6'>
         Read-only statistics from the r/wetshaving Shave of the Day pipeline.
       </p>
-      <div className='grid gap-4 md:grid-cols-3'>
+      <HomeDashboard />
+      <div className='grid gap-4 md:grid-cols-3 mt-4'>
         {cards.map(c => (
           <Link key={c.to} to={c.to} className='block rounded-lg bg-gray-800 p-5 hover:bg-gray-700'>
             <h2 className='text-lg font-semibold mb-1'>{c.title}</h2>

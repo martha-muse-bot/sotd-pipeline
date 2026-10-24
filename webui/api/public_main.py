@@ -20,6 +20,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
+from .home_overview import router as home_overview_router  # noqa: E402
 from .monthly_user_posts import router as monthly_user_posts_router  # noqa: E402
 from .product_usage import router as product_usage_router  # noqa: E402
 from .report_rankings import router as report_rankings_router  # noqa: E402
@@ -34,6 +35,7 @@ app = FastAPI(
     redoc_url=None,
 )
 
+app.include_router(home_overview_router)
 app.include_router(product_usage_router)
 app.include_router(monthly_user_posts_router)
 app.include_router(report_rankings_router)
