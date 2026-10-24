@@ -71,6 +71,17 @@ def test_parse_empty_and_malformed():
     assert parse_phase_durations("Phase fetch: 1.00s ✓\n") == {}
 
 
+def test_parse_skips_pathological_duration():
+    """A multi-dot duration ("1.2.3") must be skipped, not crash the run."""
+    out = parse_phase_durations(
+        "Phase Breakdown:\n"
+        "  Phase 1 (fetch):   12.34s ✓\n"
+        "  Phase 2 (extract):   1.2.3s ✓\n"
+        "  Phase 3 (match):   3.21s ✓\n"
+    )
+    assert out == {"fetch": 12.34, "match": 3.21}
+
+
 def test_parse_failed_run_keeps_ok_phase_durations():
     """run.py stops at first failure; OK lines from a failed run are real work."""
     failed = (

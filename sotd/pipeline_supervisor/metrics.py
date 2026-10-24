@@ -27,7 +27,7 @@ run_duration_seconds = Gauge(
 )
 
 # run.py's Phase Breakdown line (run.py:441):
-#   "  Phase 1 (fetch):   12.34s OK | 1,234 records"
+#   "  Phase 1 (fetch):   12.34s ✓ | 1,234 records"
 # The status mark and trailing fields are ignored. A FAILED run's summary
 # marks the failed phase with ✗ — that line is skipped (no duration metric
 # for a phase that failed); earlier OK phases are kept, since that time was
@@ -52,7 +52,12 @@ def parse_phase_durations(stdout: str) -> dict[str, float]:
         if any(mark in line for mark in _FAILED_MARKS):
             continue
         if m := _PHASE_LINE_RE.search(line):
-            out[m.group("phase")] = float(m.group("dur"))
+            try:
+                out[m.group("phase")] = float(m.group("dur"))
+            except ValueError:
+                # pathological duration (e.g. "1.2.3") — skip the line, never
+                # let metrics parsing abort the run
+                continue
     return out
 
 
