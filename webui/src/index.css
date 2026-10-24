@@ -114,4 +114,12 @@
   body {
     @apply bg-background text-foreground;
   }
+  /* Buttons are <button> elements (UA default text-align: center). In table
+     cells that centering shows only when the label wraps to fill the column
+     (single-line buttons shrink-to-fit, so they look left-aligned either way)
+     — pin table-cell buttons to the left so wrapped product names align with
+     plain-text cells. */
+  td button {
+    text-align: left;
+  }
 }
