@@ -249,11 +249,23 @@ published bundle, and the public site reflects the new run.
   exposed: `sotd_pipeline_last_run_timestamp_seconds`,
   `sotd_pipeline_last_run_status{phase}`,
   `sotd_pipeline_months_processed`,
-  `sotd_pipeline_catalog_catchup_last_success_timestamp_seconds`.
+  `sotd_pipeline_catalog_catchup_last_success_timestamp_seconds`,
+  `sotd_pipeline_phase_duration_seconds{phase, scope}`, and
+  `sotd_pipeline_run_duration_seconds`.
   Phase labels on `last_run_status`: `pull`, `fetch` (the whole
   `fetch:aggregate` monthly run — 0 if ANY month failed), `publish`, and
   `catchup`. Note the `--once` smoke run does not serve metrics (the
   port belongs to the running loop).
+- **Phase durations**: `sotd_pipeline_phase_duration_seconds{phase, scope}`
+  carries one duration per pipeline phase parsed from run.py's summary —
+  `phase` is fetch/extract/match/enrich/aggregate, `scope` is `monthly`
+  (per-month `fetch:aggregate` runs) or `catchup` (the all-months
+  `match:aggregate` run; match over 2 months isn't comparable to match over
+  159+). A failed phase gets no duration; earlier OK phases of a failed run
+  still do. In Grafana, trend `phase_duration_seconds{phase}` (split by
+  `scope`) to watch fetch vs match vs catch-up timing drift.
+  `sotd_pipeline_run_duration_seconds` is the whole nightly cycle wall time
+  (git pull through final publish), one label-free series.
 - **Public site reflects a forced run**: run the `--once` smoke test,
   then reload the public site — product usage / monthly posts should
   include the newest processed month.

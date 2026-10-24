@@ -1,7 +1,28 @@
 import subprocess
 from pathlib import Path
 
+import pytest
+
 from sotd.pipeline_supervisor.loop import run_nightly, sync_match_inputs
+from sotd.pipeline_supervisor.metrics import (
+    phase_duration_seconds,
+    run_duration_seconds,
+)
+
+PHASE_STDOUT = (
+    "Phase Breakdown:\n"
+    "  Phase 1 (fetch):   12.34s OK\n"
+    "  Phase 2 (extract):   0.56s OK\n"
+    "  Phase 3 (match):   3.21s OK\n"
+    "  Phase 4 (enrich):   1.11s OK\n"
+    "  Phase 5 (aggregate):   2.00s OK\n"
+)
+CATCHUP_STDOUT = (
+    "Phase Breakdown:\n"
+    "  Phase 1 (match):   9.00s OK\n"
+    "  Phase 2 (enrich):   5.00s OK\n"
+    "  Phase 3 (aggregate):   4.00s OK\n"
+)
 
 
 def fake_runner_ok(cmd, **kw):
@@ -297,3 +318,69 @@ def test_git_pull_failure_skips_run(tmp_path, monkeypatch):
     )
     assert result.published is False
     assert result.phases["pull"] is False
+
+
+# --- phase-duration metrics ---------------------------------------------------
+
+
+def _clear_phase_gauges():
+    phase_duration_seconds.clear()
+    run_duration_seconds._value.set(0.0)
+
+
+def test_phase_durations_set_from_monthly_and_catchup(tmp_path, monkeypatch):
+    repo, data, bundle = setup_dirs(tmp_path)
+    monkeypatch.setattr("sotd.pipeline_supervisor.loop.catalog_hash", lambda d: "h1")
+    _clear_phase_gauges()
+
+    def runner(cmd, **kw):
+        out = CATCHUP_STDOUT if "--range" in cmd else PHASE_STDOUT
+        return subprocess.CompletedProcess(cmd, 0, stdout=out, stderr="")
+
+    run_nightly(
+        repo_dir=repo,
+        data_dir=data,
+        bundle_dir=bundle,
+        runner=runner,
+        months=("2026-10", "2026-09"),
+        all_months=("2026-10", "2016-05"),
+    )
+    # monthly runs emit scope="monthly"; catch-up run emits scope="catchup"
+    monthly_fetch = phase_duration_seconds.labels(phase="fetch", scope="monthly")
+    assert monthly_fetch._value.get() == pytest.approx(12.34)
+    # catch-up's match overwrites the monthly match value on its own label set
+    monthly_match = phase_duration_seconds.labels(phase="match", scope="monthly")
+    catchup_match = phase_duration_seconds.labels(phase="match", scope="catchup")
+    assert monthly_match._value.get() == pytest.approx(3.21)
+    assert catchup_match._value.get() == pytest.approx(9.00)
+    assert phase_duration_seconds.labels(phase="enrich", scope="catchup")._value.get() == (
+        pytest.approx(5.00)
+    )
+    assert phase_duration_seconds.labels(phase="aggregate", scope="catchup")._value.get() == (
+        pytest.approx(4.00)
+    )
+    assert run_duration_seconds._value.get() > 0
+
+
+def test_phase_durations_skipped_when_no_phase_lines(tmp_path, monkeypatch, caplog):
+    repo, data, bundle = setup_dirs(tmp_path)
+    (data / ".catalog_hash").write_text("h1")  # no catch-up branch
+    monkeypatch.setattr("sotd.pipeline_supervisor.loop.catalog_hash", lambda d: "h1")
+    _clear_phase_gauges()
+    phase_duration_seconds.labels(phase="fetch", scope="monthly").set(99.0)  # sentinel
+
+    def runner(cmd, **kw):
+        return subprocess.CompletedProcess(cmd, 0, stdout="nothing parseable here", stderr="")
+
+    with caplog.at_level("WARNING", logger="sotd.pipeline_supervisor.loop"):
+        run_nightly(
+            repo_dir=repo,
+            data_dir=data,
+            bundle_dir=bundle,
+            runner=runner,
+            months=("2026-10", "2026-09"),
+            all_months=("2026-10", "2016-05"),
+        )
+    got = phase_duration_seconds.labels(phase="fetch", scope="monthly")._value.get()
+    assert got == 99.0
+    assert any("phase" in r.message.lower() for r in caplog.records)

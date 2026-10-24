@@ -18,6 +18,9 @@ from sotd.pipeline_supervisor.metrics import (
     catalog_catchup_success,
     last_run_status,
     months_processed,
+    parse_phase_durations,
+    record_phase_durations,
+    run_duration_seconds,
     set_last_run_timestamp,
 )
 from sotd.pipeline_supervisor.publish import publish_bundle
@@ -91,6 +94,7 @@ def run_nightly(
     all_months: tuple[str, str],
 ) -> RunResult:
     result = RunResult()
+    run_start = time.monotonic()
     pull = _subprocess(runner, ["git", "-C", str(repo_dir), "pull", "--ff-only"], repo_dir)
     if pull is None or pull.returncode != 0:
         logger.error("git pull failed: %s", "crashed" if pull is None else pull.stderr)
@@ -140,6 +144,8 @@ def run_nightly(
         )
         result.catchup_ok = catchup is not None and catchup.returncode == 0
         last_run_status.labels(phase="catchup").set(1 if result.catchup_ok else 0)
+        if catchup is not None and catchup.stdout:
+            _record_phases(catchup.stdout, "catchup", result.catchup_ok)
         if result.catchup_ok:
             if publish_bundle(data_dir, bundle_dir):
                 (data_dir / HASH_FILE).write_text(new_hash)
@@ -148,6 +154,7 @@ def run_nightly(
                 result.catchup_ok = False  # publish failed: retry hash next night
                 _set_phase_status(result, "publish", {"daily": result.published, "catchup": False})
     months_processed.set(result.months_processed)
+    run_duration_seconds.set(time.monotonic() - run_start)
     return result
 
 
@@ -162,7 +169,28 @@ def _run_monthly(runner, repo_dir: Path, month: str) -> bool:
         logger.exception("fetch:aggregate crashed for %s", month)
     elif not ok:
         logger.error("fetch:aggregate failed for %s: %s", month, proc.stderr)
+    if proc is not None and proc.stdout:
+        _record_phases(proc.stdout, "monthly", ok)
     return ok
+
+
+def _record_phases(stdout: str, context: str, ok: bool) -> None:
+    """Parse phase durations from run.py stdout and set the gauges.
+
+    OK phases from a failed run are emitted too (real completed work). No
+    parseable phase lines — warn and emit nothing; metrics must never crash
+    or perturb the run itself.
+    """
+    durations = parse_phase_durations(stdout)
+    if not durations:
+        logger.warning(
+            "no phase durations parsed from %s run.py output (ok=%s) — "
+            "run.py summary format may have drifted",
+            context,
+            ok,
+        )
+        return
+    record_phase_durations(durations, context=context)
 
 
 def _set_phase_status(result: RunResult, phase: str, outcomes: dict) -> None:
