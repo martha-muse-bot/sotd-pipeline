@@ -117,7 +117,11 @@ def _rank_map(pu: dict, field: str) -> Dict[str, int]:
     a tie for display purposes — position comes from this ordering)."""
     entries = sorted(
         (e for e in (pu.get(field) or {}).values() if not _is_unknown(e.get("product", {}))),
-        key=lambda e: (-e.get("total_usage", 0), -e.get("unique_users", 0), _display_name(e.get("product", {}))),
+        key=lambda e: (
+            -e.get("total_usage", 0),
+            -e.get("unique_users", 0),
+            _display_name(e.get("product", {})),
+        ),
     )
     return {_display_name(e["product"]): i + 1 for i, e in enumerate(entries)}
 
