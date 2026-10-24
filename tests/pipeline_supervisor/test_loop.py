@@ -107,6 +107,14 @@ def test_supervisor_survives_phase_crash(tmp_path, monkeypatch):
     assert not (data / ".catalog_hash").exists()
 
 
+def test_once_flag_exists():
+    import inspect
+
+    from sotd.pipeline_supervisor import loop
+
+    assert "once" in inspect.getsource(loop.main)
+
+
 def test_git_pull_failure_skips_run(tmp_path, monkeypatch):
     repo, data, bundle = setup_dirs(tmp_path)
 
