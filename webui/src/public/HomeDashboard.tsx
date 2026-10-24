@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { buildMovers, buildPulseSeries, monthLabel } from './homeData';
 
@@ -73,6 +73,7 @@ function MoverCard({ title, movers, month }: { title: string; movers: Mover[]; m
 }
 
 export default function HomeDashboard() {
+  const navigate = useNavigate();
   const [overview, setOverview] = useState<Overview | null>(null);
   const [error, setError] = useState(false);
 
@@ -129,7 +130,7 @@ export default function HomeDashboard() {
               onClick={(state: { activeLabel?: string | number }) => {
                 const month =
                   typeof state?.activeLabel === 'string' ? state.activeLabel : undefined;
-                if (month) window.location.assign(`/product-usage?month=${month}`);
+                if (month) navigate(`/product-usage?months=${month}`);
               }}
             >
               <defs>
@@ -183,7 +184,7 @@ export default function HomeDashboard() {
           ).map(([label, value]) => (
             <Link
               key={label}
-              to={`/product-usage?month=${latest}`}
+              to={`/product-usage?months=${latest}`}
               className='rounded-lg bg-gray-800 p-4 hover:bg-gray-700'
             >
               <div className='text-sm font-semibold truncate' title={value ?? undefined}>
