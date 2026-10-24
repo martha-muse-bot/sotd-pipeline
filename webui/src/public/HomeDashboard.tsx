@@ -78,6 +78,12 @@ export default function HomeDashboard() {
 
   useEffect(() => {
     let cancelled = false;
+    // jsdom (jest) has no fetch — degrade to the error card instead of
+    // throwing inside the effect, which would crash the whole tree.
+    if (typeof fetch !== 'function') {
+      setError(true);
+      return;
+    }
     fetch('/api/home/overview')
       .then(r => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
       .then(body => {

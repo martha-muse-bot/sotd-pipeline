@@ -1,5 +1,4 @@
-import { describe, expect, it } from 'vitest';
-import { buildPulseSeries, buildMovers, monthLabel } from '../homeData';
+import { buildMovers, buildPulseSeries, monthLabel } from '../homeData';
 
 describe('monthLabel', () => {
   it('formats YYYY-MM as Mon YYYY', () => {
