@@ -111,13 +111,20 @@ def _top_products(pu: dict) -> Dict[str, Optional[str]]:
     return out
 
 
+def _rank_map(pu: dict, field: str) -> Dict[str, int]:
+    """Rank products by the canonical table semantics: shaves desc, then
+    unique_users desc (matching aggregate_query ranking; equal shaves are NOT
+    a tie for display purposes — position comes from this ordering)."""
+    entries = sorted(
+        (e for e in (pu.get(field) or {}).values() if not _is_unknown(e.get("product", {}))),
+        key=lambda e: (-e.get("total_usage", 0), -e.get("unique_users", 0), _display_name(e.get("product", {}))),
+    )
+    return {_display_name(e["product"]): i + 1 for i, e in enumerate(entries)}
+
+
 def _movers_for(current: dict, prior: dict, field: str) -> List[Mover]:
-    prior_usage = {}
-    for entry in (prior.get(field) or {}).values():
-        if _is_unknown(entry.get("product", {})):
-            continue
-        name = _display_name(entry.get("product", {}))
-        prior_usage[name] = prior_usage.get(name, 0) + entry.get("total_usage", 0)
+    prior_rank = _rank_map(prior, field)
+    current_rank = _rank_map(current, field)
 
     scored = []
     for entry in (current.get(field) or {}).values():
@@ -125,8 +132,9 @@ def _movers_for(current: dict, prior: dict, field: str) -> List[Mover]:
             continue
         name = _display_name(entry.get("product", {}))
         count = entry.get("total_usage", 0)
-        if name in prior_usage:
-            scored.append((count, count - prior_usage[name], False, name))
+        if name in prior_rank:
+            # rank delta: positive = climbed (prior position - current position)
+            scored.append((count, prior_rank[name] - current_rank[name], False, name))
         else:
             scored.append((count, 0, True, name))
     scored.sort(key=lambda t: (-t[0], t[3]))

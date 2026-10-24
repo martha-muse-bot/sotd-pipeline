@@ -97,9 +97,32 @@ def test_tiles_from_latest_month(client):
 def test_movers_compare_with_prior_month(client):
     body = client.get("/api/home/overview").json()
     mover = next(m for m in body["movers"]["razors"] if m["name"] == "Gillette NEW")
-    # 2026-10 total_usage 5 vs 2026-09 total_usage 3 → delta +2
+    # Rank delta, not usage delta: Gillette NEW is the only razor in both
+    # months → rank 1 in Sept, rank 1 in Oct → delta 0 (held #1).
     assert mover["count"] == 5
-    assert mover["delta"] == 2
+    assert mover["delta"] == 0
+    assert mover["is_new"] is False
+
+
+def test_rank_delta_climbs_and_drops(client, tmp_path):
+    # Sept: A(90) B(60) C(30). Oct: B(80) C(40) A(10) — B climbs 2→1,
+    # C climbs 3→2, A drops 1→3. Deltas must reflect position swaps.
+    for month, usage in (("2026-09", {"A": 90, "B": 60, "C": 30}), ("2026-10", {"B": 80, "C": 40, "A": 10})):
+        pu_path = tmp_path / "aggregated" / "product_usage" / f"{month}.json"
+        pu = json.loads(pu_path.read_text())
+        pu["razors"] = {
+            f"Acme|{k}": {
+                "product": {"type": "razor", "brand": "Acme", "model": k},
+                "total_usage": v,
+                "unique_users": 2,
+                "users": [],
+            }
+            for k, v in usage.items()
+        }
+        pu_path.write_text(json.dumps(pu))
+    body = client.get("/api/home/overview").json()
+    deltas = {m["name"].split()[-1]: m["delta"] for m in body["movers"]["razors"]}
+    assert deltas == {"B": 1, "C": 1, "A": -2}
 
 
 def test_unknown_products_skipped(client, tmp_path):

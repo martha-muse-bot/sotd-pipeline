@@ -23,6 +23,7 @@ from .extract_overrides import router as extract_overrides_router
 from .files import router as files_router
 from .filtered import router as filtered_router
 from .format_compatibility import router as format_compatibility_router
+from .home_overview import router as home_overview_router
 from .monthly_user_posts import router as monthly_user_posts_router
 from .product_usage import router as product_usage_router
 from .report_rankings import router as report_rankings_router
@@ -149,6 +150,7 @@ app.include_router(brush_validation_router)
 app.include_router(brush_matching_router)
 app.include_router(soap_analyzer_router)
 app.include_router(monthly_user_posts_router)
+app.include_router(home_overview_router)
 app.include_router(product_usage_router)
 app.include_router(report_rankings_router)
 app.include_router(format_compatibility_router)
