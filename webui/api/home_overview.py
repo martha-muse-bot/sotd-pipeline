@@ -12,7 +12,7 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from .utils.data_dir import get_data_dir  # noqa: E402
@@ -146,7 +146,7 @@ def _movers_for(current: dict, prior: dict, field: str) -> List[Mover]:
 
 
 @router.get("/overview", response_model=Overview)
-async def get_overview() -> Overview:
+async def get_overview(month: Optional[str] = None) -> Overview:
     data_dir = Path(get_data_dir())
     ua_dir = _month_dir(data_dir, "user_analysis")
     pu_dir = _month_dir(data_dir, "product_usage")
@@ -156,14 +156,19 @@ async def get_overview() -> Overview:
         return Overview(pulse=[], movers=Movers(razors=[], soaps=[], blades=[]))
 
     pulse = []
-    for month in months:
-        ua = _load(ua_dir / f"{month}.json")
+    for m in months:
+        ua = _load(ua_dir / f"{m}.json")
         if ua is None:
             continue
         posts = sum(int(u.get("posted_days", 0)) for u in (ua.get("users") or {}).values())
-        pulse.append(PulsePoint(month=month, posts=posts))
+        pulse.append(PulsePoint(month=m, posts=posts))
 
-    latest = months[-1]
+    # Selected month: default latest; an explicit ?month= must exist in the
+    # bundle (404 otherwise) so the dashboard never shows an empty selection.
+    latest = month if month else months[-1]
+    if month and month not in months:
+        raise HTTPException(status_code=404, detail=f"no data for month {month}")
+
     pu = _load(pu_dir / f"{latest}.json")
     ua = _load(ua_dir / f"{latest}.json")
     if pu is None or ua is None:
@@ -173,13 +178,14 @@ async def get_overview() -> Overview:
             movers=Movers(razors=[], soaps=[], blades=[]),
         )
 
+    posts_for_latest = next((p.posts for p in pulse if p.month == latest), 0)
     tiles = Tiles(
-        posts=sum(p.posts for p in pulse if p.month == latest) or 0,
+        posts=posts_for_latest,
         shavers=len((ua.get("users") or {})),
         **_top_products(pu),
     )
 
-    prior_month = months[-2] if len(months) >= 2 else None
+    prior_month = months[months.index(latest) - 1] if months.index(latest) >= 1 else None
     prior = _load(pu_dir / f"{prior_month}.json") if prior_month else None
     prior = prior or {}
 

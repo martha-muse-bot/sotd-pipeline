@@ -76,6 +76,7 @@ export default function HomeDashboard() {
   const navigate = useNavigate();
   const [overview, setOverview] = useState<Overview | null>(null);
   const [error, setError] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -85,7 +86,8 @@ export default function HomeDashboard() {
       setError(true);
       return;
     }
-    fetch('/api/home/overview')
+    const qs = selectedMonth ? `?month=${selectedMonth}` : '';
+    fetch(`/api/home/overview${qs}`)
       .then(r => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
       .then(body => {
         if (!cancelled) setOverview(body);
@@ -96,7 +98,7 @@ export default function HomeDashboard() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [selectedMonth]);
 
   if (error) {
     return (
@@ -130,7 +132,10 @@ export default function HomeDashboard() {
               onClick={(state: { activeLabel?: string | number }) => {
                 const month =
                   typeof state?.activeLabel === 'string' ? state.activeLabel : undefined;
-                if (month) navigate(`/product-usage?months=${month}`);
+                if (month) {
+                  setSelectedMonth(month);
+                  navigate('/', { replace: true });
+                }
               }}
             >
               <defs>
@@ -158,7 +163,7 @@ export default function HomeDashboard() {
         )}
       </div>
 
-      {/* This month at a glance */}
+      {/* Selected month at a glance (chart click changes the month) */}
       {overview.tiles && latest && (
         <div className='grid grid-cols-2 gap-4 md:grid-cols-5'>
           <Link
@@ -177,14 +182,18 @@ export default function HomeDashboard() {
           </Link>
           {(
             [
-              ['Top soap', overview.tiles.top_soap],
-              ['Top razor', overview.tiles.top_razor],
-              ['Top blade', overview.tiles.top_blade],
-            ] as Array<[string, string | null]>
-          ).map(([label, value]) => (
+              ['Top soap', overview.tiles.top_soap, 'soaps'],
+              ['Top razor', overview.tiles.top_razor, 'razors'],
+              ['Top blade', overview.tiles.top_blade, 'blades'],
+            ] as Array<[string, string | null, string]>
+          ).map(([label, value, tableId]) => (
             <Link
               key={label}
-              to={`/product-usage?months=${latest}`}
+              to={
+                value
+                  ? `/report-placement?productType=${tableId}&item=${encodeURIComponent(value)}&from=${latest}`
+                  : `/report-placement`
+              }
               className='rounded-lg bg-gray-800 p-4 hover:bg-gray-700'
             >
               <div className='text-sm font-semibold truncate' title={value ?? undefined}>

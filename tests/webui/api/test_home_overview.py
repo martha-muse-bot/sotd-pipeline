@@ -166,3 +166,24 @@ def test_empty_bundle_never_500s(tmp_path, monkeypatch):
     assert body["latest_month"] is None
     assert body["tiles"] is None
     assert body["movers"] == {"razors": [], "soaps": [], "blades": []}
+
+
+def test_month_param_overrides_tiles_and_movers(client):
+    body = client.get("/api/home/overview?month=2026-08").json()
+    assert body["latest_month"] == "2026-08"
+    assert body["tiles"]["posts"] == 9
+    # movers for 2026-08 vs 2026-07 (no July slice → prior empty → all is_new)
+    assert all(m["is_new"] for m in body["movers"]["razors"])
+
+
+def test_month_param_unknown_month_404(client):
+    r = client.get("/api/home/overview?month=2001-01")
+    assert r.status_code == 404
+
+
+def test_movers_vs_prior_of_selected_month(client, tmp_path):
+    # 2026-09 movers must compare vs 2026-08 (not the latest month's prior)
+    body = client.get("/api/home/overview?month=2026-09").json()
+    mover = next(m for m in body["movers"]["razors"] if m["name"] == "Gillette NEW")
+    # Sept usage 3 vs Aug usage 3 → held rank → delta 0
+    assert mover["delta"] == 0

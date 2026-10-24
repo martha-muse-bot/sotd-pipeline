@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -112,6 +113,7 @@ export function RankChartTooltipContent(
 }
 
 const ReportPlacementOverTime: React.FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [tables, setTables] = useState<ReportRankingsTable[]>([]);
   const [selectedTableId, setSelectedTableId] = useState<string>('');
   const [itemsOptions, setItemsOptions] = useState<string[]>([]);
@@ -135,8 +137,77 @@ const ReportPlacementOverTime: React.FC = () => {
   const [typeAheadQuery, setTypeAheadQuery] = useState('');
   const [typeAheadHighlightedIndex, setTypeAheadHighlightedIndex] = useState(0);
   const typeAheadListId = 'report-rankings-items-listbox';
+  const pendingFromRef = useRef<string | null>(null);
   const typeAheadHighlightedRef = useRef<HTMLDivElement | null>(null);
   const typeAheadInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Deep-link init: ?productType=<tableId>&item=<name>&from=<month> from the
+  // home dashboard tiles. Two-phase to avoid racing the selectedTableId items
+  // effect (which resets selectedItems): phase 1 selects the table and stores
+  // the pending item; phase 2 runs after that effect's itemsOptions land and
+  // applies the match. Params are cleared once fully applied.
+  const [deepLink, setDeepLink] = useState<{
+    item?: string;
+    from?: string;
+  } | null>(null);
+  useEffect(() => {
+    if (loadingTables || tables.length === 0) return;
+    const tableParam = searchParams.get('productType');
+    const itemParam = searchParams.get('item');
+    const fromParam = searchParams.get('from');
+    if (!tableParam) {
+      if (itemParam) setDeepLink({ item: itemParam, from: fromParam ?? undefined });
+      return;
+    }
+    if (!tables.some(t => t.id === tableParam)) {
+      setSearchParams({}, { replace: true });
+      return;
+    }
+    setSelectedTableId(tableParam);
+    setDeepLink(itemParam ? { item: itemParam, from: fromParam ?? undefined } : {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadingTables, tables, searchParams]);
+
+  useEffect(() => {
+    // Wait until the table's items have actually loaded (empty itemsOptions
+    // right after a table switch means the fetch is still in flight).
+    if (!deepLink || loadingItems || itemsOptions.length === 0) return;
+    if (deepLink.item) {
+      const itemParam = deepLink.item;
+      // Rankings items are 'Brand - Model'; tiles send product_usage display
+      // format 'Brand Model'. Match exact, then with the ' - ' separator
+      // inserted after the brand, then a contains-fallback.
+      const exact = itemsOptions.find(i => i === itemParam);
+      const spaced = itemsOptions.find(i =>
+        i.toLowerCase().startsWith(itemParam.toLowerCase().replace(' ', ' - '))
+      );
+      const loose = itemsOptions.find(i =>
+        itemParam
+          .toLowerCase()
+          .split(' ')
+          .every(w => i.toLowerCase().includes(w))
+      );
+      const match = exact ?? spaced ?? loose;
+      if (match) {
+        // Deep-linked arrival implies intent to see the chart: pass the item
+        // directly to handleLoadSeries (the setSelectedItems state won't be
+        // visible to its guard within this same effect tick).
+        const from = deepLink.from;
+        setSelectedItems([match]);
+        if (from) {
+          // Stored for handleLoadSeries to apply after the series lands —
+          // setting chartFromMonth here is overridden by the series effect.
+          pendingFromRef.current = from;
+        }
+        void handleLoadSeries([match]);
+      } else {
+        setError(`Item "${itemParam}" not found in rankings.`);
+      }
+    }
+    setDeepLink(null);
+    setSearchParams({}, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deepLink, loadingItems, itemsOptions]);
 
   const fetchTables = useCallback(async () => {
     try {
@@ -242,15 +313,16 @@ const ReportPlacementOverTime: React.FC = () => {
     }
   }, [viewMode, selectedTableId, selectedItems.length]);
 
-  const handleLoadSeries = async () => {
-    if (!selectedTableId || selectedItems.length === 0) {
+  const handleLoadSeries = async (itemsOverride?: string[]) => {
+    const items = itemsOverride ?? selectedItems;
+    if (!selectedTableId || items.length === 0) {
       setError('Please select an aggregation and at least one item.');
       return;
     }
     try {
       setLoadingSeries(true);
       setError(null);
-      const data = await getReportRankingsSeries(selectedTableId, selectedItems);
+      const data = await getReportRankingsSeries(selectedTableId, items);
       setSeries(data);
     } catch (err: unknown) {
       setError(handleApiError(err));
@@ -294,6 +366,12 @@ const ReportPlacementOverTime: React.FC = () => {
     const sorted = [...series.months].sort();
     setChartFromMonth(sorted[0]);
     setChartToMonth(sorted[sorted.length - 1]);
+    // A deep-linked ?from= narrows the chart window; applied here so it wins
+    // over the full-range reset this effect just performed.
+    if (pendingFromRef.current) {
+      setChartFromMonth(pendingFromRef.current);
+      pendingFromRef.current = null;
+    }
   }, [series]);
 
   const seriesMonthsSorted = React.useMemo(() => {
