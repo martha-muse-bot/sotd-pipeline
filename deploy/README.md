@@ -161,3 +161,124 @@ when `webui/dist` exists (it does in the container image).
   partial bundle rather than shipping a hole.
 - **Admin unreachable**: it is LAN-only by design — check you're on the
   LAN and that `192.168.2.23` isn't claimed by another device.
+
+## sotd-pipeline stack (nightly pipeline supervisor)
+
+The pipeline container runs the full 6-phase pipeline **on the NAS,
+nightly**, and publishes the verified slim bundle straight into the
+public stack's data share — `make publish-data` from the Mac becomes a
+fallback, not the update path. Deployed via **komodo** (gitops source
+pointing at this repository, resource `deploy/compose-sotd-pipeline.yml`):
+
+- `deploy/compose-sotd-pipeline.yml` — stack `sotd-pipeline`, image
+  `ghcr.io/nmrs/sotd-pipeline-pipeline:latest` (built by CI on push)
+
+Design notes (spec 2026-10-24): code runs from a git checkout on a
+volume (`/app`, cloned on first boot by the entrypoint — the image
+provides only the Python env + git + rsync); data lives on its own
+volume (`/data`); catalogs arrive via nightly `git pull` (the supervisor
+syncs the operator-authored match inputs from `/app/data` into `/data`,
+then a hash over the volume triggers an all-months `match:aggregate`
+catch-up when they change); the bundle is verified then rsync'd into the
+public share (failure keeps the last good bundle — never a hole). Each
+month runs as ONE command (`run.py --month M --force fetch:aggregate`)
+so a failed fetch never feeds stale data to match. Like the other
+stacks, no `cpus:` limit (Synology cgroup v1), `mem_limit: 2g` only.
+
+### First-time setup
+
+1. **Pre-create the NAS directories** (the entrypoint writes into both):
+
+   ```
+   /volume1/docker/sotd-pipeline/data
+   /volume1/docker/sotd-pipeline/repo
+   ```
+
+2. **Seed the data volume** (one-time, from the Mac — long: ~2 GB;
+   excludes non-pipeline inputs such as backups, logs and the raw
+   scrape cache). `scripts/seed-pipeline-data.sh` wraps exactly this:
+
+   ```bash
+   rsync -a --delete \
+     --exclude='.DS_Store' \
+     --exclude='*.backup' --exclude='*.bak' --exclude='*.bk' \
+     --exclude='backup/' --exclude='logs/' --exclude='learning/' \
+     --exclude='report_archive/_reddit_raw/' \
+     data/ nas:/volume1/docker/sotd-pipeline/data/
+   ```
+
+3. **Create the komodo resource** from `deploy/compose-sotd-pipeline.yml`
+   (build method: none — the image comes from GHCR; `pull_policy:
+   always` handles updates) and set these **environment variables in
+   komodo** (the entrypoint materializes `praw.ini` from them at boot):
+
+   | Env var | Purpose |
+   |---|---|
+   | `REDDIT_CLIENT_ID` | Reddit API credential (praw, required) |
+   | `REDDIT_CLIENT_SECRET` | Reddit API credential (praw, required) |
+   | `REDDIT_USER_AGENT` | Optional user-agent string (default `sotd-pipeline-supervisor`) |
+   | `REDDIT_USERNAME` | Optional — only if an authenticated account is needed |
+   | `REDDIT_PASSWORD` | Optional — only if an authenticated account is needed |
+
+   A mounted `praw.ini` wins over the env vars if you ever need to
+   provision it by file instead.
+
+4. **Deploy.** On first boot the entrypoint clones the repo into the
+   `/app` volume, then the supervisor loop self-schedules at 02:00
+   America/Chicago (nightly scope: current + prior month).
+
+### Smoke test before enabling the schedule
+
+Run one full cycle immediately, then exit:
+
+```
+docker compose exec sotd-pipeline python -m sotd.pipeline_supervisor.loop --once
+```
+
+(`--once` skips the 02:00 wait, runs one nightly cycle now, and exits —
+safe to repeat.) Verify: the `/app` clone exists, the phases ran in the
+container logs, `/volume1/docker/sotd-public/data` picked up the
+published bundle, and the public site reflects the new run.
+
+### Verification
+
+- **Prometheus target up**: add a scrape job targeting the NAS host on
+  port **8100** (the compose file binds `127.0.0.1:8100:8000` on the
+  NAS — the host-port binding keeps metrics off any bridged network the
+  NAS exposes; the container itself is on `metrics-net` only). Metrics
+  exposed: `sotd_pipeline_last_run_timestamp_seconds`,
+  `sotd_pipeline_last_run_status{phase}`,
+  `sotd_pipeline_months_processed`,
+  `sotd_pipeline_catalog_catchup_last_success_timestamp_seconds`,
+  `sotd_pipeline_phase_duration_seconds{phase, scope}`, and
+  `sotd_pipeline_run_duration_seconds`.
+  Phase labels on `last_run_status`: `pull`, `fetch` (the whole
+  `fetch:aggregate` monthly run — 0 if ANY month failed), `publish`, and
+  `catchup`. Note the `--once` smoke run does not serve metrics (the
+  port belongs to the running loop).
+- **Phase durations**: `sotd_pipeline_phase_duration_seconds{phase, scope}`
+  carries one duration per pipeline phase parsed from run.py's summary —
+  `phase` is fetch/extract/match/enrich/aggregate, `scope` is `monthly`
+  (per-month `fetch:aggregate` runs) or `catchup` (the all-months
+  `match:aggregate` run; match over 2 months isn't comparable to match over
+  159+). A failed phase gets no duration; earlier OK phases of a failed run
+  still do. In Grafana, trend `phase_duration_seconds{phase}` (split by
+  `scope`) to watch fetch vs match vs catch-up timing drift.
+  `sotd_pipeline_run_duration_seconds` is the whole nightly cycle wall time
+  (git pull through final publish), one label-free series.
+- **Public site reflects a forced run**: run the `--once` smoke test,
+  then reload the public site — product usage / monthly posts should
+  include the newest processed month.
+
+### Troubleshooting
+
+- **A phase fails overnight**: the loop aborts before publish; the
+  public data keeps the **last good bundle** (never a hole), the failing
+  phase shows in `sotd_pipeline_last_run_status{phase}` and the logs,
+  and the next night retries.
+- **Image pull failures**: `pull_policy: always` means a GHCR outage
+  blocks redeploy, but the running container and the last-good bundle
+  are unaffected. Check the NAS can reach `ghcr.io`.
+- **Catalog catch-up retries**: a failed all-months catch-up leaves the
+  catalog hash unsaved, so it retries the next night automatically; the
+  daily bundle is already published by then regardless.

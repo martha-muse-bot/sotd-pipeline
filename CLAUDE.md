@@ -42,23 +42,23 @@ python run.py community --month 2025-05 --force  # Fetch all posts + full commen
 
 #### Complete Pipeline
 ```bash
-python run.py pipeline --month 2025-05 --force   # Run all phases
-python run.py pipeline --month 2025-05 --force --debug  # With debug logging
+python run.py --month 2025-05 --force   # Run all phases
+python run.py --month 2025-05 --force --debug  # With debug logging
 ```
 
 #### Phase Ranges
 ```bash
-python run.py pipeline --month 2025-05 --force extract:enrich  # Run extract through enrich
-python run.py pipeline --month 2025-05 --force match:          # Run from match to end
-python run.py pipeline --month 2025-05 --force :enrich         # Run from start to enrich
+python run.py --month 2025-05 --force extract:enrich  # Run extract through enrich
+python run.py --month 2025-05 --force match:          # Run from match to end
+python run.py --month 2025-05 --force :enrich         # Run from start to enrich
 ```
 
 #### Date Ranges
 ```bash
-python run.py pipeline --year 2024 --force                    # Process entire year
-python run.py pipeline --start 2024-01 --end 2024-06 --force  # Date range
-python run.py pipeline --range 2024-01:2024-06 --force        # Alternative range syntax
-python run.py pipeline --range 2025-01:2025-12 --reverse --force  # Newest-to-oldest order
+python run.py --year 2024 --force                    # Process entire year
+python run.py --start 2024-01 --end 2024-06 --force  # Date range
+python run.py --range 2024-01:2024-06 --force        # Alternative range syntax
+python run.py --range 2025-01:2025-12 --reverse --force  # Newest-to-oldest order
 ```
 
 **Note**: The `--force` flag is MANDATORY for all pipeline operations unless explicitly specified otherwise. This ensures fresh data processing and avoids cached results.

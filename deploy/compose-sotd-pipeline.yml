@@ -1,0 +1,34 @@
+# SOTD nightly pipeline supervisor — deployed via komodo (gitops source: this repo).
+# Keeps the public bundle fresh: runs the full pipeline nightly, publishes the
+# verified slim bundle into /volume1/docker/sotd-public/data (the public stack's
+# read-only mount). Catalogs/code arrive via nightly git pull; secrets via komodo env.
+#
+# NOTE: do NOT set a `cpus:` limit — Synology's cgroup v1 rejects it.
+name: sotd-pipeline
+
+services:
+  sotd-pipeline:
+    image: ghcr.io/nmrs/sotd-pipeline-pipeline:latest
+    restart: unless-stopped
+    mem_limit: 2g
+    pull_policy: always
+    environment:
+      - TZ=America/Chicago
+      - SOTD_DATA_DIR=/data
+      - REDDIT_CLIENT_ID=${REDDIT_CLIENT_ID}
+      - REDDIT_CLIENT_SECRET=${REDDIT_CLIENT_SECRET}
+      - REDDIT_USERNAME=${REDDIT_USERNAME}
+      - REDDIT_PASSWORD=${REDDIT_PASSWORD}
+      - REPO_URL=https://github.com/nmrs/sotd-pipeline.git
+    volumes:
+      - /volume1/docker/sotd-pipeline/data:/data
+      - /volume1/docker/sotd-pipeline/repo:/app
+      - /volume1/docker/sotd-public/data:/bundle
+    ports:
+      - "127.0.0.1:8100:8000"   # /metrics for Prometheus scrape
+    networks:
+      - metrics-net
+
+networks:
+  metrics-net:
+    external: true
