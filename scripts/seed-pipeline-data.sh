@@ -6,8 +6,12 @@ cd "$(dirname "$0")/.."
 
 TARGET="${1:-nas:/volume1/docker/sotd-pipeline/data}"
 
-echo "==> verifying no stray files (post-2026-10-24 audit)"
-find data -name '.DS_Store' -o -name '*.backup' -o -name '*.bak' -o -name '*.bk' | grep . && {
+echo "==> verifying no stray files outside the rsync exclusions"
+# The guard checks only strays rsync does NOT exclude (excluded patterns are
+# handled by the rsync itself): .DS_Store and *.backup/*.bak/*.bk outside
+# backup/ (which is excluded wholesale).
+find data -path 'data/backup' -prune -o \
+  \( -name '.DS_Store' -o -name '*.backup' -o -name '*.bak' -o -name '*.bk' \) -type f -print | grep . && {
   echo "stray files found — clean first"; exit 1; } || true
 
 echo "==> creating remote dirs"

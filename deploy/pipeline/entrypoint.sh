@@ -21,5 +21,10 @@ fi
 
 cd "${APP_DIR}"
 
+# The repo lives on a volume; its owner uid can differ from this process's uid
+# across container recreations — mark it safe so git operations never fail
+# with "dubious ownership".
+git config --global --add safe.directory "${APP_DIR}"
+
 python -m sotd.pipeline_supervisor.materialize  # writes ${APP_DIR}/praw.ini if needed
 exec python -m sotd.pipeline_supervisor.loop
