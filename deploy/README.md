@@ -176,10 +176,13 @@ pointing at this repository, resource `deploy/compose-sotd-pipeline.yml`):
 Design notes (spec 2026-10-24): code runs from a git checkout on a
 volume (`/app`, cloned on first boot by the entrypoint — the image
 provides only the Python env + git + rsync); data lives on its own
-volume (`/data`); catalogs arrive via nightly `git pull` (a hash of the
-catalog files triggers an all-months `match:aggregate` catch-up when
-they change); the bundle is verified then rsync'd into the public share
-(failure keeps the last good bundle — never a hole). Like the other
+volume (`/data`); catalogs arrive via nightly `git pull` (the supervisor
+syncs the operator-authored match inputs from `/app/data` into `/data`,
+then a hash over the volume triggers an all-months `match:aggregate`
+catch-up when they change); the bundle is verified then rsync'd into the
+public share (failure keeps the last good bundle — never a hole). Each
+month runs as ONE command (`run.py --month M --force fetch:aggregate`)
+so a failed fetch never feeds stale data to match. Like the other
 stacks, no `cpus:` limit (Synology cgroup v1), `mem_limit: 2g` only.
 
 ### First-time setup
@@ -211,10 +214,11 @@ stacks, no `cpus:` limit (Synology cgroup v1), `mem_limit: 2g` only.
 
    | Env var | Purpose |
    |---|---|
-   | `REDDIT_CLIENT_ID` | Reddit API credential (praw) |
-   | `REDDIT_CLIENT_SECRET` | Reddit API credential (praw) |
-   | `REDDIT_USERNAME` | Reddit account used for fetching |
-   | `REDDIT_PASSWORD` | Reddit account password |
+   | `REDDIT_CLIENT_ID` | Reddit API credential (praw, required) |
+   | `REDDIT_CLIENT_SECRET` | Reddit API credential (praw, required) |
+   | `REDDIT_USER_AGENT` | Optional user-agent string (default `sotd-pipeline-supervisor`) |
+   | `REDDIT_USERNAME` | Optional — only if an authenticated account is needed |
+   | `REDDIT_PASSWORD` | Optional — only if an authenticated account is needed |
 
    A mounted `praw.ini` wins over the env vars if you ever need to
    provision it by file instead.
@@ -246,6 +250,10 @@ published bundle, and the public site reflects the new run.
   `sotd_pipeline_last_run_status{phase}`,
   `sotd_pipeline_months_processed`,
   `sotd_pipeline_catalog_catchup_last_success_timestamp_seconds`.
+  Phase labels on `last_run_status`: `pull`, `fetch` (the whole
+  `fetch:aggregate` monthly run — 0 if ANY month failed), `publish`, and
+  `catchup`. Note the `--once` smoke run does not serve metrics (the
+  port belongs to the running loop).
 - **Public site reflects a forced run**: run the `--once` smoke test,
   then reload the public site — product usage / monthly posts should
   include the newest processed month.
