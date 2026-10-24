@@ -29,7 +29,17 @@ interface Overview {
   movers: { razors: Mover[]; soaps: Mover[]; blades: Mover[] };
 }
 
-function MoverCard({ title, movers, month }: { title: string; movers: Mover[]; month: string }) {
+function MoverCard({
+  title,
+  movers,
+  month,
+  tableId,
+}: {
+  title: string;
+  movers: Mover[];
+  month: string;
+  tableId: string;
+}) {
   const rows = buildMovers(movers);
   const max = Math.max(1, ...rows.map(r => r.count));
   return (
@@ -45,7 +55,12 @@ function MoverCard({ title, movers, month }: { title: string; movers: Mover[]; m
           {rows.map(r => (
             <li key={r.name} className='text-xs'>
               <div className='flex items-baseline justify-between gap-2'>
-                <span className='truncate text-gray-300'>{r.name}</span>
+                <Link
+                  to={`/report-placement?productType=${tableId}&item=${encodeURIComponent(r.name)}`}
+                  className='truncate text-gray-300 hover:text-blue-400 hover:underline'
+                >
+                  {r.name}
+                </Link>
                 <span
                   className={
                     r.direction === 'up'
@@ -58,12 +73,13 @@ function MoverCard({ title, movers, month }: { title: string; movers: Mover[]; m
                   {r.display}
                 </span>
               </div>
-              <div className='mt-0.5 h-1.5 rounded bg-gray-700'>
-                <div
-                  className='h-1.5 rounded bg-blue-500'
-                  style={{ width: `${(r.count / max) * 100}%` }}
-                />
-              </div>
+              <Link
+                to={`/report-placement?productType=${tableId}&item=${encodeURIComponent(r.name)}`}
+                className='mt-0.5 block h-1.5 rounded bg-blue-500 hover:bg-blue-400'
+                style={{ width: `${(r.count / max) * 100}%` }}
+              >
+                <span className='sr-only'>{r.name} placement over time</span>
+              </Link>
             </li>
           ))}
         </ul>
@@ -191,7 +207,7 @@ export default function HomeDashboard() {
               key={label}
               to={
                 value
-                  ? `/report-placement?productType=${tableId}&item=${encodeURIComponent(value)}&from=${latest}`
+                  ? `/report-placement?productType=${tableId}&item=${encodeURIComponent(value)}`
                   : `/report-placement`
               }
               className='rounded-lg bg-gray-800 p-4 hover:bg-gray-700'
@@ -207,16 +223,23 @@ export default function HomeDashboard() {
 
       {/* On the move */}
       <div className='grid gap-4 md:grid-cols-3'>
-        <MoverCard title='Soaps on the move' movers={overview.movers.soaps} month={latest ?? ''} />
+        <MoverCard
+          title='Soaps on the move'
+          movers={overview.movers.soaps}
+          month={latest ?? ''}
+          tableId='soaps'
+        />
         <MoverCard
           title='Razors on the move'
           movers={overview.movers.razors}
           month={latest ?? ''}
+          tableId='razors'
         />
         <MoverCard
           title='Blades on the move'
           movers={overview.movers.blades}
           month={latest ?? ''}
+          tableId='blades'
         />
       </div>
     </div>

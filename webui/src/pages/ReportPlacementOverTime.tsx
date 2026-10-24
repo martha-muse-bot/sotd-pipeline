@@ -137,7 +137,6 @@ const ReportPlacementOverTime: React.FC = () => {
   const [typeAheadQuery, setTypeAheadQuery] = useState('');
   const [typeAheadHighlightedIndex, setTypeAheadHighlightedIndex] = useState(0);
   const typeAheadListId = 'report-rankings-items-listbox';
-  const pendingFromRef = useRef<string | null>(null);
   const typeAheadHighlightedRef = useRef<HTMLDivElement | null>(null);
   const typeAheadInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -154,9 +153,8 @@ const ReportPlacementOverTime: React.FC = () => {
     if (loadingTables || tables.length === 0) return;
     const tableParam = searchParams.get('productType');
     const itemParam = searchParams.get('item');
-    const fromParam = searchParams.get('from');
     if (!tableParam) {
-      if (itemParam) setDeepLink({ item: itemParam, from: fromParam ?? undefined });
+      if (itemParam) setDeepLink({ item: itemParam });
       return;
     }
     if (!tables.some(t => t.id === tableParam)) {
@@ -164,7 +162,7 @@ const ReportPlacementOverTime: React.FC = () => {
       return;
     }
     setSelectedTableId(tableParam);
-    setDeepLink(itemParam ? { item: itemParam, from: fromParam ?? undefined } : {});
+    setDeepLink(itemParam ? { item: itemParam } : {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadingTables, tables, searchParams]);
 
@@ -192,13 +190,7 @@ const ReportPlacementOverTime: React.FC = () => {
         // Deep-linked arrival implies intent to see the chart: pass the item
         // directly to handleLoadSeries (the setSelectedItems state won't be
         // visible to its guard within this same effect tick).
-        const from = deepLink.from;
         setSelectedItems([match]);
-        if (from) {
-          // Stored for handleLoadSeries to apply after the series lands —
-          // setting chartFromMonth here is overridden by the series effect.
-          pendingFromRef.current = from;
-        }
         void handleLoadSeries([match]);
       } else {
         setError(`Item "${itemParam}" not found in rankings.`);
@@ -366,12 +358,6 @@ const ReportPlacementOverTime: React.FC = () => {
     const sorted = [...series.months].sort();
     setChartFromMonth(sorted[0]);
     setChartToMonth(sorted[sorted.length - 1]);
-    // A deep-linked ?from= narrows the chart window; applied here so it wins
-    // over the full-range reset this effect just performed.
-    if (pendingFromRef.current) {
-      setChartFromMonth(pendingFromRef.current);
-      pendingFromRef.current = null;
-    }
   }, [series]);
 
   const seriesMonthsSorted = React.useMemo(() => {
