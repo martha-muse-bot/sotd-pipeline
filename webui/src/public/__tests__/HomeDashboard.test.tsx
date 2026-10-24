@@ -42,7 +42,11 @@ afterAll(() => {
 
 describe('HomeDashboard mover links', () => {
   it('renders mover names as links to placement over time', async () => {
-    render(<MemoryRouter><HomeDashboard /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <HomeDashboard />
+      </MemoryRouter>
+    );
     const link = await screen.findByRole('link', { name: 'Catie’s Bubbles Tonsorium' });
     expect(link.getAttribute('href')).toBe(
       '/report-placement?productType=soaps&item=' + encodeURIComponent('Catie’s Bubbles Tonsorium')
@@ -50,7 +54,11 @@ describe('HomeDashboard mover links', () => {
   });
 
   it('renders product tiles as placement deep-links', async () => {
-    render(<MemoryRouter><HomeDashboard /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <HomeDashboard />
+      </MemoryRouter>
+    );
     const tile = await screen.findByRole('link', { name: /Top soap/ });
     expect(tile.getAttribute('href')).toContain('/report-placement?productType=soaps');
   });
