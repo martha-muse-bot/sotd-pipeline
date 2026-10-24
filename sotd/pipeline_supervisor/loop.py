@@ -76,7 +76,6 @@ def run_nightly(
             [
                 "python",
                 "run.py",
-                "pipeline",
                 "--range",
                 f"{first}:{last}",
                 "--force",
@@ -100,7 +99,7 @@ def _run_phase(runner, repo_dir: Path, month: str, phase_range: str, result: Run
     phase = phase_range.split(":")[0]
     proc = _subprocess(
         runner,
-        ["python", "run.py", "pipeline", "--month", month, "--force", phase_range],
+        ["python", "run.py", "--month", month, "--force", phase_range],
         repo_dir,
     )
     ok = proc is not None and proc.returncode == 0
@@ -188,3 +187,7 @@ def _current_and_prior(dt: datetime) -> tuple[str, ...]:
 def _all_months(data_dir: Path) -> tuple[str, str]:
     months = sorted(p.stem for p in (data_dir / "enriched").glob("????-??.json"))
     return (months[0], months[-1]) if months else ("2016-05", "2016-05")
+
+
+if __name__ == "__main__":
+    main()

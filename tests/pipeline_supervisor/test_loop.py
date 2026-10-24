@@ -86,7 +86,9 @@ def test_supervisor_survives_phase_crash(tmp_path, monkeypatch):
     repo, data, bundle = setup_dirs(tmp_path)
 
     def runner(cmd, **kw):
-        raise RuntimeError("subprocess exploded")
+        if cmd[:3] == ["git", "-C", str(repo)]:
+            return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+        raise RuntimeError("subprocess exploded")  # first phase command
 
     monkeypatch.setattr("sotd.pipeline_supervisor.loop.catalog_hash", lambda d: "h1")
     result = run_nightly(
@@ -98,7 +100,11 @@ def test_supervisor_survives_phase_crash(tmp_path, monkeypatch):
         all_months=("2026-10", "2016-05"),
     )
     assert result.published is False
+    assert result.phases["pull"] is True
     assert any(v is False for v in result.phases.values())
+    assert result.catchup_ran is True  # drift branch still runs (per-brief order)
+    assert result.catchup_ok is False  # catch-up crashes too -> hash not saved
+    assert not (data / ".catalog_hash").exists()
 
 
 def test_git_pull_failure_skips_run(tmp_path, monkeypatch):
