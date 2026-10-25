@@ -298,3 +298,35 @@ def test_report_rankings_pivoted_returns_20_lanes_and_prev_rank(tmp_path):
     assert lane2["points"][0]["item"] == "Razor B"
     assert lane2["points"][1]["item"] == "Razor A"
     assert lane2["points"][1]["prev_rank"] == 1
+
+
+def test_month_cache_invalidates_on_file_change(tmp_path):
+    """A replaced month file (publish) must serve fresh data, not the cache."""
+    from api.report_rankings import _month_cache, _table_rows_cache
+
+    _month_cache.clear()
+    _table_rows_cache.clear()
+    agg_file = tmp_path / "2025-06.json"
+    agg_file.write_text(json.dumps(_mock_aggregated_content()))
+    with patch("api.report_rankings._get_aggregated_dir", return_value=tmp_path):
+        r1 = client.get("/api/report-rankings/series?table=razors&items=Razor%20A").json()
+        rank1 = r1["series"][0]["data"][0]["rank"]
+
+        # Publish replaces the file: same month, different content + mtime.
+        import os, time as _time
+
+        content2 = _mock_aggregated_content()
+        content2["data"]["razors"] = [
+            {"name": "Razor A", "shaves": 42, "unique_users": 4, "rank": 7}
+        ]
+        agg_file.write_text(json.dumps(content2))
+        st = agg_file.stat()
+        os.utime(agg_file, (st.st_atime, st.st_mtime + 2))  # force mtime change
+
+        r2 = client.get("/api/report-rankings/series?table=razors&items=Razor%20A").json()
+        rank2 = r2["series"][0]["data"][0]["rank"]
+
+    assert rank1 == 1
+    assert rank2 == 7  # cache invalidated: fresh read, not the stale rank
+    _month_cache.clear()
+    _table_rows_cache.clear()

@@ -104,6 +104,48 @@ def _get_aggregated_dir() -> Path:
     return project_root / "data" / "aggregated"
 
 
+# Month-file cache: every endpoint below scans all ~126 monthly aggregated
+# files (seconds on the NAS), and the bundle only changes when the pipeline
+# re-aggregates and publish runs. Cache keyed on each file's (size, mtime_ns)
+# so a replaced month invalidates just that entry.
+_month_cache: Dict[str, Dict[str, Any]] = {}
+
+
+def _load_month_cached(file_path: Path) -> Dict[str, Any]:
+    """load_aggregated_data for one month, served from an in-memory cache
+    keyed on the file's size + mtime."""
+    st = file_path.stat()
+    key = f"{file_path.stem}"
+    fingerprint = (st.st_size, st.st_mtime_ns)
+    cached = _month_cache.get(key)
+    if cached is not None and cached["fingerprint"] == fingerprint:
+        return cached["data"]
+    _, data = load_aggregated_data(file_path, debug=False)
+    _month_cache[key] = {"fingerprint": fingerprint, "data": data}
+    return data
+
+
+# Derived table rows cache: get_structured_table_data runs the TableGenerator
+# over a month's data (~1-5ms/month locally, more on the NAS) on every request.
+# Keyed on (table, month) with the same file fingerprint as _load_month_cached.
+_table_rows_cache: Dict[tuple, Dict[str, Any]] = {}
+
+
+def _table_rows_cached(file_path: Path, table_name: str) -> List[Dict[str, Any]]:
+    """Structured table rows for one month+table, memoized on file fingerprint."""
+    st = file_path.stat()
+    key = (table_name, file_path.stem)
+    fingerprint = (st.st_size, st.st_mtime_ns)
+    cached = _table_rows_cache.get(key)
+    if cached is not None and cached["fingerprint"] == fingerprint:
+        return cached["rows"]
+    data = _load_month_cached(file_path)
+    generator = TableGenerator(data, comparison_data={}, current_month=file_path.stem)
+    rows = generator.get_structured_table_data(table_name, deltas=False, format_column_names=False)
+    _table_rows_cache[key] = {"fingerprint": fingerprint, "rows": rows}
+    return rows
+
+
 def _humanize(key: str) -> str:
     """Convert snake_case key to title label (e.g. razor_manufacturers -> Razor manufacturers)."""
     return key.replace("_", " ").title()
@@ -187,7 +229,7 @@ async def get_tables() -> TablesResponse:
         return TablesResponse(tables=[])
 
     try:
-        _, data = load_aggregated_data(file_path, debug=False)
+        data = _load_month_cached(file_path)
         tables = _get_tables_from_data(data)
         return TablesResponse(tables=tables)
     except Exception as e:
@@ -226,11 +268,7 @@ async def get_items(
         if not file_path.exists():
             continue
         try:
-            _, data = load_aggregated_data(file_path, debug=False)
-            generator = TableGenerator(data, comparison_data={}, current_month=use_month)
-            rows = generator.get_structured_table_data(
-                table_name, deltas=False, format_column_names=False
-            )
+            rows = _table_rows_cached(file_path, table_name)
         except Exception as e:
             logger.debug(f"Skip month {use_month} for items: {e}")
             continue
@@ -273,11 +311,7 @@ async def get_series(
         if not file_path.exists():
             continue
         try:
-            _, data = load_aggregated_data(file_path, debug=False)
-            generator = TableGenerator(data, comparison_data={}, current_month=month_str)
-            rows = generator.get_structured_table_data(
-                table_name, deltas=False, format_column_names=False
-            )
+            rows = _table_rows_cached(file_path, table_name)
         except Exception as e:
             logger.debug(f"Skip month {month_str}: {e}")
             continue
@@ -362,11 +396,7 @@ async def get_pivoted(
         if not file_path.exists():
             continue
         try:
-            _, data = load_aggregated_data(file_path, debug=False)
-            generator = TableGenerator(data, comparison_data={}, current_month=month_str)
-            rows = generator.get_structured_table_data(
-                table_name, deltas=False, format_column_names=False
-            )
+            rows = _table_rows_cached(file_path, table_name)
         except Exception as e:
             logger.debug(f"Skip month {month_str}: {e}")
             continue
