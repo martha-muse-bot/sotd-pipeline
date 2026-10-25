@@ -15,6 +15,7 @@ COPY sotd /app/sotd
 COPY webui/api/__init__.py /app/webui/api/__init__.py
 COPY webui/api/utils/ /app/webui/api/utils/
 COPY webui/api/public_main.py /app/webui/api/public_main.py
+COPY webui/api/home_overview.py /app/webui/api/home_overview.py
 COPY webui/api/product_usage.py /app/webui/api/product_usage.py
 COPY webui/api/monthly_user_posts.py /app/webui/api/monthly_user_posts.py
 COPY webui/api/report_rankings.py /app/webui/api/report_rankings.py
