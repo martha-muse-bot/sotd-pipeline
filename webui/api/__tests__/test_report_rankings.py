@@ -313,7 +313,7 @@ def test_month_cache_invalidates_on_file_change(tmp_path):
         rank1 = r1["series"][0]["data"][0]["rank"]
 
         # Publish replaces the file: same month, different content + mtime.
-        import os, time as _time
+        import os
 
         content2 = _mock_aggregated_content()
         content2["data"]["razors"] = [
