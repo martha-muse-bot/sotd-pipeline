@@ -1158,6 +1158,10 @@ const ReportPlacementOverTime: React.FC = () => {
                         tickFormatter={
                           chartPrimaryMetric === 'rank' ? v => String(Math.round(v)) : undefined
                         }
+                        // Recharts defaults to a 60px axis gutter sized for long labels;
+                        // our tick labels are short numbers, so claim only ~32px and give
+                        // the difference to the plot.
+                        width={32}
                         // No rotated axis title: the metric is named in the
                         // "Chart metric" toggle above the chart, and the label
                         // cost horizontal plot width.
