@@ -83,10 +83,14 @@ kill_external_process() {
 # Function to start frontend server
 start_frontend() {
     local force=${1:-false}
-    
+
     if check_process "$FRONTEND_PID_FILE" "frontend"; then
-        print_status $YELLOW "Frontend server is already running (PID: $(cat $FRONTEND_PID_FILE))"
-        return 0
+        if [[ "$force" == "true" ]]; then
+            stop_server "$FRONTEND_PID_FILE" "frontend" $FRONTEND_PORT
+        else
+            print_status $YELLOW "Frontend server is already running (PID: $(cat $FRONTEND_PID_FILE))"
+            return 0
+        fi
     fi
     
     if check_port $FRONTEND_PORT; then
@@ -124,8 +128,12 @@ start_public() {
     local force=${1:-false}
 
     if check_process "$PUBLIC_PID_FILE" "public"; then
-        print_status $YELLOW "Public site server is already running (PID: $(cat $PUBLIC_PID_FILE))"
-        return 0
+        if [[ "$force" == "true" ]]; then
+            stop_server "$PUBLIC_PID_FILE" "public" $PUBLIC_PORT
+        else
+            print_status $YELLOW "Public site server is already running (PID: $(cat $PUBLIC_PID_FILE))"
+            return 0
+        fi
     fi
 
     if check_port $PUBLIC_PORT; then
@@ -168,10 +176,14 @@ start_public() {
 # Function to start backend server
 start_backend() {
     local force=${1:-false}
-    
+
     if check_process "$BACKEND_PID_FILE" "backend"; then
-        print_status $YELLOW "Backend server is already running (PID: $(cat $BACKEND_PID_FILE))"
-        return 0
+        if [[ "$force" == "true" ]]; then
+            stop_server "$BACKEND_PID_FILE" "backend" $BACKEND_PORT
+        else
+            print_status $YELLOW "Backend server is already running (PID: $(cat $BACKEND_PID_FILE))"
+            return 0
+        fi
     fi
     
     if check_port $BACKEND_PORT; then
@@ -235,7 +247,13 @@ stop_server() {
         rm -f "$pid_file"
         print_status $GREEN "$name server stopped"
     else
-        print_status $YELLOW "$name server is not running"
+        print_status $YELLOW "$name server is not running (no PID file)"
+    fi
+
+    # Always free the port: covers lost PID files, orphaned children (e.g. uvicorn
+    # --reload), and servers started outside this script (npm run serve:public).
+    if [[ -n "$port" ]] && check_port "$port"; then
+        kill_external_process "$port" "$name"
     fi
 }
 
@@ -278,6 +296,12 @@ check_status() {
         print_status $GREEN "Port $BACKEND_PORT: IN USE"
     else
         print_status $RED "Port $BACKEND_PORT: AVAILABLE"
+    fi
+
+    if check_port $PUBLIC_PORT; then
+        print_status $GREEN "Port $PUBLIC_PORT: IN USE"
+    else
+        print_status $RED "Port $PUBLIC_PORT: AVAILABLE"
     fi
 }
 
@@ -381,9 +405,15 @@ cleanup() {
 COMMAND="${1:-help}"
 FORCE=false
 
-# Check for --force flag
-if [[ "$2" == "--force" ]]; then
-    FORCE=true
+# Accept --force anywhere in the args (restart --force / --force restart)
+for arg in "$@"; do
+    if [[ "$arg" == "--force" ]]; then
+        FORCE=true
+    fi
+done
+# If first arg is --force, treat the next token as the command
+if [[ "$COMMAND" == "--force" ]]; then
+    COMMAND="${2:-help}"
 fi
 
 # Main script logic
