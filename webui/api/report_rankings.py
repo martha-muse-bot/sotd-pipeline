@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Report rankings API: placement over time for aggregation table rows."""
 
+import json
 import logging
 import os
 import re
@@ -146,6 +147,44 @@ def _table_rows_cached(file_path: Path, table_name: str) -> List[Dict[str, Any]]
     return rows
 
 
+# Precomputed rankings rows (aggregated/rankings/<table>.json, written at
+# publish time by home_overview_builder.write_rankings_rows). Served when the
+# file's month set matches the aggregated dir exactly — first-request-after-
+# restart stays fast, and the API never holds all parsed months in memory.
+_precomputed_rows_cache: Dict[str, Optional[Dict[str, Any]]] = {}
+
+
+def _precomputed_rows(table_id: str) -> Optional[Dict[str, Any]]:
+    """{months: [{month, rows}], ...} for a table, or None when absent/stale."""
+    aggregated_dir = _get_aggregated_dir()
+    if not aggregated_dir.exists():
+        return None
+    file_months = {p.stem for p in aggregated_dir.glob("????-??.json")}
+    path = aggregated_dir / "rankings" / f"{table_id}.json"
+    if not path.exists():
+        _precomputed_rows_cache.pop(table_id, None)
+        return None
+    cached = _precomputed_rows_cache.get(table_id)
+    # Invalidate on the rankings file's own mtime — publish replaces it.
+    try:
+        mtime = path.stat().st_mtime_ns
+    except OSError:
+        return None
+    if cached is not None and cached.get("mtime") == mtime:
+        return cached["payload"]
+    try:
+        with path.open("r", encoding="utf-8") as f:
+            payload = json.load(f)
+    except (OSError, json.JSONDecodeError) as e:
+        logger.warning(f"precomputed rankings unreadable for {table_id}: {e}")
+        return None
+    precomputed_months = {m["month"] for m in payload.get("months", [])}
+    if precomputed_months != file_months:
+        return None  # stale: publish hasn't run since a month was added/removed
+    _precomputed_rows_cache[table_id] = {"mtime": mtime, "payload": payload}
+    return payload
+
+
 def _humanize(key: str) -> str:
     """Convert snake_case key to title label (e.g. razor_manufacturers -> Razor manufacturers)."""
     return key.replace("_", " ").title()
@@ -263,6 +302,20 @@ async def get_items(
         # No month: union across all months so all items ever present are selectable
         months_to_scan = months
 
+    # Fast path: precomputed rows (whole-history unions are the common case).
+    pre = None if (month and month in months) else _precomputed_rows(table)
+    if pre is not None:
+        for month_entry in pre["months"]:
+            for row in month_entry["rows"]:
+                name = row.get("name")
+                if not name:
+                    continue
+                norm = _normalize_name(name)
+                if norm not in by_normalized:
+                    by_normalized[norm] = name
+        names = sorted(by_normalized.values(), key=lambda s: _normalize_name(s))
+        return ItemsResponse(items=names)
+
     for use_month in months_to_scan:
         file_path = aggregated_dir / f"{use_month}.json"
         if not file_path.exists():
@@ -306,41 +359,70 @@ async def get_series(
     series_by_item: Dict[str, List[Dict[str, Any]]] = {orig: [] for orig in item_list}
     valid_months: List[str] = []
 
-    for month_str in months:
-        file_path = aggregated_dir / f"{month_str}.json"
-        if not file_path.exists():
-            continue
-        try:
-            rows = _table_rows_cached(file_path, table_name)
-        except Exception as e:
-            logger.debug(f"Skip month {month_str}: {e}")
-            continue
+    # Fast path: precomputed rows — pure filtering, no month parsing.
+    pre = _precomputed_rows(table)
+    if pre is not None:
+        by_month_rows = {m["month"]: m["rows"] for m in pre["months"]}
+        for month_str in months:
+            rows = by_month_rows.get(month_str)
+            if rows is None:
+                continue
+            valid_months.append(month_str)
+            by_name = {}
+            for row in rows:
+                if row.get("name"):
+                    by_name[_normalize_name(row["name"])] = row
+            for norm, orig in wanted.items():
+                row = by_name.get(norm)
+                series_by_item[orig].append(
+                    {
+                        "month": month_str,
+                        "rank": row.get("rank") if row else None,
+                        "shaves": row.get("shaves") if row else None,
+                        "unique_users": row.get("unique_users") if row else None,
+                    }
+                )
+    else:
+        for month_str in months:
+            file_path = aggregated_dir / f"{month_str}.json"
+            if not file_path.exists():
+                continue
+            try:
+                rows = _table_rows_cached(file_path, table_name)
+            except Exception as e:
+                logger.debug(f"Skip month {month_str}: {e}")
+                continue
 
-        valid_months.append(month_str)
-        by_name: Dict[str, Dict[str, Any]] = {}
-        for row in rows:
-            name = _row_display_name(row)
-            if name:
-                by_name[_normalize_name(name)] = row
+            valid_months.append(month_str)
+            by_name: Dict[str, Dict[str, Any]] = {}
+            for row in rows:
+                name = _row_display_name(row)
+                if name:
+                    by_name[_normalize_name(name)] = row
 
-        for norm, orig in wanted.items():
-            row = by_name.get(norm)
-            rank = row.get("rank") if row else None
-            shaves = row.get("shaves") if row else None
-            unique_users = row.get("unique_users") if row else None
-            if rank is not None and isinstance(rank, str):
-                try:
-                    rank = int(rank.replace("=", "").strip())
-                except ValueError:
-                    rank = None
-            if unique_users is not None and isinstance(unique_users, str):
-                try:
-                    unique_users = int(unique_users.replace(",", "").strip())
-                except ValueError:
-                    unique_users = None
-            series_by_item[orig].append(
-                {"month": month_str, "rank": rank, "shaves": shaves, "unique_users": unique_users}
-            )
+            for norm, orig in wanted.items():
+                row = by_name.get(norm)
+                rank = row.get("rank") if row else None
+                shaves = row.get("shaves") if row else None
+                unique_users = row.get("unique_users") if row else None
+                if rank is not None and isinstance(rank, str):
+                    try:
+                        rank = int(rank.replace("=", "").strip())
+                    except ValueError:
+                        rank = None
+                if unique_users is not None and isinstance(unique_users, str):
+                    try:
+                        unique_users = int(unique_users.replace(",", "").strip())
+                    except ValueError:
+                        unique_users = None
+                series_by_item[orig].append(
+                    {
+                        "month": month_str,
+                        "rank": rank,
+                        "shaves": shaves,
+                        "unique_users": unique_users,
+                    }
+                )
 
     # Build response: ensure every item has an entry for every valid month (null if missing)
     series_entries = [
@@ -391,36 +473,52 @@ async def get_pivoted(
     month_rows: List[List[tuple]] = []  # month_rows[i] = [(name, shaves, unique_users), ...]
     valid_months: List[str] = []
 
-    for month_str in months:
-        file_path = aggregated_dir / f"{month_str}.json"
-        if not file_path.exists():
-            continue
-        try:
-            rows = _table_rows_cached(file_path, table_name)
-        except Exception as e:
-            logger.debug(f"Skip month {month_str}: {e}")
-            continue
+    def _row_slot(row: Dict[str, Any]) -> tuple:
+        name = row.get("name")
+        shaves = row.get("shaves")
+        if isinstance(shaves, str):
+            try:
+                shaves = int(shaves.replace(",", "").strip())
+            except ValueError:
+                shaves = None
+        unique_users = row.get("unique_users")
+        if isinstance(unique_users, str):
+            try:
+                unique_users = int(unique_users.replace(",", "").strip())
+            except ValueError:
+                unique_users = None
+        return (name or "", shaves, unique_users)
 
-        valid_months.append(month_str)
-        slot_list: List[tuple] = []
-        for r in rows[:TOP_N]:
-            name = _row_display_name(r)
-            shaves = r.get("shaves")
-            if isinstance(shaves, str):
-                try:
-                    shaves = int(shaves.replace(",", "").strip())
-                except ValueError:
-                    shaves = None
-            unique_users = r.get("unique_users")
-            if isinstance(unique_users, str):
-                try:
-                    unique_users = int(unique_users.replace(",", "").strip())
-                except ValueError:
-                    unique_users = None
-            slot_list.append((name or "", shaves, unique_users))
-        while len(slot_list) < TOP_N:
-            slot_list.append(("", None, None))
-        month_rows.append(slot_list)
+    # Fast path: precomputed rows — top-N per month is a slice of each month's
+    # rows (the precompute already ordered by rank).
+    pre = _precomputed_rows(table)
+    if pre is not None:
+        by_month_rows = {m["month"]: m["rows"] for m in pre["months"]}
+        for month_str in months:
+            rows = by_month_rows.get(month_str)
+            if rows is None:
+                continue
+            valid_months.append(month_str)
+            slot_list = [_row_slot(r) for r in rows[:TOP_N]]
+            while len(slot_list) < TOP_N:
+                slot_list.append(("", None, None))
+            month_rows.append(slot_list)
+    else:
+        for month_str in months:
+            file_path = aggregated_dir / f"{month_str}.json"
+            if not file_path.exists():
+                continue
+            try:
+                rows = _table_rows_cached(file_path, table_name)
+            except Exception as e:
+                logger.debug(f"Skip month {month_str}: {e}")
+                continue
+
+            valid_months.append(month_str)
+            slot_list = [_row_slot(r) for r in rows[:TOP_N]]
+            while len(slot_list) < TOP_N:
+                slot_list.append(("", None, None))
+            month_rows.append(slot_list)
 
     if not valid_months:
         return PivotedResponse(months=[], lanes=[])

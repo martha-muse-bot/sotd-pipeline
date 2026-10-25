@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from .utils.data_dir import get_enriched_dir, get_user_analysis_dir  # noqa: E402
 
@@ -51,10 +51,38 @@ class MonthData(BaseModel):
     user_count: int
 
 
+def _precomputed_months() -> Optional[List[MonthData]]:
+    """Fast path: aggregated/monthly_user_posts_months.json, written at publish
+    time (see home_overview_builder.write_months_list). Served only when fresh:
+    its month set must match the user_analysis directory exactly, otherwise
+    (publish not yet run) fall through to the compute path."""
+    ua_dir = get_user_analysis_dir()
+    if not ua_dir.exists():
+        return None
+    precomputed_file = ua_dir.parent / "monthly_user_posts_months.json"
+    if not precomputed_file.exists():
+        return None
+    try:
+        with precomputed_file.open("r", encoding="utf-8") as f:
+            rows = json.load(f)
+        file_months = {p.stem for p in ua_dir.glob("????-??.json")}
+        precomputed_months = {r.get("month") for r in rows}
+        if file_months != precomputed_months:
+            return None
+        return [MonthData(**r) for r in rows]
+    except (OSError, json.JSONDecodeError, TypeError, ValidationError) as e:
+        logger.warning(f"precomputed months unreadable: {e}")
+        return None
+
+
 @router.get("/months", response_model=List[MonthData])
 async def get_available_months() -> List[MonthData]:
     """Get list of available months with data."""
     try:
+        precomputed = _precomputed_months()
+        if precomputed is not None:
+            return precomputed
+
         # Primary source: pre-computed user_analysis aggregates (present in the
         # public bundle, which has no enriched/).
         user_analysis_dir = get_user_analysis_dir()

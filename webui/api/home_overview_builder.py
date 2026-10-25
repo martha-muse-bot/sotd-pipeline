@@ -194,3 +194,138 @@ def write_precomputed(data_dir: Path) -> Path:
         json.dump(payload, f)
     tmp.replace(out)
     return out
+
+
+# --- monthly-user-posts months list -------------------------------------------
+
+
+def build_months_list(data_dir: Path) -> List[Dict[str, Any]]:
+    """{month, has_data, user_count} rows for /api/monthly-user-posts/months.
+    The endpoint's compute path parses every user_analysis file for these
+    counts; precomputing makes the page's first request a single-file read."""
+    ua_dir = data_dir / "aggregated" / "user_analysis"
+    months = []
+    for path in sorted(ua_dir.glob("????-??.json")):
+        ua = _load(path)
+        count = len((ua.get("users") or {})) if ua is not None else 0
+        months.append({"month": path.stem, "has_data": ua is not None, "user_count": count})
+    return months
+
+
+def write_months_list(data_dir: Path) -> Path:
+    out = data_dir / "aggregated" / "monthly_user_posts_months.json"
+    tmp = out.with_suffix(".json.tmp")
+    with tmp.open("w") as f:
+        json.dump(build_months_list(data_dir), f)
+    tmp.replace(out)
+    return out
+
+
+# --- rankings rows per (table, month) -----------------------------------------
+
+
+def _table_ids_from_data(data: Dict[str, Any]) -> List[str]:
+    return sorted(
+        key
+        for key, value in data.items()
+        if isinstance(value, list) and bool(value) and isinstance(value[0], dict)
+    )
+
+
+def _row_identity(row: Dict[str, Any]) -> Optional[str]:
+    """Item display name from a structured table row (shared shape with the
+    rankings endpoint's own extraction: name/name/User/user, then any string col)."""
+    for key in ("name", "Name", "User", "user"):
+        if key in row and isinstance(row[key], str):
+            return row[key].strip() or None
+    skip = {"rank", "position", "shaves", "unique_users", "unique users"}
+    for key, value in row.items():
+        k_lower = key.lower().replace(" ", "_")
+        if k_lower in skip or (isinstance(value, (int, float)) and k_lower != "rank"):
+            continue
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    if row.get("use_count") is not None:
+        return str(row["use_count"])
+    return None
+
+
+def _numeric(value: Any) -> Optional[int]:
+    if value is None:
+        return None
+    if isinstance(value, str):
+        try:
+            return int(value.replace("=", "").replace(",", "").strip())
+        except ValueError:
+            return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def build_rankings_rows(
+    data_dir: Path,
+    table_ids: Optional[List[str]] = None,
+    progress: Optional[Any] = None,
+) -> Dict[str, List[Dict[str, Any]]]:
+    """Per-table rows across all months: for each (table, month), the list of
+    {name, rank, shaves, unique_users}. Stored newest-first per month order
+    matching the aggregated dir listing. `progress` gets (table, month) calls."""
+    agg = data_dir / "aggregated"
+    months = sorted(p.stem for p in agg.glob("????-??.json"))
+    # Import here so the builder keeps stdlib-only for the API path.
+    from sotd.report.table_generators.table_generator import TableGenerator
+
+    out: Dict[str, List[Dict[str, Any]]] = {}
+    for month in months:
+        path = agg / f"{month}.json"
+        try:
+            with path.open() as f:
+                content = json.load(f)
+            data = content["data"]
+        except (OSError, json.JSONDecodeError, KeyError) as exc:
+            logger.warning("rankings precompute: skipping %s: %s", path, exc)
+            continue
+        for table_id in table_ids if table_ids is not None else _table_ids_from_data(data):
+            if progress:
+                progress(table_id, month)
+            table_name = table_id.replace("_", "-") if "_" in table_id else table_id
+            generator = TableGenerator(data, comparison_data={}, current_month=month)
+            try:
+                rows = generator.get_structured_table_data(
+                    table_name, deltas=False, format_column_names=False
+                )
+            except Exception as exc:
+                logger.warning("rankings precompute: %s/%s: %s", table_id, month, exc)
+                continue
+            extracted = []
+            for row in rows:
+                name = _row_identity(row)
+                rank = _numeric(row.get("rank"))
+                if name is None and rank is None:
+                    continue
+                extracted.append(
+                    {
+                        "name": name,
+                        "rank": rank,
+                        "shaves": _numeric(row.get("shaves")),
+                        "unique_users": _numeric(row.get("unique_users")),
+                    }
+                )
+            out.setdefault(table_id, []).append({"month": month, "rows": extracted})
+    return out
+
+
+def write_rankings_rows(data_dir: Path, progress: Optional[Any] = None) -> Path:
+    """Write aggregated/rankings/<table>.json — one file per table, all months."""
+    rows_by_table = build_rankings_rows(data_dir, progress=progress)
+    out_dir = data_dir / "aggregated" / "rankings"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    for table_id, months in rows_by_table.items():
+        out = out_dir / f"{table_id}.json"
+        tmp = out.with_suffix(".json.tmp")
+        with tmp.open("w") as f:
+            json.dump({"table": table_id, "months": months}, f)
+        tmp.replace(out)
+    return out_dir

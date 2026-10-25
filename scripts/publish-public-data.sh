@@ -19,6 +19,7 @@ echo "==> rsyncing bundle to $TARGET"
 rsync -a --delete data/aggregated/product_usage/ "$TARGET/aggregated/product_usage/"
 rsync -a --delete data/aggregated/user_analysis/ "$TARGET/aggregated/user_analysis/"
 rsync -a --delete data/aggregated/annual/        "$TARGET/aggregated/annual/"
-rsync -a --delete --include='????-??.json' --include='home_overview.json' --exclude='*' data/aggregated/ "$TARGET/aggregated/"
+rsync -a --delete data/aggregated/rankings/      "$TARGET/aggregated/rankings/"
+rsync -a --delete --include='????-??.json' --include='home_overview.json' --include='monthly_user_posts_months.json' --exclude='*' data/aggregated/ "$TARGET/aggregated/"
 
 echo "done. bundle at $TARGET"

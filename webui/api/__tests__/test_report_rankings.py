@@ -330,3 +330,78 @@ def test_month_cache_invalidates_on_file_change(tmp_path):
     assert rank2 == 7  # cache invalidated: fresh read, not the stale rank
     _month_cache.clear()
     _table_rows_cache.clear()
+
+
+def test_series_serves_precomputed_rows(tmp_path):
+    """Precomputed rankings file drives series; content matches the compute path."""
+
+    from api.report_rankings import _precomputed_rows_cache
+
+    _precomputed_rows_cache.clear()
+    agg = tmp_path / "aggregated"
+    agg.mkdir()
+    for m in ("2025-06", "2025-07"):
+        (agg / f"{m}.json").write_text(json.dumps(_mock_aggregated_content()))
+    # Same months, same rows in the precomputed shape (name/rank/shaves/users).
+    pre_months = [
+        {
+            "month": m,
+            "rows": [
+                {
+                    "name": r["name"],
+                    "rank": r["rank"],
+                    "shaves": r["shaves"],
+                    "unique_users": r["unique_users"],
+                }
+                for r in _mock_aggregated_content()["data"]["razors"]
+            ],
+        }
+        for m in ("2025-06", "2025-07")
+    ]
+    (agg / "rankings").mkdir()
+    (agg / "rankings" / "razors.json").write_text(
+        json.dumps({"table": "razors", "months": pre_months})
+    )
+    with patch("api.report_rankings._get_aggregated_dir", return_value=agg):
+        data = client.get("/api/report-rankings/series?table=razors&items=Razor%20A").json()
+    _precomputed_rows_cache.clear()
+    assert [p["rank"] for p in data["series"][0]["data"]] == [1, 1]
+    assert data["months"] == ["2025-06", "2025-07"]
+
+
+def test_pivoted_serves_precomputed_rows(tmp_path):
+
+    from api.report_rankings import _precomputed_rows_cache
+
+    _precomputed_rows_cache.clear()
+    agg = tmp_path / "aggregated"
+    agg.mkdir()
+    for m in ("2025-06", "2025-07"):
+        (agg / f"{m}.json").write_text(json.dumps(_mock_aggregated_content()))
+    pre_months = [
+        {
+            "month": m,
+            "rows": [
+                {
+                    "name": r["name"],
+                    "rank": r["rank"],
+                    "shaves": r["shaves"],
+                    "unique_users": r["unique_users"],
+                }
+                for r in _mock_aggregated_content()["data"]["razors"]
+            ],
+        }
+        for m in ("2025-06", "2025-07")
+    ]
+    (agg / "rankings").mkdir()
+    (agg / "rankings" / "razors.json").write_text(
+        json.dumps({"table": "razors", "months": pre_months})
+    )
+    with patch("api.report_rankings._get_aggregated_dir", return_value=agg):
+        data = client.get("/api/report-rankings/pivoted?table=razors").json()
+    _precomputed_rows_cache.clear()
+    lane1 = data["lanes"][0]
+    assert lane1["points"][0]["item"] == "Razor A"
+    assert lane1["points"][0]["prev_rank"] is None
+    assert lane1["points"][1]["item"] == "Razor A"  # rank 1 again in July
+    assert lane1["points"][1]["prev_rank"] == 1

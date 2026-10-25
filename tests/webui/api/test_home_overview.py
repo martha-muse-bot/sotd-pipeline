@@ -65,6 +65,7 @@ def bundle(tmp_path: Path) -> Path:
                 }
             )
         )
+    return tmp_path
 
 
 @pytest.fixture()
@@ -294,3 +295,126 @@ def test_verifier_accepts_home_overview_json(tmp_path):
         )
     (agg / "home_overview.json").write_text("{}")
     assert check_bundle(tmp_path) == []
+
+
+# --- months-list + rankings precompute ---------------------------------------
+
+
+@pytest.fixture()
+def rankings_bundle(tmp_path: Path) -> Path:
+    """Bundle with top-level aggregated month files (rank tables), which
+    build_rankings_rows / load_aggregated_data read."""
+    agg = tmp_path / "aggregated"
+    agg.mkdir(parents=True)
+    for m in ("2026-08", "2026-09", "2026-10"):
+        (agg / f"{m}.json").write_text(
+            json.dumps(
+                {
+                    "meta": {"month": m, "total_shaves": 1000, "unique_shavers": 50},
+                    "data": {
+                        "razors": [
+                            {"name": "Razor A", "shaves": 100, "unique_users": 10, "rank": 1},
+                            {"name": "Razor B", "shaves": 80, "unique_users": 8, "rank": 2},
+                        ]
+                    },
+                }
+            )
+        )
+    return tmp_path
+
+
+def test_build_months_list_counts_users(bundle: Path):
+    from webui.api.home_overview_builder import build_months_list
+
+    rows = build_months_list(bundle)
+    assert [r["month"] for r in rows] == ["2026-08", "2026-09", "2026-10"]
+    assert all(r["has_data"] for r in rows)
+    assert all(r["user_count"] == 3 for r in rows)  # fixture: 3 users every month
+
+
+def test_write_months_list_round_trips(bundle: Path):
+    from webui.api.home_overview_builder import build_months_list, write_months_list
+
+    out = write_months_list(bundle)
+    written = json.loads(out.read_text())
+    assert written == build_months_list(bundle)
+    assert written[0]["month"] == "2026-08"
+
+
+def test_build_rankings_rows_matches_table_rows(rankings_bundle: Path):
+    """Precomputed rows carry the same name/rank/shaves/users as the endpoint's
+    compute path (TableGenerator) for the same (table, month)."""
+    from sotd.report.load import load_aggregated_data
+    from sotd.report.table_generators.table_generator import TableGenerator
+    from webui.api.home_overview_builder import build_rankings_rows
+
+    rows_by_table = build_rankings_rows(rankings_bundle, table_ids=["razors"])
+    months = rows_by_table["razors"]
+    assert [m["month"] for m in months] == ["2026-08", "2026-09", "2026-10"]
+
+    # Cross-check one month against the direct compute path.
+    _, data = load_aggregated_data(rankings_bundle / "aggregated" / "2026-10.json", debug=False)
+    gen = TableGenerator(data, comparison_data={}, current_month="2026-10")
+    direct = gen.get_structured_table_data("razors", deltas=False, format_column_names=False)
+    pre_rows = months[-1]["rows"]
+    direct_pairs = sorted((r["name"], r["rank"]) for r in direct)
+    pre_pairs = sorted((r["name"], r["rank"]) for r in pre_rows)
+    assert pre_pairs == direct_pairs
+
+
+def test_write_rankings_rows_one_file_per_table(rankings_bundle: Path):
+    from webui.api.home_overview_builder import write_rankings_rows
+
+    out_dir = write_rankings_rows(rankings_bundle)
+    files = sorted(p.stem for p in out_dir.glob("*.json"))
+    assert files == ["razors"]  # fixture data has only the razors list
+    payload = json.loads((out_dir / "razors.json").read_text())
+    assert payload["table"] == "razors"
+    assert [m["month"] for m in payload["months"]] == ["2026-08", "2026-09", "2026-10"]
+
+
+# --- endpoint fast paths for precomputed files --------------------------------
+
+
+def test_mup_months_serves_precomputed(rankings_bundle: Path, monkeypatch):
+    """monthly-user-posts/months serves the precomputed file when fresh."""
+    from webui.api.home_overview_builder import write_months_list
+
+    monkeypatch.setenv("SOTD_DATA_DIR", str(rankings_bundle))
+    # The precompute derives from user_analysis/, absent in this minimal
+    # fixture — build it so the freshness check (month-set equality) passes.
+    ua = rankings_bundle / "aggregated" / "user_analysis"
+    ua.mkdir()
+    for m in ("2026-08", "2026-09", "2026-10"):
+        (ua / f"{m}.json").write_text(json.dumps({"meta": {}, "users": {"u": {"posted_days": 1}}}))
+    write_months_list(rankings_bundle)
+
+    from fastapi import FastAPI
+
+    from webui.api.monthly_user_posts import router as mup_router
+
+    app = FastAPI()
+    app.include_router(mup_router)
+    client = TestClient(app)
+    body = client.get("/api/monthly-user-posts/months").json()
+    assert [m["month"] for m in body] == ["2026-08", "2026-09", "2026-10"]
+    assert all(m["user_count"] == 1 for m in body)
+
+
+def test_mup_months_falls_back_when_precomputed_stale(bundle: Path, monkeypatch):
+    """Precomputed file missing a month present on disk → compute path used."""
+    (bundle / "aggregated" / "monthly_user_posts_months.json").write_text(
+        json.dumps(
+            [{"month": "2026-08", "has_data": True, "user_count": 1}]
+        )  # stale: missing 09/10
+    )
+    monkeypatch.setenv("SOTD_DATA_DIR", str(bundle))
+    from fastapi import FastAPI
+
+    from webui.api.monthly_user_posts import router as mup_router
+
+    app = FastAPI()
+    app.include_router(mup_router)
+    client = TestClient(app)
+    body = client.get("/api/monthly-user-posts/months").json()
+    assert [m["month"] for m in body] == ["2026-10", "2026-09", "2026-08"]  # computed, newest first
