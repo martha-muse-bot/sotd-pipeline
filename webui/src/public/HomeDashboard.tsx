@@ -189,28 +189,13 @@ export default function HomeDashboard() {
         )}
       </div>
 
-      {/* Selected month at a glance + On the move (chart click changes the month).
-          While a clicked month is loading, all month-scoped cards dim and show
-          an updating note so the click has visible feedback. */}
+      {/* Selected month at a glance + On the move (chart click changes the
+          month). While a clicked month is loading, all month-scoped cards dim
+          so the click has visible feedback. */}
       {overview.tiles && latest && (
         <div
           className={`space-y-4 transition-opacity ${switching ? 'opacity-40 pointer-events-none' : ''}`}
         >
-          {/* Always-reserved row for the loading note: appearing/disappearing
-              must not push the layout around. Invisible when idle. */}
-          <div
-            className='flex items-center gap-2 text-xs text-gray-400'
-            style={{ visibility: switching ? 'visible' : 'hidden' }}
-          >
-            <span
-              className={`inline-block h-3 w-3 rounded-full border-2 border-gray-500 border-t-transparent ${
-                switching ? 'animate-spin' : ''
-              }`}
-            />
-            {switching
-              ? `Updating tiles for ${monthLabel(String(selectedMonth))}…`
-              : 'Placeholder row'}
-          </div>
           <div className='grid grid-cols-2 gap-4 md:grid-cols-5'>
             <Link
               to={`/monthly-user-posts?months=${latest}`}
