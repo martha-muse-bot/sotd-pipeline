@@ -77,8 +77,6 @@ jobs:
             --deselect tests/webui/api/production_tests/test_monthly_user_posts.py::TestMonthlyUserPostsAPI::test_get_user_posting_analysis_user_not_found \
             --deselect tests/match/test_validate_correct_matches_bypass.py::TestValidateCorrectMatchesBypass::test_test_brush_pattern_bypass_validation \
             --deselect tests/match/test_validate_correct_matches_bypass.py::TestValidateCorrectMatchesBypass::test_validate_field_brush_bypass \
-            --deselect tests/match/test_webui_api_bypass_fix.py::test_webui_api_bypass_issue \
-            --deselect tests/match/test_webui_api_bypass_fix.py::test_correct_bypass_approach
       # CI-runner-contention deselects (pass locally incl. this exact command; fail
       # under GitHub 2-core load — timing assertions and _yaml_catalog_cache-shared
       # structure tests. Same class as the timing deselects above; the pytest

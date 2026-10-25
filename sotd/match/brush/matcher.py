@@ -5,7 +5,7 @@ This module provides an enhanced brush matching system using scoring components.
 """
 
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 import yaml
 
@@ -51,14 +51,21 @@ from .strategies.specialized.zenith_strategy import (
 )
 from .strategies.utils.subdict_builders import build_handle_subdict, build_knot_subdict
 
-# Module-level cache for catalogs to avoid redundant loading
-_catalog_cache = None
+# Module-level cache for catalogs to avoid redundant loading.
+# KEYED BY RESOLVED CATALOG PATHS: a BrushMatcher built for tests/test_data
+# must never serve catalogs to one built for data/ (or any other data dir).
+# An unkeyed cache here made matches depend on which paths were used first in
+# the process — a nondeterministic failure under pytest-xdist depending on
+# worker assignment (seen in CI as test_brush_matcher_bypass failing only on
+# some runs). Key shape: (brushes_path, handles_path, knots_path,
+# correct_matches_path) as resolved strings.
+_catalog_cache: Dict[tuple, Dict[str, Any]] = {}
 
 
 def clear_brush_catalog_cache() -> None:
     """Clear the module-level catalog cache for brush matcher."""
     global _catalog_cache
-    _catalog_cache = None
+    _catalog_cache = {}
 
     # Also clear related caches
     from .scoring.engine import ScoringEngine
@@ -347,9 +354,15 @@ class BrushMatcher:
 
         global _catalog_cache
 
-        # Return module-level cached catalogs if available
-        if _catalog_cache is not None:
-            return _catalog_cache
+        # Return module-level cached catalogs if available for THESE paths
+        cache_key = (
+            str(self.brushes_path.resolve()),
+            str(self.handles_path.resolve()),
+            str(self.knots_path.resolve()),
+            str(self.correct_matches_path.resolve()) if self.correct_matches_path else None,
+        )
+        if cache_key in _catalog_cache:
+            return _catalog_cache[cache_key]
 
         # Load catalogs and cache them using the stored paths
         # Type guards: paths should be set by __init__, but check for safety
@@ -372,7 +385,7 @@ class BrushMatcher:
         validate_patterns_format(catalogs["knots"], self.knots_path)
 
         # Cache the catalogs for future use
-        _catalog_cache = catalogs
+        _catalog_cache[cache_key] = catalogs
         return catalogs
 
     def _load_yaml_file(self, path: Path) -> dict:
