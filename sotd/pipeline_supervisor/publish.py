@@ -20,6 +20,18 @@ def publish_bundle(
 ) -> bool:
     from scripts.publish_public_data import check_bundle
 
+    # Precompute the public home-overview payload into the bundle before the
+    # verifier and rsync so the dashboard serves one small file instead of
+    # parsing ~100MB of monthly slices per request.
+    try:
+        from webui.api.home_overview_builder import write_precomputed
+
+        out = write_precomputed(data_dir)
+        logger.info("precomputed home overview: %s", out)
+    except Exception:
+        # Non-fatal: the endpoint falls back to computing in-process.
+        logger.exception("home-overview precompute failed; endpoint will fall back")
+
     problems = check_bundle(data_dir)
     if problems:
         for p in problems:
@@ -40,7 +52,12 @@ def _rsync(runner, src: Path, dst: Path, *, include_months: bool = False) -> boo
     dst.mkdir(parents=True, exist_ok=True)
     cmd = ["rsync", "-a", "--delete"]
     if include_months:
-        cmd += ["--include=????-??.json", "--exclude=*"]
+        cmd += [
+            "--include=????-??.json",
+            # Precomputed home-overview payload rides with the month slices.
+            "--include=home_overview.json",
+            "--exclude=*",
+        ]
     cmd += [f"{src}/", f"{dst}/"]
     proc = runner(cmd, capture_output=True, text=True)
     if proc.returncode != 0:

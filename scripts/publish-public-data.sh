@@ -9,13 +9,16 @@ cd "$(dirname "$0")/.."
 
 TARGET="${1:-${SOTD_PUBLIC_DATA_TARGET:-nas:/volume1/docker/sotd-public/data}}"
 
+echo "==> precomputing home overview"
+./.venv/bin/python scripts/precompute_home_overview.py --data-dir data
+
 echo "==> verifying bundle completeness"
-python scripts/publish_public_data.py --check --data-dir data
+./.venv/bin/python scripts/publish_public_data.py --check --data-dir data
 
 echo "==> rsyncing bundle to $TARGET"
 rsync -a --delete data/aggregated/product_usage/ "$TARGET/aggregated/product_usage/"
 rsync -a --delete data/aggregated/user_analysis/ "$TARGET/aggregated/user_analysis/"
 rsync -a --delete data/aggregated/annual/        "$TARGET/aggregated/annual/"
-rsync -a --delete --include='????-??.json' --exclude='*' data/aggregated/ "$TARGET/aggregated/"
+rsync -a --delete --include='????-??.json' --include='home_overview.json' --exclude='*' data/aggregated/ "$TARGET/aggregated/"
 
 echo "done. bundle at $TARGET"

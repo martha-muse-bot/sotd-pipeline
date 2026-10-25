@@ -8,14 +8,14 @@ from fastapi.testclient import TestClient
 
 
 @pytest.fixture()
-def client(tmp_path: Path, monkeypatch):
-    """Public app with SOTD_DATA_DIR pointed at a tmp bundle."""
+def bundle(tmp_path: Path) -> Path:
+    """Three-month tmp bundle (2026-08/09/10) shared by the client fixtures."""
     (tmp_path / "aggregated" / "user_analysis").mkdir(parents=True)
     (tmp_path / "aggregated" / "product_usage").mkdir(parents=True)
 
     # 2026-08: 3 users, posted_days 5/3/1 → 9 posts; 2026-09: 12; 2026-10: 3/2/2 → 7
     posted = {"2026-08": [5, 3, 1], "2026-09": [5, 4, 3], "2026-10": [3, 2, 2]}
-    for m, users in (("2026-08", 9), ("2026-09", 12), ("2026-10", 7)):
+    for m in ("2026-08", "2026-09", "2026-10"):
         ua_dir = tmp_path / "aggregated" / "user_analysis"
         (ua_dir / f"{m}.json").write_text(
             json.dumps(
@@ -66,6 +66,10 @@ def client(tmp_path: Path, monkeypatch):
             )
         )
 
+
+@pytest.fixture()
+def client(bundle: Path, tmp_path: Path, monkeypatch):
+    """Public app with SOTD_DATA_DIR pointed at the tmp bundle."""
     monkeypatch.setenv("SOTD_DATA_DIR", str(tmp_path))
     from fastapi import FastAPI
 
@@ -107,7 +111,10 @@ def test_movers_compare_with_prior_month(client):
 def test_rank_delta_climbs_and_drops(client, tmp_path):
     # Sept: A(90) B(60) C(30). Oct: B(80) C(40) A(10) — B climbs 2→1,
     # C climbs 3→2, A drops 1→3. Deltas must reflect position swaps.
-    for month, usage in (("2026-09", {"A": 90, "B": 60, "C": 30}), ("2026-10", {"B": 80, "C": 40, "A": 10})):
+    for month, usage in (
+        ("2026-09", {"A": 90, "B": 60, "C": 30}),
+        ("2026-10", {"B": 80, "C": 40, "A": 10}),
+    ):
         pu_path = tmp_path / "aggregated" / "product_usage" / f"{month}.json"
         pu = json.loads(pu_path.read_text())
         pu["razors"] = {
@@ -187,3 +194,103 @@ def test_movers_vs_prior_of_selected_month(client, tmp_path):
     mover = next(m for m in body["movers"]["razors"] if m["name"] == "Gillette NEW")
     # Sept usage 3 vs Aug usage 3 → held rank → delta 0
     assert mover["delta"] == 0
+
+
+# --- precomputed-payload fast path -------------------------------------------
+
+
+@pytest.fixture()
+def fresh_client(bundle: Path, tmp_path: Path, monkeypatch):
+    """Client over a fresh app instance (empty in-memory cache)."""
+    monkeypatch.setenv("SOTD_DATA_DIR", str(tmp_path))
+    from fastapi import FastAPI
+
+    import webui.api.home_overview as ho
+
+    ho._cache["mtime"] = None
+    ho._cache["payload"] = None
+    app = FastAPI()
+    app.include_router(ho.router)
+    return TestClient(app)
+
+
+def test_serves_precomputed_file(fresh_client, tmp_path):
+    # A stale-but-present precomputed payload with distinctive values proves
+    # the endpoint serves the file instead of recomputing.
+    (tmp_path / "aggregated" / "home_overview.json").write_text(
+        json.dumps(
+            {
+                "latest_month": "2020-01",
+                "pulse": [{"month": "2020-01", "posts": 123}],
+                "tiles": {
+                    "posts": 123,
+                    "shavers": 42,
+                    "top_razor": "PRECOMPUTED",
+                    "top_blade": None,
+                    "top_soap": None,
+                    "top_brush": None,
+                },
+                "movers": {"razors": [], "soaps": [], "blades": []},
+            }
+        )
+    )
+    body = fresh_client.get("/api/home/overview").json()
+    assert body["tiles"]["top_razor"] == "PRECOMPUTED"
+    assert body["latest_month"] == "2020-01"
+
+
+def test_recomputes_when_bundle_changes(fresh_client, tmp_path):
+    body = fresh_client.get("/api/home/overview").json()
+    assert body["tiles"]["top_razor"] == "Gillette NEW"  # computed
+
+    # Cache is now warm; mutate the bundle (publish replaces slices).
+    pu_path = tmp_path / "aggregated" / "product_usage" / "2026-10.json"
+    pu = json.loads(pu_path.read_text())
+    pu["razors"] = {
+        "Weber|PH": {
+            "product": {"type": "razor", "brand": "Weber", "model": "PH"},
+            "total_usage": 9,
+            "unique_users": 2,
+            "users": [],
+        }
+    }
+    pu_path.write_text(json.dumps(pu))
+    body = fresh_client.get("/api/home/overview").json()
+    assert body["tiles"]["top_razor"] == "Weber PH"  # cache invalidated
+
+
+def test_falls_back_to_compute_when_no_precomputed_file(fresh_client, tmp_path):
+    body = fresh_client.get("/api/home/overview").json()
+    assert body["latest_month"] == "2026-10"
+    assert body["tiles"]["shavers"] == 3
+    assert [p["month"] for p in body["pulse"]] == ["2026-08", "2026-09", "2026-10"]
+
+
+# --- precompute writer --------------------------------------------------------
+
+
+def test_write_precomputed_round_trips(bundle: Path, tmp_path):
+    from webui.api.home_overview_builder import build_overview, write_precomputed
+
+    write_precomputed(tmp_path)
+    written = json.loads((tmp_path / "aggregated" / "home_overview.json").read_text())
+    assert written == build_overview(tmp_path)
+    assert written["latest_month"] == "2026-10"
+    assert written["tiles"]["top_blade"] == "Personna GEM"
+
+
+def test_verifier_accepts_home_overview_json(tmp_path):
+    from scripts.publish_public_data import check_bundle
+
+    # Same fixture shape as the endpoint tests: full three-month bundle.
+    agg = tmp_path / "aggregated"
+    for sub in ("user_analysis", "product_usage"):
+        (agg / sub).mkdir(parents=True)
+    for m in ("2026-08", "2026-09", "2026-10"):
+        (agg / f"{m}.json").write_text("{}")
+        (agg / "user_analysis" / f"{m}.json").write_text(json.dumps({"meta": {}, "users": {}}))
+        (agg / "product_usage" / f"{m}.json").write_text(
+            json.dumps({"meta": {}, "razors": {}, "blades": {}, "brushes": {}, "soaps": {}})
+        )
+    (agg / "home_overview.json").write_text("{}")
+    assert check_bundle(tmp_path) == []
