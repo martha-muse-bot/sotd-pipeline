@@ -93,6 +93,9 @@ export default function HomeDashboard() {
   const [overview, setOverview] = useState<Overview | null>(null);
   const [error, setError] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
+  // True while a month change is being fetched (initial load uses the
+  // skeleton below instead) — drives the tiles' loading affordance.
+  const [switching, setSwitching] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -102,14 +105,21 @@ export default function HomeDashboard() {
       setError(true);
       return;
     }
+    if (selectedMonth) setSwitching(true);
     const qs = selectedMonth ? `?month=${selectedMonth}` : '';
     fetch(`/api/home/overview${qs}`)
       .then(r => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
       .then(body => {
-        if (!cancelled) setOverview(body);
+        if (!cancelled) {
+          setOverview(body);
+          setSwitching(false);
+        }
       })
       .catch(() => {
-        if (!cancelled) setError(true);
+        if (!cancelled) {
+          setError(true);
+          setSwitching(false);
+        }
       });
     return () => {
       cancelled = true;
@@ -179,9 +189,21 @@ export default function HomeDashboard() {
         )}
       </div>
 
-      {/* Selected month at a glance (chart click changes the month) */}
+      {/* Selected month at a glance (chart click changes the month). While a
+          clicked month is loading, the tiles dim and show an updating note so
+          the click has visible feedback. */}
       {overview.tiles && latest && (
-        <div className='grid grid-cols-2 gap-4 md:grid-cols-5'>
+        <div
+          className={`relative grid grid-cols-2 gap-4 transition-opacity md:grid-cols-5 ${
+            switching ? 'opacity-40 pointer-events-none' : ''
+          }`}
+        >
+          {switching && (
+            <div className='col-span-full mb-1 flex items-center gap-2 text-xs text-gray-400'>
+              <span className='inline-block h-3 w-3 animate-spin rounded-full border-2 border-gray-500 border-t-transparent' />
+              Updating tiles for {monthLabel(String(selectedMonth))}…
+            </div>
+          )}
           <Link
             to={`/monthly-user-posts?months=${latest}`}
             className='rounded-lg bg-gray-800 p-4 hover:bg-gray-700'

@@ -148,9 +148,13 @@ async def get_overview(month: Optional[str] = None) -> Overview:
 
 
 def _overview_from_builder(data_dir: Path, month: str) -> Overview:
-    """Explicit historical ?month= path: compute directly (small surface —
-    the UI's month picker defaults to latest)."""
-    raw = home_overview_builder.build_overview(data_dir, month=month)
+    """Explicit historical ?month= path: compute tiles+movers for that month,
+    reusing the memoized pulse series so a chart click doesn't re-parse the
+    whole history (the pulse is identical for every month)."""
+    ua_dir = data_dir / "aggregated" / "user_analysis"
+    months = _month_jsons(ua_dir)
+    pulse = home_overview_builder.pulse_series_memo(data_dir, months)
+    raw = home_overview_builder.build_overview(data_dir, month=month, pulse=pulse)
     return _overview_from_payload(raw)
 
 

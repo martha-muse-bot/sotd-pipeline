@@ -24,6 +24,39 @@ class _Unsupported(Exception):
     """Payload shape changed; caller should treat as build failure."""
 
 
+def _pulse_series(ua_dir: Path, months: List[str]) -> List[Dict[str, Any]]:
+    """Monthly SOTD post counts. Parses every user_analysis slice (~126 files),
+    so callers memoize the result keyed on the directory's mtimes — the pulse
+    is identical for every requested month."""
+    pulse = []
+    for m in months:
+        ua = _load(ua_dir / f"{m}.json")
+        if ua is None:
+            continue
+        posts = sum(int(u.get("posted_days", 0)) for u in (ua.get("users") or {}).values())
+        pulse.append({"month": m, "posts": posts})
+    return pulse
+
+
+def pulse_series_memo(data_dir: Path, months: List[str]) -> List[Dict[str, Any]]:
+    """Memoized pulse series for the endpoint's per-month requests: keyed on
+    the user_analysis dir's mtimes, so a click on the pulse chart never
+    re-parses history. The precomputed file already embeds the pulse; this
+    covers the compute path."""
+    ua_dir = data_dir / "aggregated" / "user_analysis"
+    key = tuple((p.name, p.stat().st_mtime_ns) for p in sorted(ua_dir.glob("????-??.json")))
+    cache = pulse_series_memo._cache  # type: ignore[attr-defined]
+    if cache.get("key") == key and cache.get("pulse") is not None:
+        return cache["pulse"]
+    pulse = _pulse_series(data_dir / "aggregated" / "user_analysis", months)
+    cache["key"] = key
+    cache["pulse"] = pulse
+    return pulse
+
+
+pulse_series_memo._cache = {"key": None, "pulse": None}  # type: ignore[attr-defined]
+
+
 def _load(path: Path) -> Optional[dict]:
     try:
         with path.open() as f:
@@ -101,10 +134,16 @@ def _movers_for(current: dict, prior: dict, field: str) -> List[Dict[str, Any]]:
     return [{"name": n, "count": c, "delta": d, "is_new": new} for c, d, new, n in scored[:5]]
 
 
-def build_overview(data_dir: Path, month: Optional[str] = None) -> Dict[str, Any]:
+def build_overview(
+    data_dir: Path,
+    month: Optional[str] = None,
+    pulse: Optional[List[Dict[str, Any]]] = None,
+) -> Dict[str, Any]:
     """Compute the home-overview payload. Same data semantics as the
     home_overview endpoint (pulse over all months, tiles+movers for `month`
-    or the latest). Returns a JSON-ready dict."""
+    or the latest). Returns a JSON-ready dict. Callers that already hold the
+    pulse series (it is identical for every month) may pass `pulse` to skip
+    re-parsing history."""
     agg = data_dir / "aggregated"
     ua_dir = agg / "user_analysis"
     pu_dir = agg / "product_usage"
@@ -113,13 +152,8 @@ def build_overview(data_dir: Path, month: Optional[str] = None) -> Dict[str, Any
     if not months:
         return {"pulse": [], "movers": {"razors": [], "soaps": [], "blades": []}}
 
-    pulse = []
-    for m in months:
-        ua = _load(ua_dir / f"{m}.json")
-        if ua is None:
-            continue
-        posts = sum(int(u.get("posted_days", 0)) for u in (ua.get("users") or {}).values())
-        pulse.append({"month": m, "posts": posts})
+    if pulse is None:
+        pulse = _pulse_series(ua_dir, months)
 
     latest = month if month else months[-1]
     if month and month not in months:
