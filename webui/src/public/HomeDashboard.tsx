@@ -189,81 +189,90 @@ export default function HomeDashboard() {
         )}
       </div>
 
-      {/* Selected month at a glance (chart click changes the month). While a
-          clicked month is loading, the tiles dim and show an updating note so
-          the click has visible feedback. */}
+      {/* Selected month at a glance + On the move (chart click changes the month).
+          While a clicked month is loading, all month-scoped cards dim and show
+          an updating note so the click has visible feedback. */}
       {overview.tiles && latest && (
         <div
-          className={`relative grid grid-cols-2 gap-4 transition-opacity md:grid-cols-5 ${
-            switching ? 'opacity-40 pointer-events-none' : ''
-          }`}
+          className={`space-y-4 transition-opacity ${switching ? 'opacity-40 pointer-events-none' : ''}`}
         >
-          {switching && (
-            <div className='col-span-full mb-1 flex items-center gap-2 text-xs text-gray-400'>
-              <span className='inline-block h-3 w-3 animate-spin rounded-full border-2 border-gray-500 border-t-transparent' />
-              Updating tiles for {monthLabel(String(selectedMonth))}…
-            </div>
-          )}
-          <Link
-            to={`/monthly-user-posts?months=${latest}`}
-            className='rounded-lg bg-gray-800 p-4 hover:bg-gray-700'
+          {/* Always-reserved row for the loading note: appearing/disappearing
+              must not push the layout around. Invisible when idle. */}
+          <div
+            className='flex items-center gap-2 text-xs text-gray-400'
+            style={{ visibility: switching ? 'visible' : 'hidden' }}
           >
-            <div className='text-2xl font-bold'>{overview.tiles.posts}</div>
-            <div className='text-xs text-gray-400'>SOTDs in {monthLabel(latest)}</div>
-          </Link>
-          <Link
-            to={`/monthly-user-posts?months=${latest}`}
-            className='rounded-lg bg-gray-800 p-4 hover:bg-gray-700'
-          >
-            <div className='text-2xl font-bold'>{overview.tiles.shavers}</div>
-            <div className='text-xs text-gray-400'>Shavers posting</div>
-          </Link>
-          {(
-            [
-              ['Top soap', overview.tiles.top_soap, 'soaps'],
-              ['Top razor', overview.tiles.top_razor, 'razors'],
-              ['Top blade', overview.tiles.top_blade, 'blades'],
-            ] as Array<[string, string | null, string]>
-          ).map(([label, value, tableId]) => (
+            <span
+              className={`inline-block h-3 w-3 rounded-full border-2 border-gray-500 border-t-transparent ${
+                switching ? 'animate-spin' : ''
+              }`}
+            />
+            {switching
+              ? `Updating tiles for ${monthLabel(String(selectedMonth))}…`
+              : 'Placeholder row'}
+          </div>
+          <div className='grid grid-cols-2 gap-4 md:grid-cols-5'>
             <Link
-              key={label}
-              to={
-                value
-                  ? `/report-placement?productType=${tableId}&item=${encodeURIComponent(value)}`
-                  : `/report-placement`
-              }
+              to={`/monthly-user-posts?months=${latest}`}
               className='rounded-lg bg-gray-800 p-4 hover:bg-gray-700'
             >
-              <div className='text-sm font-semibold truncate' title={value ?? undefined}>
-                {value ?? '—'}
-              </div>
-              <div className='text-xs text-gray-400'>{label}</div>
+              <div className='text-2xl font-bold'>{overview.tiles.posts}</div>
+              <div className='text-xs text-gray-400'>SOTDs in {monthLabel(latest)}</div>
             </Link>
-          ))}
+            <Link
+              to={`/monthly-user-posts?months=${latest}`}
+              className='rounded-lg bg-gray-800 p-4 hover:bg-gray-700'
+            >
+              <div className='text-2xl font-bold'>{overview.tiles.shavers}</div>
+              <div className='text-xs text-gray-400'>Shavers posting</div>
+            </Link>
+            {(
+              [
+                ['Top soap', overview.tiles.top_soap, 'soaps'],
+                ['Top razor', overview.tiles.top_razor, 'razors'],
+                ['Top blade', overview.tiles.top_blade, 'blades'],
+              ] as Array<[string, string | null, string]>
+            ).map(([label, value, tableId]) => (
+              <Link
+                key={label}
+                to={
+                  value
+                    ? `/report-placement?productType=${tableId}&item=${encodeURIComponent(value)}`
+                    : `/report-placement`
+                }
+                className='rounded-lg bg-gray-800 p-4 hover:bg-gray-700'
+              >
+                <div className='text-sm font-semibold truncate' title={value ?? undefined}>
+                  {value ?? '—'}
+                </div>
+                <div className='text-xs text-gray-400'>{label}</div>
+              </Link>
+            ))}
+          </div>
+
+          {/* On the move */}
+          <div className='grid gap-4 md:grid-cols-3'>
+            <MoverCard
+              title='Soaps on the move'
+              movers={overview.movers.soaps}
+              month={latest ?? ''}
+              tableId='soaps'
+            />
+            <MoverCard
+              title='Razors on the move'
+              movers={overview.movers.razors}
+              month={latest ?? ''}
+              tableId='razors'
+            />
+            <MoverCard
+              title='Blades on the move'
+              movers={overview.movers.blades}
+              month={latest ?? ''}
+              tableId='blades'
+            />
+          </div>
         </div>
       )}
-
-      {/* On the move */}
-      <div className='grid gap-4 md:grid-cols-3'>
-        <MoverCard
-          title='Soaps on the move'
-          movers={overview.movers.soaps}
-          month={latest ?? ''}
-          tableId='soaps'
-        />
-        <MoverCard
-          title='Razors on the move'
-          movers={overview.movers.razors}
-          month={latest ?? ''}
-          tableId='razors'
-        />
-        <MoverCard
-          title='Blades on the move'
-          movers={overview.movers.blades}
-          month={latest ?? ''}
-          tableId='blades'
-        />
-      </div>
     </div>
   );
 }
