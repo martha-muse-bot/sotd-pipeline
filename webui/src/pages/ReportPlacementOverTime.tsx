@@ -29,6 +29,7 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  ReferenceArea,
 } from 'recharts';
 import {
   Table,
@@ -54,10 +55,101 @@ import CellTooltip from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { ChevronDown, X, ArrowUp, ArrowDown, Minus } from 'lucide-react';
 
-const CHART_COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
+const CHART_COLORS = [
+  'hsl(var(--chart-1))',
+  'hsl(var(--chart-2))',
+  'hsl(var(--chart-3))',
+  'hsl(var(--chart-4))',
+  'hsl(var(--chart-5))',
+];
 
 /** When an aggregation has more than this many items, use type-ahead instead of Select. */
 const ITEMS_SELECT_TYPEAHEAD_THRESHOLD = 50;
+
+/**
+ * Aggregation dropdown sections, in display order. Grouping by product type keeps
+ * the primary aggregations near the top of their section instead of 35 flat rows.
+ * Ids missing from the map fall into "Other". Exported for tests.
+ */
+export const AGGREGATION_GROUPS: Array<{ label: string; tableIds: string[] }> = [
+  {
+    label: 'Razors',
+    tableIds: [
+      'razors',
+      'razor_manufacturers',
+      'razor_formats',
+      'razor_format_users',
+      'razor_blade_combinations',
+      'straight_grinds',
+      'straight_points',
+      'straight_widths',
+      'super_speed_variants',
+      'blackbird_plates',
+      'christopher_bradley_plates',
+      'game_changer_plates',
+    ],
+  },
+  {
+    label: 'Blades',
+    tableIds: [
+      'blades',
+      'blade_manufacturers',
+      'blade_usage_distribution',
+      'highest_use_count_per_blade',
+    ],
+  },
+  {
+    label: 'Brushes',
+    tableIds: [
+      'brushes',
+      'brush_fibers',
+      'brush_fiber_users',
+      'brush_handle_makers',
+      'brush_knot_makers',
+      'brush_knot_sizes',
+    ],
+  },
+  {
+    label: 'Soaps',
+    tableIds: [
+      'soaps',
+      'soap_makers',
+      'soap_sample_brands',
+      'soap_sample_brand_scents',
+      'soap_sample_users',
+    ],
+  },
+  {
+    label: 'User stats',
+    tableIds: [
+      'users',
+      'brand_diversity',
+      'user_razor_diversity',
+      'user_blade_diversity',
+      'user_brush_diversity',
+      'user_soap_brand_diversity',
+      'user_soap_brand_scent_diversity',
+      'user_single_use_soaps',
+    ],
+  },
+];
+
+/** Bucket tables into AGGREGATION_GROUPS order; leftovers go to "Other". Exported for tests. */
+export function groupAggregationTables(
+  tables: ReportRankingsTable[]
+): Array<{ label: string; tables: ReportRankingsTable[] }> {
+  const byId = new Map(tables.map(t => [t.id, t]));
+  const used = new Set<string>();
+  const groups = AGGREGATION_GROUPS.map(g => ({
+    label: g.label,
+    tables: g.tableIds.map(id => byId.get(id)).filter((t): t is ReportRankingsTable => t != null),
+  }));
+  groups.forEach(g => g.tables.forEach(t => used.add(t.id)));
+  const other = tables.filter(t => !used.has(t.id));
+  const result = groups.filter(g => g.tables.length > 0);
+  if (other.length > 0) result.push({ label: 'Other', tables: other });
+  return result;
+}
 
 export type RankChartTooltipProps = {
   active?: boolean;
@@ -75,6 +167,23 @@ export function filterMonthsInRange(months: string[], from: string, to: string):
   });
 }
 
+/** Build chart points in chronological order (oldest first → time runs left-to-right on the chart). Exported for tests. */
+export function buildChartData(
+  series: ReportRankingsSeriesResponse | null
+): Record<string, string | number>[] {
+  if (!series || series.months.length === 0) return [];
+  return series.months.map(month => {
+    const point: Record<string, string | number> = { month };
+    series.series.forEach(entry => {
+      const d = entry.data.find(p => p.month === month);
+      point[entry.item] = d?.rank ?? '';
+      point[`${entry.item}_shaves`] = d?.shaves ?? '';
+      point[`${entry.item}_unique_users`] = d?.unique_users ?? '';
+    });
+    return point;
+  });
+}
+
 /** Custom tooltip content for rank-over-time chart: shows rank, shaves, unique users per item. Exported for tests. */
 export function RankChartTooltipContent(
   props: RankChartTooltipProps,
@@ -85,8 +194,8 @@ export function RankChartTooltipContent(
   const row = payload[0].payload;
   const month = row.month ?? label;
   return (
-    <div className="rounded-md border bg-background px-3 py-2 text-sm shadow-md">
-      <p className="font-medium mb-1.5">Month: {String(month)}</p>
+    <div className='rounded-md border bg-background px-3 py-2 text-sm shadow-md'>
+      <p className='font-medium mb-1.5'>Month: {String(month)}</p>
       {series.map((entry, i) => {
         const rank = row[entry.item];
         const shaves = row[`${entry.item}_shaves`];
@@ -98,13 +207,15 @@ export function RankChartTooltipContent(
         if (uniqueUsers !== '' && uniqueUsers !== undefined) parts.push(`${uniqueUsers} users`);
         const line = parts.length ? parts.join(', ') : '—';
         return (
-          <p key={entry.item} className="flex items-center gap-1.5">
+          <p key={entry.item} className='flex items-center gap-1.5'>
             <span
-              className="shrink-0 rounded-full"
+              className='shrink-0 rounded-full'
               style={{ backgroundColor: color, width: 8, height: 8 }}
               aria-hidden
             />
-            <span><strong>{entry.item}:</strong> {line}</span>
+            <span>
+              <strong>{entry.item}:</strong> {line}
+            </span>
           </p>
         );
       })}
@@ -128,12 +239,16 @@ const ReportPlacementOverTime: React.FC = () => {
   const [loadingPivoted, setLoadingPivoted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const prevViewModeRef = useRef<'by-item' | 'by-position'>(viewMode);
-  const [chartPrimaryMetric, setChartPrimaryMetric] = useState<
-    'rank' | 'shaves' | 'unique_users'
-  >('rank');
+  const [chartPrimaryMetric, setChartPrimaryMetric] = useState<'rank' | 'shaves' | 'unique_users'>(
+    'rank'
+  );
   const [chartFromMonth, setChartFromMonth] = useState<string>('');
   const [chartToMonth, setChartToMonth] = useState<string>('');
   const [typeAheadOpen, setTypeAheadOpen] = useState(false);
+  // Aggregation dropdown: which sections are collapsed (collapsed by default;
+  // the selected group auto-expands when the menu opens).
+  const [aggDropdownOpen, setAggDropdownOpen] = useState(false);
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [typeAheadQuery, setTypeAheadQuery] = useState('');
   const [typeAheadHighlightedIndex, setTypeAheadHighlightedIndex] = useState(0);
   const typeAheadListId = 'report-rankings-items-listbox';
@@ -300,7 +415,12 @@ const ReportPlacementOverTime: React.FC = () => {
   useEffect(() => {
     const prev = prevViewModeRef.current;
     prevViewModeRef.current = viewMode;
-    if (prev === 'by-position' && viewMode === 'by-item' && selectedTableId && selectedItems.length > 0) {
+    if (
+      prev === 'by-position' &&
+      viewMode === 'by-item' &&
+      selectedTableId &&
+      selectedItems.length > 0
+    ) {
       handleLoadSeries();
     }
   }, [viewMode, selectedTableId, selectedItems.length]);
@@ -360,25 +480,14 @@ const ReportPlacementOverTime: React.FC = () => {
     setChartToMonth(sorted[sorted.length - 1]);
   }, [series]);
 
+  const groupedTables = React.useMemo(() => groupAggregationTables(tables), [tables]);
+
   const seriesMonthsSorted = React.useMemo(() => {
     if (!series?.months?.length) return [];
     return [...series.months].sort();
   }, [series]);
 
-  const chartData = React.useMemo(() => {
-    if (!series || series.months.length === 0) return [];
-    const points = series.months.map(month => {
-      const point: Record<string, string | number> = { month };
-      series.series.forEach(entry => {
-        const d = entry.data.find(p => p.month === month);
-        point[entry.item] = d?.rank ?? '';
-        point[`${entry.item}_shaves`] = d?.shaves ?? '';
-        point[`${entry.item}_unique_users`] = d?.unique_users ?? '';
-      });
-      return point;
-    });
-    return points.reverse();
-  }, [series]);
+  const chartData = React.useMemo(() => (series ? buildChartData(series) : []), [series]);
 
   const chartDisplayData = React.useMemo(() => {
     if (!chartFromMonth && !chartToMonth) return chartData;
@@ -394,9 +503,7 @@ const ReportPlacementOverTime: React.FC = () => {
 
   const maxRank = React.useMemo(() => {
     if (!series) return 10;
-    const inWindow = new Set(
-      filterMonthsInRange(series.months, chartFromMonth, chartToMonth)
-    );
+    const inWindow = new Set(filterMonthsInRange(series.months, chartFromMonth, chartToMonth));
     let m = 0;
     series.series.forEach(entry => {
       entry.data.forEach(p => {
@@ -411,9 +518,7 @@ const ReportPlacementOverTime: React.FC = () => {
     if (!series || (chartPrimaryMetric !== 'shaves' && chartPrimaryMetric !== 'unique_users'))
       return 10;
     const field = chartPrimaryMetric === 'shaves' ? 'shaves' : 'unique_users';
-    const inWindow = new Set(
-      filterMonthsInRange(series.months, chartFromMonth, chartToMonth)
-    );
+    const inWindow = new Set(filterMonthsInRange(series.months, chartFromMonth, chartToMonth));
     let m = 0;
     series.series.forEach(entry => {
       entry.data.forEach(p => {
@@ -458,68 +563,145 @@ const ReportPlacementOverTime: React.FC = () => {
   }, [series]);
 
   return (
-    <div className="w-full p-0 sm:p-4 max-w-full overflow-x-hidden">
-      <div className="mb-4">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Rankings over time</h1>
-        <p className="text-gray-600">
+    <div className='w-full p-0 sm:p-4 max-w-full overflow-x-hidden'>
+      <div className='mb-4'>
+        <h1 className='text-2xl sm:text-3xl font-bold text-gray-900 mb-2'>Rankings over time</h1>
+        <p className='text-gray-600'>
           Choose an aggregation and one or more items to see how they ranked month over month.
         </p>
       </div>
 
-      <Card className="mb-4">
+      <Card className='mb-4'>
         <CardHeader>
           <CardTitle>Controls</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-2">
+        <CardContent className='space-y-4'>
+          <div className='grid gap-2'>
             <Label>Aggregation</Label>
-            <Select
-              value={selectedTableId}
-              onValueChange={setSelectedTableId}
-              disabled={loadingTables}
+            {/* DropdownMenu rather than Select: sections are collapsible, which
+                Radix Select group labels (non-interactive) cannot do. Header
+                rows toggle their section; the group holding the current
+                selection auto-expands on open. */}
+            <DropdownMenu
+              open={aggDropdownOpen}
+              onOpenChange={open => {
+                setAggDropdownOpen(open);
+                if (open) {
+                  // Start collapsed; reveal the section the user is already in.
+                  const selectedGroup = AGGREGATION_GROUPS.find(g =>
+                    g.tableIds.includes(selectedTableId)
+                  );
+                  setCollapsedGroups(
+                    new Set(
+                      AGGREGATION_GROUPS.map(g => g.label).filter(l => l !== selectedGroup?.label)
+                    )
+                  );
+                }
+              }}
+              modal={false}
             >
-              <SelectTrigger>
-                <SelectValue placeholder={loadingTables ? 'Loading…' : 'Select aggregation'} />
-              </SelectTrigger>
-              <SelectContent>
-                {tables.map(t => (
-                  <SelectItem key={t.id} value={t.id}>
-                    {t.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              <DropdownMenuTrigger asChild disabled={loadingTables}>
+                <button
+                  type='button'
+                  className='flex h-9 w-full items-center justify-between whitespace-nowrap rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1'
+                  aria-label='Select aggregation'
+                >
+                  <span className={selectedTableId ? '' : 'text-muted-foreground'}>
+                    {loadingTables
+                      ? 'Loading…'
+                      : selectedTableId
+                        ? (tables.find(t => t.id === selectedTableId)?.label ?? selectedTableId)
+                        : 'Select aggregation'}
+                  </span>
+                  <ChevronDown className='h-4 w-4 opacity-50' />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                className='max-h-[min(400px,50dvh)] overflow-y-auto w-[var(--radix-dropdown-menu-trigger-width)] min-w-[280px] p-1'
+                onCloseAutoFocus={e => e.preventDefault()}
+              >
+                {groupedTables.map(group => {
+                  const collapsed = collapsedGroups.has(group.label);
+                  return (
+                    <div key={group.label}>
+                      <DropdownMenuItem
+                        onSelect={e => {
+                          // Keep the menu open; toggle this section only.
+                          e.preventDefault();
+                          setCollapsedGroups(prev => {
+                            const next = new Set(prev);
+                            if (next.has(group.label)) next.delete(group.label);
+                            else next.add(group.label);
+                            return next;
+                          });
+                        }}
+                        className='cursor-pointer font-semibold'
+                        aria-expanded={!collapsed}
+                      >
+                        <ChevronDown
+                          className={cn(
+                            'h-3.5 w-3.5 shrink-0 transition-transform',
+                            collapsed && '-rotate-90'
+                          )}
+                        />
+                        {group.label}
+                      </DropdownMenuItem>
+                      {!collapsed &&
+                        group.tables.map(t => (
+                          <DropdownMenuItem
+                            key={t.id}
+                            onSelect={e => {
+                              e.preventDefault();
+                              setSelectedTableId(t.id);
+                              setAggDropdownOpen(false);
+                            }}
+                            className={cn(
+                              'cursor-pointer pl-8',
+                              t.id === selectedTableId && 'bg-accent'
+                            )}
+                          >
+                            {t.label}
+                          </DropdownMenuItem>
+                        ))}
+                    </div>
+                  );
+                })}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           {selectedTableId && (
-            <div className="grid gap-2">
-              <div className="flex flex-wrap items-center gap-2">
-                <Label className="shrink-0">View</Label>
-                <Tabs value={viewMode} onValueChange={v => setViewMode(v as 'by-item' | 'by-position')}>
+            <div className='grid gap-2'>
+              <div className='flex flex-wrap items-center gap-2'>
+                <Label className='shrink-0'>View</Label>
+                <Tabs
+                  value={viewMode}
+                  onValueChange={v => setViewMode(v as 'by-item' | 'by-position')}
+                >
                   <TabsList>
-                    <TabsTrigger value="by-item">By item</TabsTrigger>
-                    <TabsTrigger value="by-position">By position</TabsTrigger>
+                    <TabsTrigger value='by-item'>By item</TabsTrigger>
+                    <TabsTrigger value='by-position'>By position</TabsTrigger>
                   </TabsList>
                 </Tabs>
                 {selectedItems.length > 0 && (
-                  <div className="flex flex-wrap gap-2 items-center">
+                  <div className='flex flex-wrap gap-2 items-center'>
                     {selectedItems.map((item, i) => {
                       const color = CHART_COLORS[i % CHART_COLORS.length];
                       return (
                         <Badge
                           key={item}
-                          variant="secondary"
-                          className="pl-2 pr-1 py-1 gap-1.5 cursor-pointer border-l-2"
+                          variant='secondary'
+                          className='pl-2 pr-1 py-1 gap-1.5 cursor-pointer border-l-2'
                           style={{ borderLeftColor: color }}
                           onClick={() => removeItem(item)}
                         >
                           <span
-                            className="rounded-full shrink-0"
+                            className='rounded-full shrink-0'
                             style={{ backgroundColor: color, width: 8, height: 8 }}
                             aria-hidden
                           />
                           {item}
-                          <X className="h-3 w-3" />
+                          <X className='h-3 w-3' />
                         </Badge>
                       );
                     })}
@@ -530,9 +712,9 @@ const ReportPlacementOverTime: React.FC = () => {
           )}
 
           {selectedTableId && (
-            <div className="grid gap-2">
+            <div className='grid gap-2'>
               <Label>Items to track</Label>
-              <div className="flex flex-wrap gap-2 items-center">
+              <div className='flex flex-wrap gap-2 items-center'>
                 {itemsOptions.length <= ITEMS_SELECT_TYPEAHEAD_THRESHOLD ? (
                   <Select
                     value={itemToAdd}
@@ -542,7 +724,7 @@ const ReportPlacementOverTime: React.FC = () => {
                     }}
                     disabled={loadingItems}
                   >
-                    <SelectTrigger className="w-[280px]">
+                    <SelectTrigger className='w-[280px]'>
                       <SelectValue placeholder={loadingItems ? 'Loading…' : 'Add an item'} />
                     </SelectTrigger>
                     <SelectContent>
@@ -565,14 +747,14 @@ const ReportPlacementOverTime: React.FC = () => {
                     modal={false}
                   >
                     <DropdownMenuTrigger asChild>
-                      <div className="w-[280px] rounded-md border border-input bg-transparent shadow-sm focus-within:ring-1 focus-within:ring-ring">
+                      <div className='w-[280px] rounded-md border border-input bg-transparent shadow-sm focus-within:ring-1 focus-within:ring-ring'>
                         <input
                           ref={typeAheadInputRef}
                           id={typeAheadListId + '-input'}
-                          role="combobox"
+                          role='combobox'
                           aria-expanded={typeAheadOpen}
                           aria-controls={typeAheadListId}
-                          aria-autocomplete="list"
+                          aria-autocomplete='list'
                           aria-disabled={loadingItems}
                           disabled={loadingItems}
                           value={typeAheadQuery}
@@ -619,14 +801,14 @@ const ReportPlacementOverTime: React.FC = () => {
                             }
                           }}
                           placeholder={loadingItems ? 'Loading…' : 'Type to search…'}
-                          className="flex h-9 w-full rounded-md border-0 bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                          className='flex h-9 w-full rounded-md border-0 bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50'
                         />
                       </div>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
                       id={typeAheadListId}
-                      role="listbox"
-                      className="max-h-[300px] overflow-y-auto min-w-[280px] p-0"
+                      role='listbox'
+                      className='max-h-[300px] overflow-y-auto min-w-[280px] p-0'
                       onCloseAutoFocus={e => e.preventDefault()}
                       onInteractOutside={e => {
                         const target = e.target as Node;
@@ -649,7 +831,7 @@ const ReportPlacementOverTime: React.FC = () => {
                         const hasMore = filtered.length > ITEMS_SELECT_TYPEAHEAD_THRESHOLD;
                         if (displayList.length === 0) {
                           return (
-                            <div className="px-2 py-3 text-sm text-muted-foreground">
+                            <div className='px-2 py-3 text-sm text-muted-foreground'>
                               {q ? 'No matches' : 'Type to search'}
                             </div>
                           );
@@ -659,8 +841,10 @@ const ReportPlacementOverTime: React.FC = () => {
                             {displayList.map((item, idx) => (
                               <DropdownMenuItem
                                 key={item}
-                                ref={idx === typeAheadHighlightedIndex ? typeAheadHighlightedRef : null}
-                                role="option"
+                                ref={
+                                  idx === typeAheadHighlightedIndex ? typeAheadHighlightedRef : null
+                                }
+                                role='option'
                                 aria-selected={idx === typeAheadHighlightedIndex}
                                 data-highlighted={idx === typeAheadHighlightedIndex}
                                 className={cn(
@@ -678,7 +862,7 @@ const ReportPlacementOverTime: React.FC = () => {
                               </DropdownMenuItem>
                             ))}
                             {hasMore && (
-                              <div className="px-2 py-1.5 text-xs text-muted-foreground border-t">
+                              <div className='px-2 py-1.5 text-xs text-muted-foreground border-t'>
                                 Type to narrow
                               </div>
                             )}
@@ -694,12 +878,12 @@ const ReportPlacementOverTime: React.FC = () => {
 
           {viewMode === 'by-item' && (
             <Button
-              onClick={handleLoadSeries}
+              onClick={() => handleLoadSeries()}
               disabled={!selectedTableId || selectedItems.length === 0 || loadingSeries}
             >
               {loadingSeries ? (
                 <>
-                  <LoadingSpinner className="mr-2 h-4 w-4" />
+                  <LoadingSpinner className='mr-2 h-4 w-4' />
                   Loading…
                 </>
               ) : (
@@ -709,7 +893,7 @@ const ReportPlacementOverTime: React.FC = () => {
           )}
 
           {error && (
-            <p className="text-sm text-destructive" role="alert">
+            <p className='text-sm text-destructive' role='alert'>
               {error}
             </p>
           )}
@@ -717,117 +901,140 @@ const ReportPlacementOverTime: React.FC = () => {
       </Card>
 
       {viewMode === 'by-position' && selectedTableId && (
-        <Card className="mb-4">
+        <Card className='mb-4'>
           <CardHeader>
             <CardTitle>Swim lanes (top 20)</CardTitle>
-            <p className="text-sm text-muted-foreground">
+            <p className='text-sm text-muted-foreground'>
               Who was in each rank each month. ↑ moved up, ↓ moved down, — same or first month.
             </p>
           </CardHeader>
           <CardContent>
             {loadingPivoted && (
-              <div className="flex items-center justify-center py-8">
-                <LoadingSpinner className="h-8 w-8" />
+              <div className='flex items-center justify-center py-8'>
+                <LoadingSpinner className='h-8 w-8' />
               </div>
             )}
-            {!loadingPivoted && pivoted && (pivoted.months.length === 0 || !pivoted.lanes.length) && (
-              <p className="text-muted-foreground py-4">No pivoted data for this aggregation.</p>
-            )}
-            {!loadingPivoted && pivoted && pivoted.months.length > 0 && pivoted.lanes.length > 0 && (() => {
-              const monthsNewestFirst = [...pivoted.months].reverse();
-              return (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="sticky left-0 z-10 bg-background min-w-[4rem]">Rank</TableHead>
-                      {monthsNewestFirst.map(m => (
-                        <TableHead key={m} className="whitespace-nowrap">
-                          {m}
-                        </TableHead>
-                      ))}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {pivoted.lanes.map(lane => {
-                      const pointsNewestFirst = [...lane.points].reverse();
-                      return (
-                      <TableRow key={lane.rank}>
-                        <TableCell className="font-medium sticky left-0 z-10 bg-background">
-                          {lane.rank}
-                        </TableCell>
-                        {pointsNewestFirst.map(pt => {
-                          const currentRank = lane.rank;
-                          const prevRank = pt.prev_rank;
-                          let arrow: React.ReactNode = null;
-                          if (prevRank !== null && prevRank !== undefined) {
-                            if (prevRank > currentRank) arrow = <ArrowUp className="h-3 w-3 inline text-green-600" />;
-                            else if (prevRank < currentRank) arrow = <ArrowDown className="h-3 w-3 inline text-red-600" />;
-                            else arrow = <Minus className="h-3 w-3 inline text-muted-foreground" />;
-                          }
-                          const tooltipParts = [pt.item ?? ''];
-                          if (pt.shaves != null) tooltipParts.push(`${pt.shaves} shaves`);
-                          if (pt.unique_users != null) tooltipParts.push(`${pt.unique_users} users`);
-                          if (prevRank != null && prevRank !== currentRank) {
-                            tooltipParts.push(prevRank > currentRank ? `Moved up from rank ${prevRank}` : `Moved down from rank ${prevRank}`);
-                          }
-                          const tooltipContent = tooltipParts.filter(Boolean).join(' — ');
-                          const cellContent = (
-                            <span className="inline-flex items-center gap-1 max-w-[140px] truncate">
-                              {pt.item ?? '—'}
-                              {arrow}
-                            </span>
-                          );
-                          const highlightIndex = pt.item != null ? selectedItems.indexOf(pt.item) : -1;
-                          const highlightColor =
-                            highlightIndex >= 0 ? CHART_COLORS[highlightIndex % CHART_COLORS.length] : undefined;
-                          const hasItem = pt.item != null && pt.item !== '';
+            {!loadingPivoted &&
+              pivoted &&
+              (pivoted.months.length === 0 || !pivoted.lanes.length) && (
+                <p className='text-muted-foreground py-4'>No pivoted data for this aggregation.</p>
+              )}
+            {!loadingPivoted &&
+              pivoted &&
+              pivoted.months.length > 0 &&
+              pivoted.lanes.length > 0 &&
+              (() => {
+                const monthsNewestFirst = [...pivoted.months].reverse();
+                return (
+                  <div className='overflow-x-auto'>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className='sticky left-0 z-10 bg-background min-w-[4rem]'>
+                            Rank
+                          </TableHead>
+                          {monthsNewestFirst.map(m => (
+                            <TableHead key={m} className='whitespace-nowrap'>
+                              {m}
+                            </TableHead>
+                          ))}
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {pivoted.lanes.map(lane => {
+                          const pointsNewestFirst = [...lane.points].reverse();
                           return (
-                            <TableCell
-                              key={pt.month}
-                              className="whitespace-nowrap relative"
-                              onClick={hasItem ? () => addItem(pt.item!) : undefined}
-                              role={hasItem ? 'button' : undefined}
-                              style={hasItem ? { cursor: 'pointer' } : undefined}
-                            >
-                              {highlightColor && (
-                                <span
-                                  className="absolute inset-0 pointer-events-none"
-                                  style={{ backgroundColor: highlightColor, opacity: 0.12 }}
-                                  aria-hidden
-                                />
-                              )}
-                              <span className="relative">
-                                {tooltipContent ? (
-                                  <CellTooltip content={tooltipContent}>{cellContent}</CellTooltip>
-                                ) : (
-                                  cellContent
-                                )}
-                              </span>
-                            </TableCell>
+                            <TableRow key={lane.rank}>
+                              <TableCell className='font-medium sticky left-0 z-10 bg-background'>
+                                {lane.rank}
+                              </TableCell>
+                              {pointsNewestFirst.map(pt => {
+                                const currentRank = lane.rank;
+                                const prevRank = pt.prev_rank;
+                                let arrow: React.ReactNode = null;
+                                if (prevRank !== null && prevRank !== undefined) {
+                                  if (prevRank > currentRank)
+                                    arrow = <ArrowUp className='h-3 w-3 inline text-green-600' />;
+                                  else if (prevRank < currentRank)
+                                    arrow = <ArrowDown className='h-3 w-3 inline text-red-600' />;
+                                  else
+                                    arrow = (
+                                      <Minus className='h-3 w-3 inline text-muted-foreground' />
+                                    );
+                                }
+                                const tooltipParts = [pt.item ?? ''];
+                                if (pt.shaves != null) tooltipParts.push(`${pt.shaves} shaves`);
+                                if (pt.unique_users != null)
+                                  tooltipParts.push(`${pt.unique_users} users`);
+                                if (prevRank != null && prevRank !== currentRank) {
+                                  tooltipParts.push(
+                                    prevRank > currentRank
+                                      ? `Moved up from rank ${prevRank}`
+                                      : `Moved down from rank ${prevRank}`
+                                  );
+                                }
+                                const tooltipContent = tooltipParts.filter(Boolean).join(' — ');
+                                const cellContent = (
+                                  <span className='inline-flex items-center gap-1 max-w-[140px] truncate'>
+                                    {pt.item ?? '—'}
+                                    {arrow}
+                                  </span>
+                                );
+                                const highlightIndex =
+                                  pt.item != null ? selectedItems.indexOf(pt.item) : -1;
+                                const highlightColor =
+                                  highlightIndex >= 0
+                                    ? CHART_COLORS[highlightIndex % CHART_COLORS.length]
+                                    : undefined;
+                                const hasItem = pt.item != null && pt.item !== '';
+                                return (
+                                  <TableCell
+                                    key={pt.month}
+                                    className='whitespace-nowrap relative'
+                                    onClick={hasItem ? () => addItem(pt.item!) : undefined}
+                                    role={hasItem ? 'button' : undefined}
+                                    style={hasItem ? { cursor: 'pointer' } : undefined}
+                                  >
+                                    {highlightColor && (
+                                      <span
+                                        className='absolute inset-0 pointer-events-none'
+                                        style={{ backgroundColor: highlightColor, opacity: 0.12 }}
+                                        aria-hidden
+                                      />
+                                    )}
+                                    <span className='relative'>
+                                      {tooltipContent ? (
+                                        <CellTooltip content={tooltipContent}>
+                                          {cellContent}
+                                        </CellTooltip>
+                                      ) : (
+                                        cellContent
+                                      )}
+                                    </span>
+                                  </TableCell>
+                                );
+                              })}
+                            </TableRow>
                           );
                         })}
-                      </TableRow>
-                    );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
-              );
-            })()}
+                      </TableBody>
+                    </Table>
+                  </div>
+                );
+              })()}
           </CardContent>
         </Card>
       )}
 
       {series && viewMode === 'by-item' && (
         <>
-          <Card className="mb-4">
+          <Card className='mb-4'>
             <CardHeader>
               <CardTitle>Rank over time</CardTitle>
               {chartData.length > 0 && (
-                <div className="flex flex-wrap items-center gap-3 pt-2">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Label className="text-sm font-normal text-muted-foreground shrink-0">
+                <div className='flex flex-wrap items-center gap-3 pt-2'>
+                  <div className='flex flex-wrap items-center gap-2'>
+                    <Label className='text-sm font-normal text-muted-foreground shrink-0'>
                       Chart metric
                     </Label>
                     <Tabs
@@ -836,34 +1043,34 @@ const ReportPlacementOverTime: React.FC = () => {
                         setChartPrimaryMetric(v as 'rank' | 'shaves' | 'unique_users')
                       }
                     >
-                      <TabsList className="h-8">
-                        <TabsTrigger value="rank" className="text-xs px-2 py-1">
+                      <TabsList className='h-8'>
+                        <TabsTrigger value='rank' className='text-xs px-2 py-1'>
                           Rank
                         </TabsTrigger>
-                        <TabsTrigger value="shaves" className="text-xs px-2 py-1">
+                        <TabsTrigger value='shaves' className='text-xs px-2 py-1'>
                           Shaves
                         </TabsTrigger>
-                        <TabsTrigger value="unique_users" className="text-xs px-2 py-1">
+                        <TabsTrigger value='unique_users' className='text-xs px-2 py-1'>
                           Unique users
                         </TabsTrigger>
                       </TabsList>
                     </Tabs>
                   </div>
                   {seriesMonthsSorted.length > 0 && (
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className='flex flex-wrap items-center gap-2'>
                       <Label
-                        htmlFor="chart-from-month"
-                        className="text-sm font-normal text-muted-foreground shrink-0"
+                        htmlFor='chart-from-month'
+                        className='text-sm font-normal text-muted-foreground shrink-0'
                       >
                         From
                       </Label>
                       <Select value={chartFromMonth} onValueChange={handleChartFromChange}>
                         <SelectTrigger
-                          id="chart-from-month"
-                          className="h-8 w-[120px]"
-                          aria-label="From"
+                          id='chart-from-month'
+                          className='h-8 w-[120px]'
+                          aria-label='From'
                         >
-                          <SelectValue placeholder="From" />
+                          <SelectValue placeholder='From' />
                         </SelectTrigger>
                         <SelectContent>
                           {seriesMonthsSorted.map(m => (
@@ -874,18 +1081,18 @@ const ReportPlacementOverTime: React.FC = () => {
                         </SelectContent>
                       </Select>
                       <Label
-                        htmlFor="chart-to-month"
-                        className="text-sm font-normal text-muted-foreground shrink-0"
+                        htmlFor='chart-to-month'
+                        className='text-sm font-normal text-muted-foreground shrink-0'
                       >
                         To
                       </Label>
                       <Select value={chartToMonth} onValueChange={handleChartToChange}>
                         <SelectTrigger
-                          id="chart-to-month"
-                          className="h-8 w-[120px]"
-                          aria-label="To"
+                          id='chart-to-month'
+                          className='h-8 w-[120px]'
+                          aria-label='To'
                         >
-                          <SelectValue placeholder="To" />
+                          <SelectValue placeholder='To' />
                         </SelectTrigger>
                         <SelectContent>
                           {seriesMonthsSorted.map(m => (
@@ -902,41 +1109,60 @@ const ReportPlacementOverTime: React.FC = () => {
             </CardHeader>
             <CardContent>
               {chartData.length === 0 ? (
-                <p className="text-muted-foreground">No data for the selected aggregation and items.</p>
+                <p className='text-muted-foreground'>
+                  No data for the selected aggregation and items.
+                </p>
               ) : chartDisplayData.length === 0 ? (
-                <p className="text-muted-foreground">No months in the selected From/To range.</p>
+                <p className='text-muted-foreground'>No months in the selected From/To range.</p>
               ) : (
-                <div className="h-[400px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={chartDisplayData} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                      <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                <div className='h-[400px] w-full'>
+                  <ResponsiveContainer width='100%' height='100%'>
+                    <LineChart
+                      data={chartDisplayData}
+                      margin={{ top: 8, right: 8, left: 8, bottom: 8 }}
+                    >
+                      <CartesianGrid strokeDasharray='3 3' className='stroke-muted' />
+                      <XAxis dataKey='month' tick={{ fontSize: 12 }} minTickGap={48} />
+                      {chartPrimaryMetric === 'rank' && (
+                        <ReferenceArea
+                          y1={1}
+                          y2={3}
+                          yAxisId={0}
+                          // Neutral tint — color follows the series, so the podium band
+                          // must not borrow a series hue.
+                          fill='hsl(var(--muted-foreground))'
+                          fillOpacity={0.06}
+                          ifOverflow='extendDomain'
+                          label={{
+                            value: 'Top 3',
+                            position: 'insideTopLeft',
+                            fill: 'hsl(var(--muted-foreground))',
+                            fontSize: 11,
+                          }}
+                        />
+                      )}
                       <YAxis
-                        type="number"
+                        type='number'
                         // Rank: reverse so #1 is at the top (higher on chart = better).
                         // domain={[high, low]} alone does not invert in Recharts.
+                        // Log scale: rank is ordinal and heavily top-weighted — #1 vs #2
+                        // matters more than #46 vs #47, so the top of the axis gets the
+                        // space. scale="log" needs a positive domain starting at 1.
                         reversed={chartPrimaryMetric === 'rank'}
-                        domain={
-                          chartPrimaryMetric === 'rank'
-                            ? [1, maxRank]
-                            : [0, maxChartValue]
-                        }
+                        scale={chartPrimaryMetric === 'rank' ? 'log' : 'auto'}
+                        domain={chartPrimaryMetric === 'rank' ? [1, maxRank] : [0, maxChartValue]}
                         allowDecimals={chartPrimaryMetric !== 'rank'}
                         tick={{ fontSize: 12 }}
-                        label={{
-                          value:
-                            chartPrimaryMetric === 'rank'
-                              ? 'Rank (1 = top)'
-                              : chartPrimaryMetric === 'shaves'
-                                ? 'Shaves'
-                                : 'Unique users',
-                          angle: -90,
-                          position: 'insideLeft',
-                        }}
+                        // Log ticks (1,2,3,5,10,20,...) render as "1e0"-style by default
+                        // in some versions; emit plain integers.
+                        tickFormatter={
+                          chartPrimaryMetric === 'rank' ? v => String(Math.round(v)) : undefined
+                        }
+                        // No rotated axis title: the metric is named in the
+                        // "Chart metric" toggle above the chart, and the label
+                        // cost horizontal plot width.
                       />
-                      <Tooltip
-                        content={(props) => RankChartTooltipContent(props, series.series)}
-                      />
+                      <Tooltip content={props => RankChartTooltipContent(props, series.series)} />
                       <Legend />
                       {series.series.map((entry, i) => {
                         const dataKey =
@@ -948,7 +1174,7 @@ const ReportPlacementOverTime: React.FC = () => {
                         return (
                           <Line
                             key={entry.item}
-                            type="monotone"
+                            type='monotone'
                             dataKey={dataKey}
                             stroke={CHART_COLORS[i % CHART_COLORS.length]}
                             strokeWidth={2}
@@ -971,63 +1197,71 @@ const ReportPlacementOverTime: React.FC = () => {
             </CardHeader>
             <CardContent>
               {chartData.length === 0 ? (
-                <p className="text-muted-foreground">No data to show.</p>
+                <p className='text-muted-foreground'>No data to show.</p>
               ) : (
                 <>
-                  <div className="flex flex-wrap items-center gap-4 text-sm mb-4">
-                    <span className="text-muted-foreground">
-                      1st places: <span className="font-medium text-foreground">{placementSummary.firstPlaces}</span>
+                  <div className='flex flex-wrap items-center gap-4 text-sm mb-4'>
+                    <span className='text-muted-foreground'>
+                      1st places:{' '}
+                      <span className='font-medium text-foreground'>
+                        {placementSummary.firstPlaces}
+                      </span>
                     </span>
-                    <span className="text-muted-foreground">
-                      Podiums (1–3): <span className="font-medium text-foreground">{placementSummary.podiums}</span>
+                    <span className='text-muted-foreground'>
+                      Podiums (1–3):{' '}
+                      <span className='font-medium text-foreground'>
+                        {placementSummary.podiums}
+                      </span>
                     </span>
-                    <span className="text-muted-foreground">
-                      Top 10s: <span className="font-medium text-foreground">{placementSummary.top10s}</span>
+                    <span className='text-muted-foreground'>
+                      Top 10s:{' '}
+                      <span className='font-medium text-foreground'>{placementSummary.top10s}</span>
                     </span>
                   </div>
-                  <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Month</TableHead>
-                        {series.series.map(entry => (
-                          <TableHead key={entry.item}>{entry.item}</TableHead>
-                        ))}
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {chartData.map(row => (
-                        <TableRow key={row.month}>
-                          <TableCell className="font-medium">{row.month}</TableCell>
-                          {series.series.map(entry => {
-                            const rank = row[entry.item];
-                            const shaves = row[`${entry.item}_shaves`];
-                            const uniqueUsers = row[`${entry.item}_unique_users`];
-                            let cell: string;
-                            if (rank === '' || rank === undefined) {
-                              cell = '—';
-                            } else {
-                              const hasShaves = shaves !== '' && shaves !== undefined;
-                              const hasUsers = uniqueUsers !== '' && uniqueUsers !== undefined;
-                              if (hasShaves && hasUsers) {
-                                cell = `#${rank} (${shaves} shaves, ${uniqueUsers} users)`;
-                              } else if (hasShaves) {
-                                cell = `#${rank} (${shaves})`;
-                              } else if (hasUsers) {
-                                cell = `#${rank} (${uniqueUsers} users)`;
-                              } else {
-                                cell = `#${rank}`;
-                              }
-                            }
-                            return (
-                              <TableCell key={entry.item}>{cell}</TableCell>
-                            );
-                          })}
+                  <div className='overflow-x-auto'>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Month</TableHead>
+                          {series.series.map(entry => (
+                            <TableHead key={entry.item}>{entry.item}</TableHead>
+                          ))}
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                      </TableHeader>
+                      <TableBody>
+                        {chartData
+                          .slice()
+                          .reverse()
+                          .map(row => (
+                            <TableRow key={row.month}>
+                              <TableCell className='font-medium'>{row.month}</TableCell>
+                              {series.series.map(entry => {
+                                const rank = row[entry.item];
+                                const shaves = row[`${entry.item}_shaves`];
+                                const uniqueUsers = row[`${entry.item}_unique_users`];
+                                let cell: string;
+                                if (rank === '' || rank === undefined) {
+                                  cell = '—';
+                                } else {
+                                  const hasShaves = shaves !== '' && shaves !== undefined;
+                                  const hasUsers = uniqueUsers !== '' && uniqueUsers !== undefined;
+                                  if (hasShaves && hasUsers) {
+                                    cell = `#${rank} (${shaves} shaves, ${uniqueUsers} users)`;
+                                  } else if (hasShaves) {
+                                    cell = `#${rank} (${shaves})`;
+                                  } else if (hasUsers) {
+                                    cell = `#${rank} (${uniqueUsers} users)`;
+                                  } else {
+                                    cell = `#${rank}`;
+                                  }
+                                }
+                                return <TableCell key={entry.item}>{cell}</TableCell>;
+                              })}
+                            </TableRow>
+                          ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </>
               )}
             </CardContent>
@@ -1035,17 +1269,22 @@ const ReportPlacementOverTime: React.FC = () => {
         </>
       )}
 
-      {viewMode === 'by-item' && !series && selectedTableId && selectedItems.length > 0 && !loadingSeries && !error && (
-        <Card>
-          <CardContent className="py-8 text-center text-muted-foreground">
-            Click &quot;Load series&quot; to load rank-over-time data.
-          </CardContent>
-        </Card>
-      )}
+      {viewMode === 'by-item' &&
+        !series &&
+        selectedTableId &&
+        selectedItems.length > 0 &&
+        !loadingSeries &&
+        !error && (
+          <Card>
+            <CardContent className='py-8 text-center text-muted-foreground'>
+              Click &quot;Load series&quot; to load rank-over-time data.
+            </CardContent>
+          </Card>
+        )}
 
       {!selectedTableId && !loadingTables && (
         <Card>
-          <CardContent className="py-8 text-center text-muted-foreground">
+          <CardContent className='py-8 text-center text-muted-foreground'>
             Choose an aggregation and one or more items to see how they placed over time.
           </CardContent>
         </Card>

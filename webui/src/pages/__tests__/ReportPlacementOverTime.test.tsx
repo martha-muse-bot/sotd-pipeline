@@ -14,6 +14,8 @@ jest.mock('../../services/api', () => ({
 import ReportPlacementOverTime, {
   RankChartTooltipContent,
   filterMonthsInRange,
+  buildChartData,
+  groupAggregationTables,
 } from '../ReportPlacementOverTime';
 import * as api from '../../services/api';
 
@@ -31,6 +33,38 @@ const mockGetPivoted = api.getReportRankingsPivoted as jest.MockedFunction<
 >;
 
 describe('ReportPlacementOverTime', () => {
+  // Radix DropdownMenu opens on the full pointer sequence; userEvent provides it.
+  let aggUser: ReturnType<typeof userEvent.setup> | null = null;
+  const openAggregationMenu = async () => {
+    aggUser = aggUser ?? userEvent.setup();
+    await aggUser.click(screen.getByRole('button', { name: 'Select aggregation' }));
+  };
+  const expandGroup = async (name: string) => {
+    aggUser = aggUser ?? userEvent.setup();
+    // Group headers carry aria-expanded; items don't.
+    const headers = screen
+      .queryAllByRole('menuitem')
+      .filter(el => el.getAttribute('aria-expanded') != null);
+    const header = headers.find(el => el.textContent?.startsWith(name));
+    if (!header) throw new Error(`group header "${name}" not found`);
+    await aggUser.click(header);
+  };
+  // Group headers and same-named items share text; items have no aria-expanded.
+  const expectMenuItem = (name: string) => {
+    const items = screen
+      .queryAllByRole('menuitem')
+      .filter(el => el.textContent === name && el.getAttribute('aria-expanded') == null);
+    expect(items.length).toBeGreaterThan(0);
+  };
+  const selectAggregation = async (name: string) => {
+    aggUser = aggUser ?? userEvent.setup();
+    const items = screen
+      .queryAllByRole('menuitem')
+      .filter(el => el.textContent === name && el.getAttribute('aria-expanded') == null);
+    expect(items.length).toBeGreaterThan(0);
+    await aggUser.click(items[0]);
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
     mockGetTables.mockResolvedValue([
@@ -87,9 +121,7 @@ describe('ReportPlacementOverTime', () => {
     await waitFor(() => {
       expect(screen.getByText('Rankings over time')).toBeInTheDocument();
     });
-    expect(
-      screen.getByText(/see how they ranked month over month/)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/see how they ranked month over month/)).toBeInTheDocument();
   });
 
   it('fetches tables on mount', async () => {
@@ -113,7 +145,9 @@ describe('ReportPlacementOverTime', () => {
       expect(mockGetTables).toHaveBeenCalled();
     });
     expect(
-      screen.getByText(/Choose an aggregation and one or more items to see how they placed over time/)
+      screen.getByText(
+        /Choose an aggregation and one or more items to see how they placed over time/
+      )
     ).toBeInTheDocument();
   });
 
@@ -126,13 +160,12 @@ describe('ReportPlacementOverTime', () => {
     await waitFor(() => {
       expect(mockGetTables).toHaveBeenCalled();
     });
-    const triggers = screen.getAllByRole('combobox');
-    expect(triggers.length).toBeGreaterThanOrEqual(1);
-    fireEvent.click(triggers[0]);
-    await waitFor(() => {
-      expect(screen.getByText('Razors')).toBeInTheDocument();
-      expect(screen.getByText('Blades')).toBeInTheDocument();
-    });
+    await openAggregationMenu();
+    // Sections start collapsed; open the two groups and check their items appear.
+    await expandGroup('Razors');
+    await expandGroup('Blades');
+    expectMenuItem('Razors');
+    expectMenuItem('Blades');
   });
 
   it('Load series button is disabled when no aggregation or items selected', async () => {
@@ -171,12 +204,9 @@ describe('ReportPlacementOverTime', () => {
     await waitFor(() => {
       expect(mockGetTables).toHaveBeenCalled();
     });
-    const triggers = screen.getAllByRole('combobox');
-    fireEvent.click(triggers[0]);
-    await waitFor(() => {
-      expect(screen.getByText('Razors')).toBeInTheDocument();
-    });
-    fireEvent.click(screen.getByText('Razors'));
+    await openAggregationMenu();
+    await expandGroup('Razors');
+    await selectAggregation('Razors');
     await waitFor(() => {
       expect(screen.getByText('By item')).toBeInTheDocument();
       expect(screen.getByText('By position')).toBeInTheDocument();
@@ -193,12 +223,9 @@ describe('ReportPlacementOverTime', () => {
     await waitFor(() => {
       expect(mockGetTables).toHaveBeenCalled();
     });
-    const aggregationTrigger = screen.getAllByRole('combobox')[0];
-    fireEvent.click(aggregationTrigger);
-    await waitFor(() => {
-      expect(screen.getByText('Razors')).toBeInTheDocument();
-    });
-    fireEvent.click(screen.getByText('Razors'));
+    await openAggregationMenu();
+    await expandGroup('Razors');
+    await selectAggregation('Razors');
     await waitFor(() => {
       expect(screen.getByRole('tab', { name: /By position/i })).toBeInTheDocument();
     });
@@ -226,11 +253,9 @@ describe('ReportPlacementOverTime', () => {
     await waitFor(() => {
       expect(mockGetTables).toHaveBeenCalled();
     });
-    fireEvent.click(screen.getAllByRole('combobox')[0]);
-    await waitFor(() => {
-      expect(screen.getByText('Razors')).toBeInTheDocument();
-    });
-    fireEvent.click(screen.getByText('Razors'));
+    await openAggregationMenu();
+    await expandGroup('Razors');
+    await selectAggregation('Razors');
     await user.click(screen.getByRole('tab', { name: /By position/i }));
     await waitFor(() => {
       expect(mockGetPivoted).toHaveBeenCalled();
@@ -250,11 +275,9 @@ describe('ReportPlacementOverTime', () => {
     await waitFor(() => {
       expect(mockGetTables).toHaveBeenCalled();
     });
-    fireEvent.click(screen.getAllByRole('combobox')[0]);
-    await waitFor(() => {
-      expect(screen.getByText('Razors')).toBeInTheDocument();
-    });
-    fireEvent.click(screen.getByText('Razors'));
+    await openAggregationMenu();
+    await expandGroup('Razors');
+    await selectAggregation('Razors');
     await user.click(screen.getByRole('tab', { name: /By position/i }));
     await waitFor(() => {
       expect(mockGetPivoted).toHaveBeenCalledWith('razors');
@@ -279,11 +302,9 @@ describe('ReportPlacementOverTime', () => {
     await waitFor(() => {
       expect(mockGetTables).toHaveBeenCalled();
     });
-    fireEvent.click(screen.getAllByRole('combobox')[0]);
-    await waitFor(() => {
-      expect(screen.getByText('Razors')).toBeInTheDocument();
-    });
-    fireEvent.click(screen.getByText('Razors'));
+    await openAggregationMenu();
+    await expandGroup('Razors');
+    await selectAggregation('Razors');
     await user.click(screen.getByRole('tab', { name: /By position/i }));
     await waitFor(() => {
       expect(mockGetPivoted).toHaveBeenCalled();
@@ -310,11 +331,9 @@ describe('ReportPlacementOverTime', () => {
     await waitFor(() => {
       expect(mockGetTables).toHaveBeenCalled();
     });
-    fireEvent.click(screen.getAllByRole('combobox')[0]);
-    await waitFor(() => {
-      expect(screen.getByText('Razors')).toBeInTheDocument();
-    });
-    fireEvent.click(screen.getByText('Razors'));
+    await openAggregationMenu();
+    await expandGroup('Razors');
+    await selectAggregation('Razors');
     await user.click(screen.getByRole('tab', { name: /By position/i }));
     await waitFor(() => {
       expect(mockGetPivoted).toHaveBeenCalled();
@@ -344,11 +363,9 @@ describe('ReportPlacementOverTime', () => {
     await waitFor(() => {
       expect(mockGetTables).toHaveBeenCalled();
     });
-    fireEvent.click(screen.getAllByRole('combobox')[0]);
-    await waitFor(() => {
-      expect(screen.getByText('Razors')).toBeInTheDocument();
-    });
-    fireEvent.click(screen.getByText('Razors'));
+    await openAggregationMenu();
+    await expandGroup('Razors');
+    await selectAggregation('Razors');
     await user.click(screen.getByRole('tab', { name: /By position/i }));
     await waitFor(() => {
       expect(mockGetPivoted).toHaveBeenCalled();
@@ -380,11 +397,9 @@ describe('ReportPlacementOverTime', () => {
     await waitFor(() => {
       expect(mockGetTables).toHaveBeenCalled();
     });
-    fireEvent.click(screen.getAllByRole('combobox')[0]);
-    await waitFor(() => {
-      expect(screen.getByText('Razors')).toBeInTheDocument();
-    });
-    fireEvent.click(screen.getByText('Razors'));
+    await openAggregationMenu();
+    await expandGroup('Razors');
+    await selectAggregation('Razors');
     await user.click(screen.getByRole('tab', { name: /By position/i }));
     await waitFor(() => {
       expect(mockGetPivoted).toHaveBeenCalled();
@@ -401,6 +416,33 @@ describe('ReportPlacementOverTime', () => {
     const shavesTab = screen.getByRole('tab', { name: /Shaves/i });
     await user.click(shavesTab);
     expect(screen.getByText('Rank over time')).toBeInTheDocument();
+  });
+
+  describe('groupAggregationTables', () => {
+    const allTables = [
+      { id: 'razors', label: 'Razors' },
+      { id: 'blades', label: 'Blades' },
+      { id: 'users', label: 'Users' },
+      { id: 'some_future_table', label: 'Future Thing' },
+    ];
+
+    it('buckets tables into their groups in group order', () => {
+      const groups = groupAggregationTables(allTables);
+      expect(groups.map(g => g.label)).toEqual(['Razors', 'Blades', 'User stats', 'Other']);
+      expect(groups[0].tables).toEqual([{ id: 'razors', label: 'Razors' }]);
+      expect(groups[1].tables).toEqual([{ id: 'blades', label: 'Blades' }]);
+      expect(groups[2].tables).toEqual([{ id: 'users', label: 'Users' }]);
+    });
+
+    it('puts unknown ids into Other', () => {
+      const groups = groupAggregationTables(allTables);
+      expect(groups[3].tables).toEqual([{ id: 'some_future_table', label: 'Future Thing' }]);
+    });
+
+    it('omits empty groups', () => {
+      const groups = groupAggregationTables([{ id: 'soaps', label: 'Soaps' }]);
+      expect(groups.map(g => g.label)).toEqual(['Soaps']);
+    });
   });
 
   describe('filterMonthsInRange', () => {
@@ -421,6 +463,61 @@ describe('ReportPlacementOverTime', () => {
     it('returns empty when range excludes all months', () => {
       expect(filterMonthsInRange(months, '2026-01', '2026-12')).toEqual([]);
     });
+  });
+
+  it('renders chart time oldest-left and data table newest-first', async () => {
+    const user = userEvent.setup();
+    const mockGetSeriesResult = {
+      months: ['2025-05', '2025-06', '2025-07'],
+      series: [
+        {
+          item: 'Razor A',
+          data: [
+            { month: '2025-05', rank: 3, shaves: 50, unique_users: 5 },
+            { month: '2025-06', rank: 1, shaves: 100, unique_users: 10 },
+            { month: '2025-07', rank: 2, shaves: 80, unique_users: 8 },
+          ],
+        },
+      ],
+    };
+    mockGetSeries.mockResolvedValue(mockGetSeriesResult);
+    render(
+      <MemoryRouter>
+        <ReportPlacementOverTime />
+      </MemoryRouter>
+    );
+    await waitFor(() => {
+      expect(mockGetTables).toHaveBeenCalled();
+    });
+    await openAggregationMenu();
+    await expandGroup('Razors');
+    await selectAggregation('Razors');
+    // Add the item via a swim-lane cell (the reliable path used by other tests),
+    // then return to By item — the view switch auto-loads the series.
+    await user.click(screen.getByRole('tab', { name: /By position/i }));
+    await waitFor(() => {
+      expect(mockGetPivoted).toHaveBeenCalled();
+    });
+    const razorACells = screen.getAllByRole('button', { name: /Razor A/ });
+    await user.click(razorACells[0]);
+    await user.click(screen.getByRole('tab', { name: /By item/i }));
+    await waitFor(() => {
+      expect(mockGetSeries).toHaveBeenCalled();
+    });
+
+    // Chart data is chronological (oldest first → time runs left-to-right on the
+    // chart). Chart internals aren't renderable in jsdom (ResponsiveContainer has
+    // no width), so the ordering is asserted on the extracted builder.
+    expect(buildChartData(mockGetSeriesResult)).toEqual([
+      { month: '2025-05', 'Razor A': 3, 'Razor A_shaves': 50, 'Razor A_unique_users': 5 },
+      { month: '2025-06', 'Razor A': 1, 'Razor A_shaves': 100, 'Razor A_unique_users': 10 },
+      { month: '2025-07', 'Razor A': 2, 'Razor A_shaves': 80, 'Razor A_unique_users': 8 },
+    ]);
+
+    // Data table: newest month is the first row under the header.
+    const tableRows = screen.getAllByRole('row').filter(row => row.textContent?.includes('2025-'));
+    expect(tableRows[0]).toHaveTextContent('2025-07');
+    expect(tableRows[tableRows.length - 1]).toHaveTextContent('2025-05');
   });
 
   it('shows From/To month filters after series loads and defaults to full range', async () => {
@@ -446,15 +543,16 @@ describe('ReportPlacementOverTime', () => {
     await waitFor(() => {
       expect(mockGetTables).toHaveBeenCalled();
     });
-    fireEvent.click(screen.getAllByRole('combobox')[0]);
-    await waitFor(() => {
-      expect(screen.getByText('Razors')).toBeInTheDocument();
-    });
-    fireEvent.click(screen.getByText('Razors'));
+    await openAggregationMenu();
+    await expandGroup('Razors');
+    await selectAggregation('Razors');
     await waitFor(() => {
       expect(mockGetItems).toHaveBeenCalled();
     });
-    fireEvent.click(screen.getAllByRole('combobox')[1]);
+    const itemsTrigger = screen
+      .getAllByRole('combobox')
+      .find(el => el.textContent?.includes('Add an item'));
+    fireEvent.click(itemsTrigger!);
     await waitFor(() => {
       expect(screen.getByText('Razor A')).toBeInTheDocument();
     });
@@ -482,12 +580,7 @@ describe('ReportPlacementOverTime', () => {
     ];
     const series = [{ item: 'Razor A' }];
     const { container } = render(
-      <>
-        {RankChartTooltipContent(
-          { active: true, payload, label: '2025-06' },
-          series
-        )}
-      </>
+      <>{RankChartTooltipContent({ active: true, payload, label: '2025-06' }, series)}</>
     );
     expect(container.textContent).toMatch(/100 shaves/);
     expect(container.textContent).toMatch(/10 users/);
@@ -526,11 +619,9 @@ describe('ReportPlacementOverTime', () => {
       await waitFor(() => {
         expect(mockGetTables).toHaveBeenCalled();
       });
-      fireEvent.click(screen.getAllByRole('combobox')[0]);
-      await waitFor(() => {
-        expect(screen.getByText('Razors')).toBeInTheDocument();
-      });
-      fireEvent.click(screen.getByText('Razors'));
+      await openAggregationMenu();
+      await expandGroup('Razors');
+      await selectAggregation('Razors');
       await waitFor(() => {
         expect(mockGetItems).toHaveBeenCalledWith('razors');
       });
@@ -549,11 +640,9 @@ describe('ReportPlacementOverTime', () => {
       await waitFor(() => {
         expect(mockGetTables).toHaveBeenCalled();
       });
-      fireEvent.click(screen.getAllByRole('combobox')[0]);
-      await waitFor(() => {
-        expect(screen.getByText('Razors')).toBeInTheDocument();
-      });
-      fireEvent.click(screen.getByText('Razors'));
+      await openAggregationMenu();
+      await expandGroup('Razors');
+      await selectAggregation('Razors');
       await waitFor(() => {
         expect(screen.getByPlaceholderText('Type to search…')).toBeInTheDocument();
       });
