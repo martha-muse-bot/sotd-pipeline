@@ -80,7 +80,14 @@ python -m sotd.report.tools.community_query search --months 2026-08:2026-09 --qu
 Consumption: the `community-summarizer` agent (`.claude/agents/community-summarizer.md`)
 distills one fetched month into `data/community/summaries/YYYY-MM.md` — storyline
 context with thread/comment provenance, gitignored, never a numeric source. Invoke it
-explicitly with a month ("summarize community context for 2026-09").
+explicitly with a month ("summarize community context for 2026-09"). Methodology
+(2026-10-26): the agent reads the **entire** month record via `community_query full`
+(deterministic ~600k-char parts) and keeps a per-part notebook at
+`data/community/summaries/.notes/YYYY-MM.md` — a census, not a sample; no drill
+budgets. Every summary ships through the `community_query verify-ids` provenance
+gate before reporting. All 125 months (2016-05 → 2026-09) are summarized under
+this methodology; the superseded sampling-era summaries are archived at
+`data/community/summaries_v1/`.
 
 The `observations-drafter` agent (`.claude/agents/observations-drafter.md`) drafts the
 `## Observations` section for the monthly hardware/software reports in the community-announcer
