@@ -32,12 +32,14 @@ def test_entrypoint_uses_app_dir_variable():
 def test_entrypoint_delivers_dashboards():
     """Each repo defines its dashboards (ruling 2026-10-26): the entrypoint
     copies deploy/metrics/grafana/dashboards/*.json to the shared Grafana's
-    provisioned mount, after the clone so a first boot delivers too."""
+    provisioned mount, after a boot-time pull — /app is a persistent volume
+    that may predate the dashboards directory, so a pull must precede the
+    copy (the nightly loop's pull only runs at 02:00)."""
     text = _entrypoint_text()
-    clone_idx = text.index("git clone")
-    copy_idx = text.index('dashboards/*.json')
-    assert clone_idx < copy_idx
-    assert 'SOTD_DASHBOARDS_DIR:-/dashboards' in text
+    pull_idx = text.index('git -C "${APP_DIR}" pull --ff-only')
+    copy_idx = text.index("dashboards/*.json")
+    assert pull_idx < copy_idx
+    assert "SOTD_DASHBOARDS_DIR:-/dashboards" in text
 
 
 def test_dashboard_source_of_truth_in_repo():

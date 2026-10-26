@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import json
 import logging
+import os
 import re
+from pathlib import Path
 
 from prometheus_client import Counter, Gauge, start_http_server
 
@@ -127,6 +130,83 @@ def record_phase_durations(durations: dict[str, float], *, context: str) -> None
 
 def set_last_run_timestamp(epoch: float) -> None:
     last_run_timestamp.set(epoch)
+
+
+# --- run-state persistence ----------------------------------------------------
+#
+# A redeploy recreates the container and resets every gauge to 0 — the
+# freshness anchor (publish_last_success) would read as "never published",
+# tripping the dashboard's 26h threshold on deploy day. Persist the run-state
+# gauges/counters to the /data volume and restore them on boot.
+
+STATE_KEYS = (
+    "last_run_timestamp",
+    "publish_last_success",
+    "catalog_catchup_success",
+    "consecutive_failures",
+    "runs_ok",
+    "runs_failed",
+    "publish_failures",
+)
+
+
+def default_state_path() -> str:
+    return os.environ.get("SOTD_METRICS_STATE", "/data/.metrics_state.json")
+
+
+def persist_metrics_state(path: str | None = None) -> None:
+    """Write the run-state gauges/counters to the state file (best-effort)."""
+    path = path or default_state_path()
+    payload = {
+        "last_run_timestamp": last_run_timestamp._value.get(),
+        "publish_last_success": publish_last_success._value.get(),
+        "catalog_catchup_success": catalog_catchup_success._value.get(),
+        "consecutive_failures": consecutive_failures._value.get(),
+        "runs_ok": runs_total._metrics.get(("ok",), None)._value.get()
+        if runs_total._metrics.get(("ok",), None) is not None
+        else 0,
+        "runs_failed": runs_total._metrics.get(("failed",), None)._value.get()
+        if runs_total._metrics.get(("failed",), None) is not None
+        else 0,
+        "publish_failures": publish_failures_total._value.get(),
+    }
+    try:
+        Path(path).parent.mkdir(parents=True, exist_ok=True)
+        Path(path).write_text(json.dumps(payload))
+    except OSError:
+        logger.exception("could not persist metrics state to %s — gauges reset on next boot", path)
+
+
+def restore_metrics_state(path: str | None = None) -> None:
+    """Restore run-state gauges/counters from the state file on boot."""
+    path = path or default_state_path()
+    p = Path(path)
+    if not p.is_file():
+        return
+    try:
+        payload = json.loads(p.read_text())
+    except (OSError, ValueError):
+        logger.exception("could not read metrics state from %s", path)
+        return
+    for key in STATE_KEYS:
+        value = payload.get(key)
+        if value is None:
+            continue
+        if key == "last_run_timestamp":
+            last_run_timestamp.set(value)
+        elif key == "publish_last_success":
+            publish_last_success.set(value)
+        elif key == "catalog_catchup_success":
+            catalog_catchup_success.set(value)
+        elif key == "consecutive_failures":
+            consecutive_failures.set(value)
+        elif key == "runs_ok":
+            runs_total.labels(outcome="ok").inc(value)
+        elif key == "runs_failed":
+            runs_total.labels(outcome="failed").inc(value)
+        elif key == "publish_failures":
+            publish_failures_total.inc(value)
+    logger.info("restored metrics state from %s", path)
 
 
 def start_metrics_server(port: int = 8000) -> None:

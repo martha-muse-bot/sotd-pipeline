@@ -21,10 +21,12 @@ from sotd.pipeline_supervisor.metrics import (
     months_processed,
     parse_phase_durations,
     parse_phase_records,
+    persist_metrics_state,
     phase_records,
     publish_failures_total,
     publish_last_success,
     record_phase_durations,
+    restore_metrics_state,
     run_duration_seconds,
     runs_total,
     set_last_run_timestamp,
@@ -166,6 +168,7 @@ def run_nightly(
     months_processed.set(result.months_processed)
     run_duration_seconds.set(time.monotonic() - run_start)
     _record_run_outcome(result)
+    persist_metrics_state()
     return result
 
 
@@ -280,6 +283,9 @@ def main() -> None:
         from sotd.pipeline_supervisor.metrics import next_run_timestamp, start_metrics_server
 
         start_metrics_server(8000)
+        # Run-state gauges survive redeploys: restore from the /data volume
+        # before the port serves traffic, or the freshness panel false-alarms.
+        restore_metrics_state()
     data_dir = Path("/data")
     repo_dir = Path("/app")
     bundle_dir = Path("/bundle")

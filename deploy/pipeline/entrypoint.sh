@@ -28,8 +28,10 @@ git config --global --add safe.directory "${APP_DIR}"
 
 # Dashboard delivery: the shared nas-stacks Grafana provisions SOTD dashboards
 # from this mount. Each repo defines its own dashboards (ruling 2026-10-26) —
-# the pipeline image/checkout is the source of truth, copied out on every boot
-# so a new image version delivers new dashboards without touching nas-stacks.
+# the pipeline image/checkout is the source of truth. /app is a persistent
+# volume that may predate the dashboards directory, so pull before copying;
+# the nightly loop also pulls, but only at 02:00 — a redeploy must deliver.
+git -C "${APP_DIR}" pull --ff-only >/dev/null 2>&1 || true
 DASH_DIR="${SOTD_DASHBOARDS_DIR:-/dashboards}"
 if [ -d "${APP_DIR}/deploy/metrics/grafana/dashboards" ]; then
   mkdir -p "${DASH_DIR}"

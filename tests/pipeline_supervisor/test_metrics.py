@@ -1,3 +1,5 @@
+import json
+
 from prometheus_client import REGISTRY
 
 from sotd.pipeline_supervisor.metrics import (
@@ -155,3 +157,71 @@ def test_new_gauges_registered():
     assert "sotd_pipeline_runs" in names  # Counter: _total stripped by the client
     assert "sotd_pipeline_consecutive_failures" in names
     assert "sotd_pipeline_next_run_timestamp_seconds" in names
+
+
+# --- run-state persistence ----------------------------------------------------
+
+
+def test_persist_and_restore_roundtrip(tmp_path):
+    from sotd.pipeline_supervisor.metrics import (
+        catalog_catchup_success,
+        consecutive_failures,
+        last_run_timestamp,
+        persist_metrics_state,
+        publish_failures_total,
+        publish_last_success,
+        restore_metrics_state,
+        runs_total,
+    )
+
+    state_file = tmp_path / "state" / ".metrics_state.json"
+    last_run_timestamp.set(1700000000)
+    publish_last_success.set(1700000100)
+    catalog_catchup_success.set(1700000200)
+    consecutive_failures.set(2)
+    runs_total.labels(outcome="ok").inc(5)
+    runs_total.labels(outcome="failed").inc(1)
+    publish_failures_total.inc(3)
+
+    persist_metrics_state(str(state_file))
+    # Counters cannot be reset, so persist captures the RUNNING TOTAL and
+    # restore re-adds it. The contract being tested: restore adds exactly the
+    # persisted total to whatever the counter holds — across a real redeploy
+    # the fresh container's counters start at 0, so the restore lands them at
+    # the pre-redeploy total (continuity). Emulate that here by zeroing via a
+    # fresh registry: assert against the persisted file's values instead of
+    # deltas, with the counter's at-persist-time value as the base.
+    after_inc_ok = runs_total._metrics[("ok",)]._value.get()
+    after_inc_failed = runs_total._metrics[("failed",)]._value.get()
+    after_inc_pf = publish_failures_total._value.get()
+    persisted = json.loads(state_file.read_text())
+
+    last_run_timestamp.set(0)
+    publish_last_success.set(0)
+    catalog_catchup_success.set(0)
+    consecutive_failures.set(0)
+    restore_metrics_state(str(state_file))
+
+    assert last_run_timestamp._value.get() == 1700000000
+    assert publish_last_success._value.get() == 1700000100
+    assert catalog_catchup_success._value.get() == 1700000200
+    assert consecutive_failures._value.get() == 2
+    assert runs_total._metrics[("ok",)]._value.get() == after_inc_ok + persisted["runs_ok"]
+    assert (
+        runs_total._metrics[("failed",)]._value.get() == after_inc_failed + persisted["runs_failed"]
+    )
+    assert publish_failures_total._value.get() == after_inc_pf + persisted["publish_failures"]
+
+
+def test_restore_missing_file_is_noop(tmp_path):
+    from sotd.pipeline_supervisor.metrics import restore_metrics_state
+
+    restore_metrics_state(str(tmp_path / "nonexistent.json"))  # no crash, no change
+
+
+def test_restore_garbage_file_is_noop(tmp_path):
+    from sotd.pipeline_supervisor.metrics import restore_metrics_state
+
+    bad = tmp_path / "bad.json"
+    bad.write_text("not json{")
+    restore_metrics_state(str(bad))  # no crash
