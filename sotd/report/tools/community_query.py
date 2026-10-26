@@ -255,6 +255,16 @@ def build_parser() -> argparse.ArgumentParser:
     verify.add_argument("--month", required=True, help="Month (YYYY-MM) to check ids against")
     verify.add_argument("file", help="Text file (e.g. a summary) whose ids should be validated")
 
+    resolve = sub.add_parser(
+        "resolve",
+        help="Comment lookup by author/body-phrase/thread — recover correct ids",
+    )
+    resolve.add_argument("--month", required=True, help="Month (YYYY-MM)")
+    resolve.add_argument("--author", help="Exact author name (case-insensitive)")
+    resolve.add_argument("--text", help="Case-insensitive body-phrase filter")
+    resolve.add_argument("--thread", help="Restrict to one thread (t3_ prefix optional)")
+    resolve.add_argument("--top", type=int, default=10, help="Max rows to print")
+
     return parser
 
 
@@ -326,6 +336,16 @@ def main(argv: Sequence[str] | None = None) -> int:
                 print(cmd_gaps(doc, as_json=args.json, summary=args.summary))
             elif args.command == "verify-ids":
                 print(cmd_verify_ids(doc, args.file))
+            elif args.command == "resolve":
+                print(
+                    cmd_resolve(
+                        doc,
+                        author=args.author,
+                        text=args.text,
+                        thread=args.thread,
+                        top=args.top,
+                    )
+                )
             else:
                 raise QueryError(f"Unknown command: {args.command}")
         return 0
@@ -563,6 +583,7 @@ _AUTHOR_MARKERS = {None, "", "[deleted]", "[removed]"}
 # requires the prefix, so verification matches prefixed citations). Lower
 # bound 2: any prefixed token is an id by contract.
 _ID_RE = re.compile(r"\b(?:t[13]_[a-z0-9]{2,8})\b")
+_BARE_ID_RE = re.compile(r"\b[a-z0-9]{5,8}\b")
 _CONTENT_MARKERS = ("[deleted]", "[removed]")
 
 
@@ -732,30 +753,34 @@ def cmd_gaps(doc: dict, *, as_json: bool = False, summary: bool = False) -> str:
 def cmd_verify_ids(doc: dict, file_path: str) -> str:
     """Post-write provenance gate: validate ids cited in a text file.
 
-    Extracts every t1_/t3_ id from the file (ids appear bare too — e.g. inside
-    `posts` output or notebook lines) and checks each against the month's
-    posts/comments. Ids spanning multiple months are out of scope: only the
-    named month's record is consulted, so an id from another month reports as
-    unknown (that is correct behavior for a per-month summary).
+    Extracts every t1_/t3_ id from the file and checks each against the month's
+    posts/comments. The renderer also emits bare ids (``[hjx6b1v]``); bare
+    base36 tokens that match a record id count as verified citations — tokens
+    that match nothing are prose, never flagged. Ids spanning multiple months
+    are out of scope: only the named month's record is consulted, so an id from
+    another month reports as unknown (correct for a per-month summary).
     """
     path = Path(file_path)
     if not path.exists():
         raise QueryError(f"No such file: {file_path}")
     text = path.read_text(encoding="utf-8", errors="replace")
     cited = set(_ID_RE.findall(text))
-    if not cited:
-        return f"{path.name}: no t1_/t3_ ids cited"
-
     post_ids = {p["id"] for p in doc["data"].get("posts", [])}
     comment_ids = {c["id"] for c in doc["data"].get("comments", [])}
     known = post_ids | comment_ids
+    # Bare ids: renderer-style citations without the t1_/t3_ prefix. Only
+    # tokens that exist in the record count; unknown bare tokens are prose.
+    bare = {t for t in _BARE_ID_RE.findall(text) if t in known}
+    if not cited and not bare:
+        return f"{path.name}: no t1_/t3_ ids cited"
 
     unknown = sorted(i for i in cited if i.removeprefix("t1_").removeprefix("t3_") not in known)
     n_posts = sum(1 for i in cited if i.startswith("t3_") and i.removeprefix("t3_") in post_ids)
     n_cmts = sum(1 for i in cited if i.startswith("t1_") and i.removeprefix("t1_") in comment_ids)
     lines = [
-        f"{path.name}: {len(cited)} ids cited — {n_posts} t3_ (post) verified, "
+        f"{path.name}: {len(cited)} prefixed ids cited — {n_posts} t3_ (post) verified, "
         f"{n_cmts} t1_ (comment) verified"
+        + (f", plus {len(bare)} bare ids matched to the record" if bare else "")
     ]
     if unknown:
         lines.append(f"UNKNOWN ({len(unknown)}):")
@@ -764,6 +789,39 @@ def cmd_verify_ids(doc: dict, file_path: str) -> str:
         lines.append("unknown ids must be fixed or removed before shipping")
     else:
         lines.append("all cited ids verified against the month record")
+    return "\n".join(lines)
+
+
+def cmd_resolve(doc, *, author: str | None, text: str | None, thread: str | None, top: int) -> str:
+    """Comment lookup by author / body phrase / thread — the verify-ids fix loop.
+
+    Finds comments matching any of the filters (ANDed) and prints bounded
+    id/author/date/body-head rows so a mis-cited id can be replaced by the
+    right one without hand-coding python over the JSON.
+    """
+    comments = doc["data"].get("comments", [])
+    pid = thread.removeprefix("t3_").removeprefix("t1_") if thread else None
+    needle = text.lower() if text else None
+    rows = []
+    for c in comments:
+        if author and (c.get("author") or "").lower() != author.lower():
+            continue
+        if pid and c.get("thread_id") != pid:
+            continue
+        if needle and needle not in (c.get("body") or "").lower():
+            continue
+        rows.append(c)
+        if len(rows) >= top:
+            break
+    if not rows:
+        return "no matching comments"
+    lines = [f"{len(rows)} matching comments:"]
+    for c in rows:
+        head = _flatten_body(c.get("body") or "")[:110]
+        lines.append(
+            f"t1_{c['id']}  in t3_{c.get('thread_id')}  u/{c.get('author')}  "
+            f"{c['created_utc'][:10]}: {head}"
+        )
     return "\n".join(lines)
 
 

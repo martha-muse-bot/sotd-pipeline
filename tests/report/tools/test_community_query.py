@@ -921,6 +921,96 @@ class TestVerifyIds:
         assert "no t1_/t3_ ids cited" in out
 
 
+    def test_bare_renderer_ids_recognized(self, tmp_path, capsys):
+        """The renderer emits bare ids ([hjx6b1v]); verify-ids validates them when
+        they exist in the record and ignores unknown bare tokens (prose)."""
+        comm = tmp_path / "community"
+        comm.mkdir()
+        make_community_file(
+            comm / "2026-08.json",
+            "2026-08",
+            posts=[
+                {
+                    "id": "sotdab1",
+                    "title": "T",
+                    "selftext": "",
+                    "author": "a",
+                    "created_utc": "2026-08-01T00:00:00Z",
+                    "score": 1,
+                    "num_comments": 1,
+                    "flair": None,
+                    "url": "u",
+                    "locked": False,
+                    "stickied": False,
+                    "in_pipeline": False,
+                }
+            ],
+            comments=[
+                {
+                    "id": "hjx6b1v",
+                    "thread_id": "sotdab1",
+                    "thread_title": "T",
+                    "parent_id": "t3_sotdab1",
+                    "author": "b",
+                    "created_utc": "2026-08-01T01:00:00Z",
+                    "body": "nice shave",
+                    "score": 1,
+                    "is_submitter": False,
+                }
+            ],
+        )
+        f = tmp_path / "summary.md"
+        f.write_text(
+            "SOTD daily [sotdab1] got a reply (hjx6b1v) and prose like 'part2'.", encoding="utf-8"
+        )
+        code, out, _ = run(
+            capsys, ["--data-dir", str(tmp_path), "verify-ids", "--month", "2026-08", str(f)]
+        )
+        assert code == 0
+        assert "all cited ids verified" in out
+        assert "bare ids matched" in out
+
+class TestResolve:
+    """resolve: comment lookup by author/phrase/thread for the verify-ids fix loop."""
+
+    def test_lookup_by_author(self, data_dir, capsys):
+        code, out, _ = run(
+            capsys,
+            ["--data-dir", str(data_dir), "resolve", "--month", "2026-08", "--author", "bigcheese"],
+        )
+        assert code == 0
+        assert "t1_c2" in out
+        assert "t1_c5" in out
+        assert "t1_c1" not in out  # shaver1's comment not included
+
+    def test_lookup_by_phrase_and_thread(self, data_dir, capsys):
+        code, out, _ = run(
+            capsys,
+            [
+                "--data-dir",
+                str(data_dir),
+                "resolve",
+                "--month",
+                "2026-08",
+                "--thread",
+                "t3_disc",
+                "--text",
+                "verdict",
+            ],
+        )
+        assert code == 0
+        assert "t1_c4" in out
+        assert "t1_c2" not in out  # different thread
+
+    def test_no_matches(self, data_dir, capsys):
+        code, out, _ = run(
+            capsys,
+            ["--data-dir", str(data_dir), "resolve", "--month", "2026-08", "--author", "nobody"],
+        )
+        assert code == 0
+        assert "no matching comments" in out
+
+
 class TestPosts:
     """posts: post metadata lookup for chosen ids."""
 

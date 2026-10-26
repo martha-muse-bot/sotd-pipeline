@@ -89,9 +89,14 @@ instead of guessing. One month per run.
    off here — likely bullet-worthy"), drafted voice is not.
    Then run the provenance gate before reporting:
    `... community_query verify-ids --month {month} data/community/summaries/{month}.md`
-   — it extracts every cited id and checks it against the month record. Fix or
+   — it extracts every cited id (prefixed `t3_`/`t1_` and renderer-style bare
+   ids) and checks it against the month record. Fix or
    remove every UNKNOWN id (truncated ids, placeholder fragments like `t3_ef?`,
-   mid-id spaces) and re-run until it reports "all cited ids verified".
+   mid-id spaces) and re-run until it reports "all cited ids verified". To
+   recover the right id for a citation, use
+   `... community_query resolve --month {month} --author <u/> --text "<phrase>"
+   [--thread t3_x]` — bounded id/author/date/body-head rows instead of
+   hand-coded python.
 8. **Report back** using the return format below.
 
 ## Community JSON record shape
