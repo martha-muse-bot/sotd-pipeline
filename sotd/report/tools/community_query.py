@@ -783,9 +783,14 @@ def cmd_verify_ids(doc: dict, file_path: str) -> str:
         + (f", plus {len(bare)} bare ids matched to the record" if bare else "")
     ]
     if unknown:
+        import difflib
+
         lines.append(f"UNKNOWN ({len(unknown)}):")
         for i in unknown:
-            lines.append(f"  {i}")
+            bare_id = i.removeprefix("t1_").removeprefix("t3_")
+            near = difflib.get_close_matches(bare_id, sorted(known), n=2, cutoff=0.6)
+            hint = f"  — did you mean {' or '.join(near)}?" if near else ""
+            lines.append(f"  {i}{hint}")
         lines.append("unknown ids must be fixed or removed before shipping")
     else:
         lines.append("all cited ids verified against the month record")

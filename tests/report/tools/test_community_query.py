@@ -897,6 +897,42 @@ class TestVerifyIds:
         assert "t3_zzzzz9" in out
         assert "t1_nope00" in out
 
+    def test_unknown_ids_get_near_match_suggestions(self, tmp_path, capsys):
+        """Transposed/truncated ids get difflib near-match suggestions from the
+        record — the fix loop's one-step recovery (promoted from wave-8 agents)."""
+        comm = tmp_path / "community"
+        comm.mkdir()
+        make_community_file(
+            comm / "2026-05.json",
+            "2026-05",
+            posts=[
+                {
+                    "id": "if0s14o",
+                    "title": "T",
+                    "selftext": "",
+                    "author": "a",
+                    "created_utc": "2026-05-01T00:00:00Z",
+                    "score": 1,
+                    "num_comments": 0,
+                    "flair": None,
+                    "url": "u",
+                    "locked": False,
+                    "stickied": False,
+                    "in_pipeline": False,
+                }
+            ],
+            comments=[],
+        )
+        f = tmp_path / "summary.md"
+        f.write_text("See t3_if0s14d for the thread.", encoding="utf-8")
+        code, out, _ = run(
+            capsys, ["--data-dir", str(tmp_path), "verify-ids", "--month", "2026-05", str(f)]
+        )
+        assert code == 0
+        assert "t3_if0s14d" in out
+        assert "did you mean" in out
+        assert "if0s14o" in out
+
     def test_missing_file_exits_1(self, data_dir, tmp_path, capsys):
         code, _, err = run(
             capsys,
@@ -919,7 +955,6 @@ class TestVerifyIds:
         )
         assert code == 0
         assert "no t1_/t3_ ids cited" in out
-
 
     def test_bare_renderer_ids_recognized(self, tmp_path, capsys):
         """The renderer emits bare ids ([hjx6b1v]); verify-ids validates them when
@@ -969,6 +1004,7 @@ class TestVerifyIds:
         assert code == 0
         assert "all cited ids verified" in out
         assert "bare ids matched" in out
+
 
 class TestResolve:
     """resolve: comment lookup by author/phrase/thread for the verify-ids fix loop."""
