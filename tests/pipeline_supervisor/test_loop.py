@@ -513,3 +513,33 @@ def test_phase_records_set_from_stdout(tmp_path, monkeypatch):
     )
     for phase, count in records.items():
         assert phase_records.labels(phase=phase, scope="monthly")._value.get() == count
+
+
+def test_once_mode_runs_past_gauge_import(tmp_path, monkeypatch):
+    """Regression: --once crashed with UnboundLocalError on next_run_timestamp
+    (lazy import inside the metrics-server branch; the set ran in both modes).
+    Runs the real main() with --once: hardcoded /data,/app,/bundle dirs are
+    monkeypatched, git pull fails fast (no repo), and main must survive one
+    full cycle — through next_run_timestamp.set, the failed pull, and the
+    --once break — without an UnboundLocalError."""
+    import sotd.pipeline_supervisor.loop as loop_mod
+
+    data = tmp_path / "data"
+    data.mkdir()
+    (data / "enriched").mkdir()
+    repo = tmp_path / "repo"
+    repo.mkdir()  # not a git repo: pull fails fast, run_nightly returns early
+    bundle = tmp_path / "bundle"
+    bundle.mkdir()
+    monkeypatch.setattr(
+        "sotd.pipeline_supervisor.loop.Path",
+        lambda p="": {"/data": data, "/app": repo, "/bundle": bundle}.get(p, Path(p)),
+    )
+    monkeypatch.setattr(
+        loop_mod,
+        "_current_and_prior",
+        lambda dt: ("2026-10", "2026-09"),
+    )
+    monkeypatch.setattr(loop_mod, "_all_months", lambda d: ("2026-10", "2026-10"))
+    monkeypatch.setattr("sys.argv", ["loop.py", "--once"])
+    loop_mod.main()  # no exception = regression fixed

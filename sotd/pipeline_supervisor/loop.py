@@ -19,6 +19,7 @@ from sotd.pipeline_supervisor.metrics import (
     consecutive_failures,
     last_run_status,
     months_processed,
+    next_run_timestamp,
     parse_phase_durations,
     parse_phase_records,
     persist_metrics_state,
@@ -280,7 +281,10 @@ def main() -> None:
     if not args.once:
         # The metrics port belongs to the long-running loop process; a --once
         # smoke run inside the same container must not try to take it.
-        from sotd.pipeline_supervisor.metrics import next_run_timestamp, start_metrics_server
+        # (start_metrics_server stays lazy; next_run_timestamp is a top-level
+        # import — the --once path sets it too, and a lazy import left it
+        # unbound there. Found by the first manual smoke run.)
+        from sotd.pipeline_supervisor.metrics import start_metrics_server
 
         start_metrics_server(8000)
         # Run-state gauges survive redeploys: restore from the /data volume
