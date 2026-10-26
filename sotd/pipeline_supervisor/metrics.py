@@ -162,12 +162,16 @@ def persist_metrics_state(path: str | None = None) -> None:
         "publish_last_success": publish_last_success._value.get(),
         "catalog_catchup_success": catalog_catchup_success._value.get(),
         "consecutive_failures": consecutive_failures._value.get(),
-        "runs_ok": runs_total._metrics.get(("ok",), None)._value.get()
-        if runs_total._metrics.get(("ok",), None) is not None
-        else 0,
-        "runs_failed": runs_total._metrics.get(("failed",), None)._value.get()
-        if runs_total._metrics.get(("failed",), None) is not None
-        else 0,
+        "runs_ok": (
+            runs_total._metrics.get(("ok",), None)._value.get()
+            if runs_total._metrics.get(("ok",), None) is not None
+            else 0
+        ),
+        "runs_failed": (
+            runs_total._metrics.get(("failed",), None)._value.get()
+            if runs_total._metrics.get(("failed",), None) is not None
+            else 0
+        ),
         "publish_failures": publish_failures_total._value.get(),
     }
     try:
