@@ -87,7 +87,11 @@ explicitly with a month ("summarize community context for 2026-09"). Methodology
 budgets. Every summary ships through the `community_query verify-ids` provenance
 gate before reporting. All 125 months (2016-05 → 2026-09) are summarized under
 this methodology; the superseded sampling-era summaries are archived at
-`data/community/summaries_v1/`.
+`data/community/summaries_v1/`. An annual layer (`community-annual-summarizer` agent)
+distills each year's monthly summaries into `data/community/summaries/annual/YYYY.md`
+(year narrative, cross-month arcs, month spine, unresolved-at-year-end) — for readers
+that need broad arcs without consuming 125 monthly files; input is the monthly
+summaries layer, never raw records.
 
 The `observations-drafter` agent (`.claude/agents/observations-drafter.md`) drafts the
 `## Observations` section for the monthly hardware/software reports in the community-announcer
