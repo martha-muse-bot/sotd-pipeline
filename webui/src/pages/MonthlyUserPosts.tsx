@@ -11,53 +11,15 @@ import CommentModal from '@/components/domain/CommentModal';
 import { getCommentDetail, CommentDetail } from '@/services/api';
 import MonthSelector from '@/components/forms/MonthSelector';
 import { isPublicBuild } from '@/lib/buildMode';
+import {
+  fillAbsentMonths,
+  type UserPostingAnalysis,
+} from '@/utils/userAnalysis';
 import axios from 'axios';
 
 interface UserData {
   username: string;
   post_count: number;
-}
-
-interface UserPostingAnalysis {
-  user: string;
-  posted_days: number;
-  missed_days: number;
-  posted_dates: string[];
-  comment_ids: string[];
-  comments_by_date: Record<string, string[]>;
-  comment_urls?: Record<string, string>; // Optional for backward compatibility
-  // Product usage data
-  razors: Array<{
-    key: string;
-    brand: string;
-    model: string;
-    count: number;
-    comment_ids: string[];
-  }>;
-  blades: Array<{
-    key: string;
-    brand: string;
-    model: string;
-    count: number;
-    comment_ids: string[];
-  }>;
-  brushes: Array<{
-    key: string;
-    brand: string;
-    model: string;
-    handle_brand: string;
-    knot_brand: string;
-    knot_model: string;
-    count: number;
-    comment_ids: string[];
-  }>;
-  soaps: Array<{
-    key: string;
-    brand: string;
-    model: string;
-    count: number;
-    comment_ids: string[];
-  }>;
 }
 
 const MonthlyUserPosts: React.FC = () => {
@@ -278,19 +240,24 @@ const MonthlyUserPosts: React.FC = () => {
         return;
       }
 
-      const validAnalysesWithMonths = responses
-        .filter(r => r.response !== null)
-        .map(r => ({
-          month: r.month,
-          analysis: r.response!.data as UserPostingAnalysis,
-        }));
-
-      if (validAnalysesWithMonths.length === 0) {
+      // Months where the user posted nothing 404; synthesize an empty analysis
+      // so the calendar still renders (all cells red) — but only when the user
+      // exists in at least one selected month, so a typo'd name still errors.
+      const found = responses.filter(r => r.response !== null);
+      if (found.length === 0) {
         setError(`User ${username} not found in any selected month`);
         setAggregatedAnalysis(null);
         setUserAnalyses([]);
         return;
       }
+
+      const validAnalysesWithMonths = fillAbsentMonths(
+        responses.map(r => r.month),
+        Object.fromEntries(
+          found.map(r => [r.month, r.response!.data as UserPostingAnalysis])
+        ),
+        username
+      );
 
       // Aggregate analyses
       const validAnalyses = validAnalysesWithMonths.map(item => item.analysis);
