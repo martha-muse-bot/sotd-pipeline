@@ -705,6 +705,108 @@ class TestGaps:
         assert "0 gapped posts, 0 gapped comments" in out
         assert "no deleted, removed, or authorless records" in out
 
+    def test_overwrite_pattern_reported(self, tmp_path, capsys):
+        """Author-intact comments whose bodies are mass-deletion placeholders
+        (Redact/'Fuck u/spez') are real gaps invisible to the classic census."""
+        comm = tmp_path / "community"
+        comm.mkdir()
+        posts = [
+            {
+                "id": "ok",
+                "title": "Thread",
+                "selftext": "",
+                "author": "a",
+                "created_utc": "2026-06-01T00:00:00Z",
+                "score": 1,
+                "num_comments": 3,
+                "flair": None,
+                "url": "u",
+                "locked": False,
+                "stickied": False,
+                "in_pipeline": False,
+            }
+        ]
+        base = {
+            "thread_id": "ok",
+            "thread_title": "Thread",
+            "created_utc": "2026-06-01T01:00:00Z",
+            "score": 1,
+            "is_submitter": False,
+        }
+        comments = [
+            {
+                **base,
+                "id": "ow1",
+                "parent_id": "t3_ok",
+                "author": "redacted_user",
+                "body": "Edited to remove comments. Fuck u/spez",
+            },
+            {
+                **base,
+                "id": "ow2",
+                "parent_id": "t3_ok",
+                "author": "redacted_user",
+                "body": "redact.dev removed this comment",
+            },
+            {
+                **base,
+                "id": "healthyc",
+                "parent_id": "t3_ok",
+                "author": "user",
+                "body": "I am fine and this mentions nothing weird",
+            },
+        ]
+        make_community_file(comm / "2026-06.json", "2026-06", posts, comments)
+        code, out, _ = run(capsys, ["--data-dir", str(tmp_path), "gaps", "--month", "2026-06"])
+        assert code == 0
+        assert "overwrites" in out
+        # grouped by (author, pattern) — the two placeholder bodies use different patterns
+        assert "u/redacted_user [edited to remove comments]: 1 comment" in out
+        assert "u/redacted_user [redact]: 1 comment" in out
+        # healthy comment must not be counted as an overwrite
+        assert "u/user [" not in out
+
+    def test_overwrite_json(self, tmp_path, capsys):
+        comm = tmp_path / "community"
+        comm.mkdir()
+        posts = [
+            {
+                "id": "ok",
+                "title": "Thread",
+                "selftext": "",
+                "author": "a",
+                "created_utc": "2026-06-01T00:00:00Z",
+                "score": 1,
+                "num_comments": 1,
+                "flair": None,
+                "url": "u",
+                "locked": False,
+                "stickied": False,
+                "in_pipeline": False,
+            }
+        ]
+        comments = [
+            {
+                "id": "ow1",
+                "thread_id": "ok",
+                "thread_title": "Thread",
+                "parent_id": "t3_ok",
+                "author": "wiper",
+                "created_utc": "2026-06-01T01:00:00Z",
+                "body": "Fuck u/spez",
+                "score": 1,
+                "is_submitter": False,
+            },
+        ]
+        make_community_file(comm / "2026-06.json", "2026-06", posts, comments)
+        code, out, _ = run(
+            capsys, ["--json", "--data-dir", str(tmp_path), "gaps", "--month", "2026-06"]
+        )
+        assert code == 0
+        doc = json.loads(out)
+        assert doc["overwrite_comments"] == 1
+        assert doc["overwrites"]["wiper (fuck u/spez)"] == ["ow1"]
+
     def test_lists_gapped_records_with_context(self, gappy_dir, capsys):
         code, out, _ = run(capsys, ["--data-dir", str(gappy_dir), "gaps", "--month", "2026-06"])
         assert code == 0
@@ -755,7 +857,48 @@ class TestGaps:
     def test_missing_month_exits_1(self, capsys):
         code, _, err = run(capsys, ["--data-dir", "/nonexistent", "gaps", "--month", "2025-01"])
         assert code == 1
-        assert "No community file" in err
+
+    def test_summary_hotspots(self, gappy_dir, capsys):
+        """--summary renders headline + per-thread hotspot ranking, no id list."""
+        code, out, _ = run(
+            capsys, ["--data-dir", str(gappy_dir), "gaps", "--month", "2026-06", "--summary"]
+        )
+        assert code == 0
+        assert "1 gapped post, 3 gapped comments" in out
+        assert "gapped-comment hotspots:" in out
+        assert "t3_ok" in out  # all 3 gapped comments sit in the healthy thread
+        # full id list must NOT appear in summary mode
+        assert "t1_delc" not in out
+        assert "posts:" not in out or "gapped-post hotspots:" in out
+
+
+class TestPosts:
+    """posts: post metadata lookup for chosen ids."""
+
+    def test_looks_up_id_with_metadata(self, data_dir, capsys):
+        code, out, _ = run(
+            capsys, ["--data-dir", str(data_dir), "posts", "--month", "2026-08", "--ids", "disc"]
+        )
+        assert code == 0
+        assert "t3_disc" in out
+        assert "u/bigcheese" in out
+        assert "Lather Games wrap-up" in out
+        assert "the final standings" in out  # selftext head
+
+    def test_accepts_prefix_and_lists_unknown(self, data_dir, capsys):
+        code, out, _ = run(
+            capsys,
+            ["--data-dir", str(data_dir), "posts", "--month", "2026-08", "--ids", "t3_sotd,zzzz9"],
+        )
+        assert code == 0
+        assert "t3_sotd" in out
+        assert "unknown ids: zzzz9" in out
+
+    def test_all_unknown_exits_1(self, data_dir, capsys):
+        code, out, _ = run(
+            capsys, ["--data-dir", str(data_dir), "posts", "--month", "2026-08", "--ids", "zzzz9"]
+        )
+        assert code == 1
 
 
 class TestBodies:
@@ -1156,5 +1299,163 @@ class TestSchema:
 
     def test_missing_month_exits_1(self, capsys):
         code, _, err = run(capsys, ["--data-dir", "/nonexistent", "schema", "--month", "2025-01"])
+        assert code == 1
+        assert "No community file" in err
+
+
+class TestFull:
+    """The full-record subcommand: whole month, no truncation, deterministic parts."""
+
+    def test_renders_all_posts_and_full_bodies(self, data_dir, capsys):
+        code, out, _ = run(capsys, ["--data-dir", str(data_dir), "full", "2026-08"])
+        assert code == 0
+        for pid in ("sotd", "disc", "quiet"):
+            assert pid in out
+        assert "the final standings" in out  # post selftext
+        assert "final verdict posted" in out
+        assert "(part 1 of " in out
+
+    def test_deleted_bodies_not_deduped(self, tmp_path, capsys):
+        """[deleted]/[removed] selftexts repeat across posts by nature — they must
+        render as markers, never as 'identical to <id>' (a real bug found by the
+        2018-02 summarizer)."""
+        comm = tmp_path / "community"
+        comm.mkdir()
+        posts = [
+            {
+                "id": f"del{i}",
+                "title": f"T{i}",
+                "selftext": "[deleted]",
+                "author": "a",
+                "created_utc": f"2026-05-0{i + 1}T00:00:00Z",
+                "score": 1,
+                "num_comments": 0,
+                "flair": None,
+                "url": "u",
+                "locked": False,
+                "stickied": False,
+                "in_pipeline": False,
+            }
+            for i in range(2)
+        ]
+        make_community_file(comm / "2026-05.json", "2026-05", posts, [])
+        code, out, _ = run(capsys, ["--data-dir", str(tmp_path), "full", "2026-05"])
+        assert code == 0
+        assert out.count("identical to") == 0
+        assert out.count("[deleted]") >= 2
+
+    def test_no_comment_truncation(self, tmp_path, capsys):
+        comm = tmp_path / "community"
+        comm.mkdir()
+        long_body = "x" * 500
+        make_community_file(
+            comm / "2026-07.json",
+            "2026-07",
+            posts=[
+                {
+                    "id": "t1post",
+                    "title": "T",
+                    "selftext": "",
+                    "author": "a",
+                    "created_utc": "2026-07-01T00:00:00Z",
+                    "score": 1,
+                    "num_comments": 1,
+                    "flair": None,
+                    "url": "u",
+                    "locked": False,
+                    "stickied": False,
+                    "in_pipeline": False,
+                }
+            ],
+            comments=[
+                {
+                    "id": "lc",
+                    "thread_id": "t1post",
+                    "thread_title": "T",
+                    "parent_id": "t3_t1post",
+                    "author": "b",
+                    "created_utc": "2026-07-01T01:00:00Z",
+                    "body": long_body,
+                    "score": 1,
+                    "is_submitter": False,
+                }
+            ],
+        )
+        _, out, _ = run(capsys, ["--data-dir", str(tmp_path), "full", "2026-07"])
+        assert long_body in out  # `thread` cuts at 200 chars; full must not
+
+    def test_deterministic_parts_cover_everything(self, data_dir, capsys):
+        parts = []
+        n = None
+        part = 1
+        while True:
+            code, out, _ = run(
+                capsys, ["--data-dir", str(data_dir), "full", "2026-08", "--part", str(part)]
+            )
+            if code != 0:
+                break
+            parts.append(out)
+            if n is None:
+                n = int(out.split("(part 1 of ")[1].split(")")[0])
+            part += 1
+        assert part - 1 == n
+        joined = "".join(parts)
+        for cid in ("c1", "c2", "c4", "c5", "c6"):
+            assert cid in joined
+
+    def test_part_out_of_range_exits_1(self, data_dir, capsys):
+        code, _, err = run(capsys, ["--data-dir", str(data_dir), "full", "2026-08", "--part", "99"])
+        assert code == 1
+        assert "does not exist" in err
+
+    def test_chars_per_part_splits_threads(self, tmp_path, capsys):
+        comm = tmp_path / "community"
+        comm.mkdir()
+        make_community_file(
+            comm / "2026-06.json",
+            "2026-06",
+            posts=[
+                {
+                    "id": f"p{i}",
+                    "title": f"T{i}",
+                    "selftext": "y" * 50,
+                    "author": "a",
+                    "created_utc": f"2026-06-0{i + 1}T00:00:00Z",
+                    "score": 1,
+                    "num_comments": 1,
+                    "flair": None,
+                    "url": "u",
+                    "locked": False,
+                    "stickied": False,
+                    "in_pipeline": False,
+                }
+                for i in range(1, 4)
+            ],
+            comments=[
+                {
+                    "id": f"c{i}",
+                    "thread_id": f"p{i}",
+                    "thread_title": f"T{i}",
+                    "parent_id": f"t3_p{i}",
+                    "author": "b",
+                    "created_utc": f"2026-06-0{i + 1}T01:00:00Z",
+                    "body": "z" * 50,
+                    "score": 1,
+                    "is_submitter": False,
+                }
+                for i in range(1, 4)
+            ],
+        )
+        code, out, _ = run(
+            capsys,
+            ["--data-dir", str(tmp_path), "full", "2026-06", "--chars-per-part", "400"],
+        )
+        assert code == 0
+        assert "(part 1 of " in out
+        n = int(out.split("(part 1 of ")[1].split(")")[0])
+        assert n >= 2  # 3 thread blocks at ~150 chars each must split into >=2 parts
+
+    def test_missing_month_exits_1(self, capsys):
+        code, _, err = run(capsys, ["--data-dir", "/nonexistent", "full", "2025-01"])
         assert code == 1
         assert "No community file" in err

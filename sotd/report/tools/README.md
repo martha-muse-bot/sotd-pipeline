@@ -101,8 +101,10 @@ Queries over `data/community/` month files (all posts + full comment trees):
 reconstructed comment tree, with `--top-level` and `--tail N` slice views),
 `bodies` (bounded body slices for chosen post or comment ids — "body reads"),
 `search` (keyword/author across a bounded window), `gaps` (census of
-deleted/removed/authorless records), and `schema` (meta keys, counts,
-post/comment record keys).
+deleted/removed/authorless records), `posts` (post-metadata lookup for chosen
+ids), `schema` (meta keys, counts, post/comment record keys), and `full` (the
+entire month record — every post body plus every thread's complete comment
+tree, no truncation — streamed in deterministic parts).
 
 ```bash
 .venv/bin/python -m sotd.report.tools.community_query meta --month 2026-08
@@ -115,8 +117,19 @@ post/comment record keys).
 .venv/bin/python -m sotd.report.tools.community_query bodies --month 2026-08 --ids t3_id1,t3_id2 --max-chars 1000
 .venv/bin/python -m sotd.report.tools.community_query bodies --month 2026-08 --id t1_ovchl1k,t1_ovhanvs --max-chars 1200
 .venv/bin/python -m sotd.report.tools.community_query search --months 2026-03:2026-04 --query "group buy"
+.venv/bin/python -m sotd.report.tools.community_query posts --month 2026-08 --ids t3_id1,t3_id2   # id → author/date/title/selftext-head
 .venv/bin/python -m sotd.report.tools.community_query gaps --month 2026-08
+.venv/bin/python -m sotd.report.tools.community_query gaps --month 2026-08 --summary             # headline + per-thread gap hotspots
+.venv/bin/python -m sotd.report.tools.community_query full 2026-08            # part 1 of N
+.venv/bin/python -m sotd.report.tools.community_query full 2026-08 --part 2   # subsequent parts
 ```
+
+**`full` — whole-record streaming.** Renders all posts (header + full body)
+then all thread comment trees in time order, full bodies (no 200-char cut),
+packaged into parts of ~600k chars (~150k tokens) at thread boundaries —
+deterministic, so `--part 2` after reading part 1 resumes exactly. Read parts
+in sequence and the whole month is in context. Output grows with the month:
+2026-04 is 2 parts; 2022-06 era months are ~8–12.
 
 Ids in `bodies`/`thread` accept the `t3_`/`t1_` prefix or the bare id (`--id` is
 an alias for `--ids`); unknown ids are listed in the output rather than failing
@@ -129,7 +142,10 @@ fixture without a full drill. `--tail N` renders the last N comments by time
 instead of the first `--max-comments` (the two slice flags are mutually
 exclusive; `--top-level` composes with either view). `gaps` lists
 deleted/removed/authorless posts and comments with their ids and thread titles
-— the Open-questions census in one call.
+— the Open-questions census in one call. It also detects **overwrite
+placeholders**: comments whose author is intact but whose body is a
+mass-deletion stub (Redact.dev wipes, "Fuck u/spez" edits) — invisible to the
+classic census, reported grouped per author and pattern.
 
 Record shape (also shown by `schema`): `{"meta": {...}, "data": {"posts": [...],
 "comments": [...]}}` — posts carry `id/title/selftext/author/created_utc/...`

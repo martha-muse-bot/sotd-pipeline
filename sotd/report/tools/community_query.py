@@ -5,7 +5,10 @@ without loading whole month files into context:
 thread listings, one thread with its reconstructed comment tree (top-level
 and tail views), bounded body slices for chosen post or comment ids
 ("body reads"), keyword/author search across a bounded month window, and
-a census of deleted/removed/authorless records.
+a census of deleted/removed/authorless records. The ``full`` subcommand
+streams the *entire* month record — every post body plus every thread's
+complete comment tree, no truncation — in deterministic bounded parts
+for agents whose context can hold a whole month.
 
 Month/window arguments are always explicit — this structurally enforces the
 "never see future months" rule (same mechanism as --end on history queries).
@@ -207,6 +210,27 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     schema = sub.add_parser("schema", help="Show meta keys, counts, and post/comment record keys")
+    posts_lookup = sub.add_parser(
+        "posts", help="Post metadata (id/author/title/date/selftext-head) for chosen ids"
+    )
+    posts_lookup.add_argument("--month", required=True, help="Month (YYYY-MM)")
+    posts_lookup.add_argument(
+        "--ids",
+        "--id",
+        required=True,
+        help="Comma-separated post ids (t3_ prefix optional)",
+    )
+    full = sub.add_parser(
+        "full", help="Stream the entire month record (all posts + full comment trees) in parts"
+    )
+    full.add_argument("month", help="Month to render, YYYY-MM (explicit, never inferred)")
+    full.add_argument("--part", type=int, default=1, help="Which part to render (1-based)")
+    full.add_argument(
+        "--chars-per-part",
+        type=int,
+        default=600_000,
+        help="Approximate part size in characters (~4 chars/token)",
+    )
     schema.add_argument("--month", required=True, help="Month (YYYY-MM)")
 
     search = sub.add_parser("search", help="Keyword/author search across a bounded window")
@@ -217,6 +241,11 @@ def build_parser() -> argparse.ArgumentParser:
 
     gaps = sub.add_parser("gaps", help="Census of deleted/removed/authorless posts and comments")
     gaps.add_argument("--month", required=True, help="Month (YYYY-MM)")
+    gaps.add_argument(
+        "--summary",
+        action="store_true",
+        help="Headline counts + per-thread hotspot ranking instead of the full id list",
+    )
 
     return parser
 
@@ -273,13 +302,20 @@ def main(argv: Sequence[str] | None = None) -> int:
                 )
             elif args.command == "schema":
                 print(cmd_schema(doc, as_json=args.json))
+            elif args.command == "full":
+                print(cmd_full(doc, part=args.part, chars_per_part=args.chars_per_part))
             elif args.command == "bodies":
                 ids = [s for s in (i.strip() for i in args.ids.split(",")) if s]
                 if not ids:
                     raise QueryError("No ids given (--ids is comma-separated)")
                 print(cmd_bodies(doc, ids, max_chars=args.max_chars, as_json=args.json))
+            elif args.command == "posts":
+                ids = [s for s in (i.strip() for i in args.ids.split(",")) if s]
+                if not ids:
+                    raise QueryError("No ids given (--ids is comma-separated)")
+                print(cmd_posts(doc, ids))
             elif args.command == "gaps":
-                print(cmd_gaps(doc, as_json=args.json))
+                print(cmd_gaps(doc, as_json=args.json, summary=args.summary))
             else:
                 raise QueryError(f"Unknown command: {args.command}")
         return 0
@@ -290,6 +326,109 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 def _flatten_body(body: str) -> str:
     return " / ".join(line.strip() for line in (body or "").splitlines() if line.strip())
+
+
+def cmd_full(doc: dict, *, part: int = 1, chars_per_part: int = 600_000) -> str:
+    """Render the entire month record — every post, every comment, full bodies.
+
+    Deterministic parting: part 1 carries all posts (id/date/author/score/title/
+    body) plus the first threads' full comment trees; later parts continue at
+    thread boundaries. ~600k chars ≈ ~150k tokens per part. The same month,
+    same args → same output, so an agent can resume at `--part 2` after reading
+    part 1. Gapped records render their markers ([deleted]/[removed]) as-is.
+    """
+    if part < 1:
+        raise QueryError("--part must be a positive integer")
+    if chars_per_part < 100:
+        raise QueryError("--chars-per-part must be >= 100")
+
+    counts = comment_counts(doc)
+    posts = doc["data"].get("posts", [])
+    comments = doc["data"].get("comments", [])
+    by_thread: dict = {}
+    for c in comments:
+        by_thread.setdefault(c["thread_id"], []).append(c)
+
+    # Token trims: (1) no URL lines — the id is the permalink's key part; (2)
+    # exact-duplicate post bodies (AutoModerator daily templates) render once
+    # in full, repeats as a one-line pointer. Dedupe is by exact selftext hash
+    # in post order; only identical bodies collapse.
+    body_seen: dict[int, str] = {}
+
+    # Render units: one block per post (header + body), then per-thread trees.
+    # Posts without comments render in the posts section; thread blocks follow.
+    post_blocks: list[str] = []
+    thread_blocks: list[str] = []
+    commented: set = set()
+    for p in posts:
+        pid = p["id"]
+        lines = [
+            f"{pid}  {p['created_utc'][:10]}  u/{p.get('author')}  "
+            f"{counts.get(pid, 0)} comments  score {p['score']}"
+            + (f"  flair={p['flair']}" if p.get("flair") else ""),
+            p["title"],
+        ]
+        st = p.get("selftext") or ""
+        # Dedupe only real, substantive bodies. Deletion markers ("[deleted]",
+        # "[removed]") repeat across posts by nature — collapsing them would
+        # misreport genuine gaps as shared content.
+        if st and st not in _CONTENT_MARKERS:
+            key = hash(st)
+            first = body_seen.get(key)
+            if first is None:
+                body_seen[key] = pid
+                lines.append("--- body ---")
+                lines.append(st)
+            else:
+                lines.append(f"--- body: identical to {first} ---")
+        elif st:
+            lines.append("--- body ---")
+            lines.append(st)
+        n = by_thread.get(pid)
+        if n:
+            commented.add(pid)
+            cmts = sorted(n, key=lambda c: c["created_utc"])
+            children: dict = {}
+            for c in cmts:
+                children.setdefault(c["parent_id"].removeprefix("t1_"), []).append(c)
+
+            def walk(parent: str, depth: int) -> None:
+                for c in sorted(children.get(parent, []), key=lambda x: x["created_utc"]):
+                    body = _flatten_body(c["body"])
+                    op = " (OP)" if c.get("is_submitter") else ""
+                    lines.append(
+                        f"{'  ' * depth}[{c['id']}] u/{c['author']} {c['created_utc'][:10]}{op}: {body}"
+                    )
+                    walk(c["id"], depth + 1)
+
+            lines.append(f"--- {len(cmts)} comments ---")
+            walk(f"t3_{pid}", 0)
+        thread_blocks.append("\n".join(lines))
+    # Posts with zero fetched comments render in the posts section only.
+    post_blocks = [b for b, p in zip(thread_blocks, posts) if p["id"] not in commented]
+    thread_blocks = [b for b, p in zip(thread_blocks, posts) if p["id"] in commented]
+
+    header = (
+        f"# {doc['meta'].get('month')} full record — {len(posts)} posts, {len(comments)} comments\n"
+    )
+
+    # Pack blocks into parts at block boundaries.
+    parts: list[list[str]] = [[]]
+    size = 0
+    for block in post_blocks + thread_blocks:
+        bsize = len(block)
+        if size and size + bsize > chars_per_part:
+            parts.append([])
+            size = 0
+        parts[-1].append(block)
+        size += bsize
+
+    idx = part - 1
+    if idx >= len(parts):
+        raise QueryError(f"Part {part} does not exist ({len(parts)} parts total)")
+    out = [header, f"(part {part} of {len(parts)})"]
+    out.extend(parts[idx])
+    return "\n".join(out)
 
 
 def cmd_thread(
@@ -414,13 +553,46 @@ def _gap_reasons(record: dict, content_key: str) -> list:
     return reasons
 
 
-def cmd_gaps(doc: dict, *, as_json: bool = False) -> str:
-    """Census of deleted/removed/authorless posts and comments, with ids and titles."""
+def cmd_gaps(doc: dict, *, as_json: bool = False, summary: bool = False) -> str:
+    """Census of deleted/removed/authorless posts and comments, with ids and titles.
+
+    --summary renders headline counts plus a per-thread hotspot ranking instead
+    of the full id list — the Open-questions digest in one call.
+    """
     posts = doc["data"].get("posts", [])
     comments = doc["data"].get("comments", [])
     gapped_posts = [(p, reasons) for p in posts if (reasons := _gap_reasons(p, "selftext"))]
     gapped_comments = [(c, reasons) for c in comments if (reasons := _gap_reasons(c, "body"))]
     month = doc["meta"].get("month")
+
+    # Overwrite-pattern comments: author intact but body is a mass-deletion
+    # placeholder (Redact.dev wipes, "Fuck u/spez" edits, collapse stubs). The
+    # classic gap census misses these — the author looks healthy — yet the real
+    # text is gone. Detected by pattern, reported per author.
+    _OVERWRITE_PATTERNS = (
+        "edited to remove comments",
+        "fuck u/spez",
+        "[removed by reddit]",
+        "removed by reddit's",
+        "redact",
+    )
+
+    def _is_overwrite(body: str) -> str | None:
+        low = (body or "").lower()
+        for pat in _OVERWRITE_PATTERNS:
+            if pat in low:
+                return pat
+        return None
+
+    overwrites = {}
+    for c in comments:
+        author = c.get("author")
+        if author in _AUTHOR_MARKERS:
+            continue
+        pat = _is_overwrite(c.get("body", ""))
+        if pat:
+            key = (author, pat)
+            overwrites.setdefault(key, []).append(c["id"])
 
     if as_json:
         return json.dumps(
@@ -430,6 +602,10 @@ def cmd_gaps(doc: dict, *, as_json: bool = False) -> str:
                 "comment_count": len(comments),
                 "gapped_posts": len(gapped_posts),
                 "gapped_comments": len(gapped_comments),
+                "overwrite_comments": sum(len(v) for v in overwrites.values()),
+                "overwrites": {
+                    f"{author} ({pat})": ids for (author, pat), ids in overwrites.items()
+                },
                 "posts": [
                     {
                         "id": p["id"],
@@ -460,7 +636,39 @@ def cmd_gaps(doc: dict, *, as_json: bool = False) -> str:
         f"{_plural(len(gapped_comments), 'gapped comment')} "
         f"(of {_plural(len(posts), 'post')} / {_plural(len(comments), 'comment')})"
     ]
-    if not gapped_posts and not gapped_comments:
+    if summary:
+        # Hotspot digest: gap concentration per thread, ranked. Posts and
+        # comments are counted separately; thread titles give the context.
+        post_hot = Counter((p["id"], (p.get("title") or "")[:50]) for p, _r in gapped_posts)
+        cmt_hot = Counter(
+            (c.get("thread_id"), (c.get("thread_title") or "")[:50]) for c, _r in gapped_comments
+        )
+        if overwrites:
+            lines.append(
+                "overwrites (author intact, body is a mass-deletion placeholder — "
+                "invisible to the classic census):"
+            )
+            for (author, pat), ids in sorted(overwrites.items(), key=lambda kv: -len(kv[1])):
+                lines.append(f"  u/{author} [{pat}]: {len(ids)} comments")
+        if post_hot:
+            lines.append("gapped-post hotspots:")
+            for (pid, title), n in post_hot.most_common(10):
+                lines.append(f"  t3_{pid}  {n}  {title}")
+        if cmt_hot:
+            lines.append("gapped-comment hotspots:")
+            for (tid, title), n in cmt_hot.most_common(10):
+                lines.append(f"  t3_{tid}  {n}  {title}")
+        if not post_hot and not cmt_hot and not overwrites:
+            lines.append("no deleted, removed, or authorless records")
+        return "\n".join(lines)
+    if overwrites:
+        lines.append(
+            "overwrites (author intact, body is a mass-deletion placeholder — "
+            "invisible to the classic census):"
+        )
+        for (author, pat), ids in sorted(overwrites.items(), key=lambda kv: -len(kv[1])):
+            lines.append(f"  u/{author} [{pat}]: {len(ids)} comments")
+    if not gapped_posts and not gapped_comments and not overwrites:
         lines.append("no deleted, removed, or authorless records")
         return "\n".join(lines)
     if gapped_posts:
@@ -482,6 +690,36 @@ def cmd_gaps(doc: dict, *, as_json: bool = False) -> str:
             if c.get("body") in _CONTENT_MARKERS:
                 parts.append(f"body={c.get('body')}")
             lines.append("  " + "  ".join(parts))
+    return "\n".join(lines)
+
+
+def cmd_posts(doc: dict, ids: list) -> str:
+    """Post metadata for chosen ids — id/author/date/title/selftext head.
+
+    The id→author/title lookup agents otherwise hand-roll; bodies are sliced
+    to 200 chars (full bodies go through `bodies` or `full`).
+    """
+    posts = {p["id"]: p for p in doc["data"].get("posts", [])}
+    lines = []
+    unknown = []
+    for raw in ids:
+        pid = raw.removeprefix("t3_").removeprefix("t1_")
+        p = posts.get(pid)
+        if p is None:
+            unknown.append(raw)
+            continue
+        head = (p.get("selftext") or "")[:200]
+        lines.append(
+            f"t3_{pid}  {p['created_utc'][:10]}  u/{p.get('author')}  "
+            f"{p.get('num_comments')} comments  score {p['score']}"
+            + (f"  flair={p['flair']}" if p.get("flair") else "")
+            + f"\n  {p.get('title')}"
+            + (f"\n  {head}" if head else "")
+        )
+    if not lines:
+        raise QueryError(f"Unknown ids: {', '.join(unknown)}")
+    if unknown:
+        lines.append(f"(unknown ids: {', '.join(unknown)})")
     return "\n".join(lines)
 
 
