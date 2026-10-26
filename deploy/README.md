@@ -242,6 +242,11 @@ published bundle, and the public site reflects the new run.
 
 ### Verification
 
+- **One-shot check**: `scripts/verify-pipeline-metrics.sh` (repo root) — walks the
+  whole chain: supervisor `/metrics` (via NAS), Prometheus targets (through the
+  Grafana datasource proxy), the `up{job="sotd-pipeline"}` query, and the Grafana
+  SOTD folder/dashboard. Exits nonzero if the target isn't scraped.
+
 - **Metrics**: scraped by the NAS **monitoring stack**
   (`nas-stacks/stacks/monitoring/` — one shared Prometheus + Grafana on
   `metrics-net`; the `127.0.0.1:8100` host bind is only a curl stopgap).
