@@ -247,6 +247,10 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Headline counts + per-thread hotspot ranking instead of the full id list",
     )
+    gaps.add_argument(
+        "--author",
+        help="Restrict the census to one author's records (case-insensitive)",
+    )
 
     verify = sub.add_parser(
         "verify-ids",
@@ -333,7 +337,14 @@ def main(argv: Sequence[str] | None = None) -> int:
                     raise QueryError("No ids given (--ids is comma-separated)")
                 print(cmd_posts(doc, ids))
             elif args.command == "gaps":
-                print(cmd_gaps(doc, as_json=args.json, summary=args.summary))
+                print(
+                    cmd_gaps(
+                        doc,
+                        as_json=args.json,
+                        summary=args.summary,
+                        author=args.author,
+                    )
+                )
             elif args.command == "verify-ids":
                 print(cmd_verify_ids(doc, args.file))
             elif args.command == "resolve":
@@ -610,14 +621,21 @@ def _gap_reasons(record: dict, content_key: str) -> list:
     return reasons
 
 
-def cmd_gaps(doc: dict, *, as_json: bool = False, summary: bool = False) -> str:
+def cmd_gaps(
+    doc: dict, *, as_json: bool = False, summary: bool = False, author: str | None = None
+) -> str:
     """Census of deleted/removed/authorless posts and comments, with ids and titles.
 
     --summary renders headline counts plus a per-thread hotspot ranking instead
-    of the full id list — the Open-questions digest in one call.
+    of the full id list — the Open-questions digest in one call. --author
+    restricts the census to one author's records (their overwrite stubs included).
     """
     posts = doc["data"].get("posts", [])
     comments = doc["data"].get("comments", [])
+    if author:
+        want = author.lower()
+        posts = [p for p in posts if (p.get("author") or "").lower() == want]
+        comments = [c for c in comments if (c.get("author") or "").lower() == want]
     gapped_posts = [(p, reasons) for p in posts if (reasons := _gap_reasons(p, "selftext"))]
     gapped_comments = [(c, reasons) for c in comments if (reasons := _gap_reasons(c, "body"))]
     month = doc["meta"].get("month")
@@ -625,13 +643,17 @@ def cmd_gaps(doc: dict, *, as_json: bool = False, summary: bool = False) -> str:
     # Overwrite-pattern comments: author intact but body is a mass-deletion
     # placeholder (Redact.dev wipes, "Fuck u/spez" edits, collapse stubs). The
     # classic gap census misses these — the author looks healthy — yet the real
-    # text is gone. Detected by pattern, reported per author.
+    # text is gone. Detected by pattern, reported per author. The "redact"
+    # patterns require the marker forms — bare "redact" false-positives on
+    # ordinary prose like "declassified with redactions" (found by the 2023-01
+    # summarizer).
     _OVERWRITE_PATTERNS = (
         "edited to remove comments",
         "fuck u/spez",
         "[removed by reddit]",
         "removed by reddit's",
-        "redact",
+        "redact.dev",
+        "[redact]",
     )
 
     def _is_overwrite(body: str) -> str | None:

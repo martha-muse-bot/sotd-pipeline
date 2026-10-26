@@ -762,9 +762,59 @@ class TestGaps:
         assert "overwrites" in out
         # grouped by (author, pattern) — the two placeholder bodies use different patterns
         assert "u/redacted_user [edited to remove comments]: 1 comment" in out
-        assert "u/redacted_user [redact]: 1 comment" in out
+        assert "u/redacted_user [redact.dev]: 1 comment" in out
         # healthy comment must not be counted as an overwrite
         assert "u/user [" not in out
+
+    def test_bare_redact_word_is_not_an_overwrite(self, tmp_path, capsys):
+        """Ordinary prose containing 'redact' (e.g. 'declassified with redactions')
+        is not a mass-deletion stub — bare-word false positive found by the
+        2023-01 summarizer."""
+        comm = tmp_path / "community"
+        comm.mkdir()
+        posts = [
+            {
+                "id": "ok",
+                "title": "Thread",
+                "selftext": "",
+                "author": "a",
+                "created_utc": "2026-06-01T00:00:00Z",
+                "score": 1,
+                "num_comments": 1,
+                "flair": None,
+                "url": "u",
+                "locked": False,
+                "stickied": False,
+                "in_pipeline": False,
+            }
+        ]
+        comments = [
+            {
+                "id": "prose1",
+                "thread_id": "ok",
+                "thread_title": "Thread",
+                "parent_id": "t3_ok",
+                "author": "writer",
+                "created_utc": "2026-06-01T01:00:00Z",
+                "body": "The document was declassified with redactions applied.",
+                "score": 1,
+                "is_submitter": False,
+            }
+        ]
+        make_community_file(comm / "2026-06.json", "2026-06", posts, comments)
+        code, out, _ = run(capsys, ["--data-dir", str(tmp_path), "gaps", "--month", "2026-06"])
+        assert code == 0
+        assert "overwrites" not in out
+
+    def test_author_filter_restricts_census(self, gappy_dir, capsys):
+        """--author restricts the census to one author's records and stubs."""
+        code, out, _ = run(
+            capsys,
+            ["--data-dir", str(gappy_dir), "gaps", "--month", "2026-06", "--author", "mod"],
+        )
+        assert code == 0
+        assert "t1_modc" in out  # mod's [removed]-body comment
+        assert "t1_delc" not in out  # [deleted]-author comment excluded
 
     def test_overwrite_json(self, tmp_path, capsys):
         comm = tmp_path / "community"
