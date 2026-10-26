@@ -15,6 +15,8 @@ class OverrideManager:
 
     # Valid field names that can be overridden
     VALID_FIELDS = {"razor", "blade", "brush", "soap"}
+    # Reserved month-level key for many-IDs → one field value (not a comment id)
+    BULK_KEY = "bulk"
 
     def __init__(self, override_file_path: Path):
         """Initialize OverrideManager with path to override file.
@@ -127,100 +129,205 @@ class OverrideManager:
         if not isinstance(content, dict):
             raise ValueError("Override file must contain a dictionary at root level")
 
-        # Validate and load overrides
-        duplicate_overrides = []
+        # Validate and load overrides (per-ID + optional month-level bulk)
+        total_override_count = 0
         for month, month_data in content.items():
             if not isinstance(month_data, dict):
                 raise ValueError(f"Month '{month}' must contain a dictionary of comment overrides")
 
-            month_overrides = {}
+            bulk_map = self._parse_bulk_overrides(month, month_data.get(self.BULK_KEY))
+            per_id_map: Dict[str, Dict[str, str]] = {}
+
             for comment_id, field_data in month_data.items():
+                if comment_id == self.BULK_KEY:
+                    continue
+
                 if not isinstance(field_data, dict):
                     raise ValueError(
                         f"Comment '{comment_id}' in month '{month}' must contain field overrides"
                     )
 
-                comment_overrides = {}
+                comment_overrides: Dict[str, str] = {}
                 for field, value in field_data.items():
-                    # Validate field name
-                    if field not in self.VALID_FIELDS:
-                        # Find line number for better error reporting
-                        line_num = self._find_field_line_number(month, comment_id, field)
-                        error_msg = (
-                            f"Invalid field '{field}' in comment '{comment_id}' month '{month}' "
-                            f"in {self.override_file_path}"
-                        )
-                        if line_num:
-                            error_msg += f" (line {line_num})"
-                        error_msg += (
-                            f".\n  Field value: {repr(value) if isinstance(value, str) else value}\n"
-                            f"  Valid fields: {', '.join(sorted(self.VALID_FIELDS))}\n"
-                            f"  Hint: Did you mean 'soap' instead of '{field}'?"
-                        )
-                        raise ValueError(error_msg)
-
-                    # Validate override value
-                    if not isinstance(value, str):
-                        line_num = self._find_field_line_number(month, comment_id, field)
-                        error_msg = (
-                            f"Override value for field '{field}' in comment "
-                            f"'{comment_id}' month '{month}' in {self.override_file_path}"
-                        )
-                        if line_num:
-                            error_msg += f" (line {line_num})"
-                        error_msg += (
-                            f" must be a string, got: {type(value).__name__} (value: {repr(value)})"
-                        )
-                        raise ValueError(error_msg)
-
-                    if not value.strip():
-                        line_num = self._find_field_line_number(month, comment_id, field)
-                        error_msg = (
-                            f"Override value for field '{field}' in comment "
-                            f"'{comment_id}' month '{month}' in {self.override_file_path}"
-                        )
-                        if line_num:
-                            error_msg += f" (line {line_num})"
-                        error_msg += " cannot be empty or whitespace-only"
-                        raise ValueError(error_msg)
-
-                    # Check for reasonable length (prevent extremely long values)
-                    if len(value.strip()) > 200:
-                        line_num = self._find_field_line_number(month, comment_id, field)
-                        error_msg = (
-                            f"Override value for field '{field}' in comment "
-                            f"'{comment_id}' month '{month}' in {self.override_file_path}"
-                        )
-                        if line_num:
-                            error_msg += f" (line {line_num})"
-                        error_msg += (
-                            f" is too long ({len(value.strip())} characters). "
-                            f"Maximum length: 200 characters"
-                        )
-                        raise ValueError(error_msg)
-
-                    # Check for duplicate overrides
-                    override_key = f"{month}:{comment_id}:{field}"
-                    if override_key in duplicate_overrides:
-                        raise ValueError(
-                            f"Duplicate override for field '{field}' in "
-                            f"comment '{comment_id}' month '{month}'. "
-                            f"Each comment+field combination can only have "
-                            f"one override."
-                        )
-                    duplicate_overrides.append(override_key)
-
-                    comment_overrides[field] = value.strip()
+                    stripped = self._validate_field_override_value(month, comment_id, field, value)
+                    comment_overrides[field] = stripped
 
                 if comment_overrides:
-                    month_overrides[comment_id] = comment_overrides
+                    per_id_map[comment_id] = comment_overrides
+
+            self._raise_on_override_conflicts(month, per_id_map, bulk_map)
+
+            month_overrides: Dict[str, Dict[str, str]] = {}
+            for comment_id, fields in bulk_map.items():
+                month_overrides[comment_id] = dict(fields)
+            for comment_id, fields in per_id_map.items():
+                if comment_id not in month_overrides:
+                    month_overrides[comment_id] = dict(fields)
+                else:
+                    month_overrides[comment_id].update(fields)
 
             if month_overrides:
                 self.overrides[month] = month_overrides
+                total_override_count += sum(len(fields) for fields in month_overrides.values())
 
-        logger.debug(
-            "Loaded %d overrides from %s", len(duplicate_overrides), self.override_file_path
-        )
+        logger.debug("Loaded %d overrides from %s", total_override_count, self.override_file_path)
+
+    def _validate_field_override_value(
+        self, month: str, comment_id: str, field: str, value: Any
+    ) -> str:
+        """Validate a single field override value; return stripped string."""
+        if field not in self.VALID_FIELDS:
+            line_num = self._find_field_line_number(month, comment_id, field)
+            error_msg = (
+                f"Invalid field '{field}' in comment '{comment_id}' month '{month}' "
+                f"in {self.override_file_path}"
+            )
+            if line_num:
+                error_msg += f" (line {line_num})"
+            error_msg += (
+                f".\n  Field value: {repr(value) if isinstance(value, str) else value}\n"
+                f"  Valid fields: {', '.join(sorted(self.VALID_FIELDS))}\n"
+                f"  Hint: Did you mean 'soap' instead of '{field}'?"
+            )
+            raise ValueError(error_msg)
+
+        if not isinstance(value, str):
+            line_num = self._find_field_line_number(month, comment_id, field)
+            error_msg = (
+                f"Override value for field '{field}' in comment "
+                f"'{comment_id}' month '{month}' in {self.override_file_path}"
+            )
+            if line_num:
+                error_msg += f" (line {line_num})"
+            error_msg += f" must be a string, got: {type(value).__name__} (value: {repr(value)})"
+            raise ValueError(error_msg)
+
+        if not value.strip():
+            line_num = self._find_field_line_number(month, comment_id, field)
+            error_msg = (
+                f"Override value for field '{field}' in comment "
+                f"'{comment_id}' month '{month}' in {self.override_file_path}"
+            )
+            if line_num:
+                error_msg += f" (line {line_num})"
+            error_msg += " cannot be empty or whitespace-only"
+            raise ValueError(error_msg)
+
+        if len(value.strip()) > 200:
+            line_num = self._find_field_line_number(month, comment_id, field)
+            error_msg = (
+                f"Override value for field '{field}' in comment "
+                f"'{comment_id}' month '{month}' in {self.override_file_path}"
+            )
+            if line_num:
+                error_msg += f" (line {line_num})"
+            error_msg += (
+                f" is too long ({len(value.strip())} characters). Maximum length: 200 characters"
+            )
+            raise ValueError(error_msg)
+
+        return value.strip()
+
+    def _parse_bulk_overrides(self, month: str, bulk_data: Any) -> Dict[str, Dict[str, str]]:
+        """Parse month-level bulk overrides into comment_id → field → value.
+
+        Raises ValueError on invalid shape or duplicate comment+field within bulk.
+        """
+        if bulk_data is None:
+            return {}
+
+        if not isinstance(bulk_data, list):
+            raise ValueError(
+                f"Month '{month}' key '{self.BULK_KEY}' must be a list of bulk override entries "
+                f"in {self.override_file_path}"
+            )
+
+        bulk_map: Dict[str, Dict[str, str]] = {}
+        for index, entry in enumerate(bulk_data):
+            if not isinstance(entry, dict):
+                raise ValueError(
+                    f"Bulk entry {index} in month '{month}' must be a dictionary "
+                    f"in {self.override_file_path}"
+                )
+
+            missing = [k for k in ("field", "value", "comment_ids") if k not in entry]
+            if missing:
+                raise ValueError(
+                    f"Bulk entry {index} in month '{month}' missing required key(s): "
+                    f"{', '.join(missing)} in {self.override_file_path}"
+                )
+
+            field = entry["field"]
+            value = entry["value"]
+            comment_ids = entry["comment_ids"]
+
+            if not isinstance(field, str) or field not in self.VALID_FIELDS:
+                raise ValueError(
+                    f"Invalid field '{field}' in bulk entry {index} month '{month}' "
+                    f"in {self.override_file_path}. "
+                    f"Valid fields: {', '.join(sorted(self.VALID_FIELDS))}"
+                )
+
+            if not isinstance(value, str):
+                raise ValueError(
+                    f"Bulk entry {index} in month '{month}' value must be a string, "
+                    f"got: {type(value).__name__} in {self.override_file_path}"
+                )
+            stripped_value = value.strip()
+            if not stripped_value:
+                raise ValueError(
+                    f"Bulk entry {index} in month '{month}' value cannot be empty "
+                    f"or whitespace-only in {self.override_file_path}"
+                )
+            if len(stripped_value) > 200:
+                raise ValueError(
+                    f"Bulk entry {index} in month '{month}' value is too long "
+                    f"({len(stripped_value)} characters). Maximum length: 200 characters "
+                    f"in {self.override_file_path}"
+                )
+
+            if not isinstance(comment_ids, list) or not comment_ids:
+                raise ValueError(
+                    f"Bulk entry {index} in month '{month}' comment_ids must be a "
+                    f"non-empty list in {self.override_file_path}"
+                )
+
+            for comment_id in comment_ids:
+                if not isinstance(comment_id, str) or not comment_id.strip():
+                    raise ValueError(
+                        f"Bulk entry {index} in month '{month}' has invalid comment_id "
+                        f"{repr(comment_id)} in {self.override_file_path}"
+                    )
+                cid = comment_id.strip()
+                existing = bulk_map.get(cid, {}).get(field)
+                if existing is not None:
+                    raise ValueError(
+                        f"Conflict for comment '{cid}' field '{field}' in month '{month}': "
+                        f"appears in multiple bulk entries "
+                        f"({repr(existing)} vs {repr(stripped_value)}) "
+                        f"in {self.override_file_path}"
+                    )
+                bulk_map.setdefault(cid, {})[field] = stripped_value
+
+        return bulk_map
+
+    def _raise_on_override_conflicts(
+        self,
+        month: str,
+        per_id_map: Dict[str, Dict[str, str]],
+        bulk_map: Dict[str, Dict[str, str]],
+    ) -> None:
+        """Fail loudly when the same comment+field is set in both per-ID and bulk."""
+        for comment_id, bulk_fields in bulk_map.items():
+            per_id_fields = per_id_map.get(comment_id, {})
+            for field, bulk_value in bulk_fields.items():
+                if field in per_id_fields:
+                    raise ValueError(
+                        f"Conflict for comment '{comment_id}' field '{field}' in month "
+                        f"'{month}': set in both per-ID override "
+                        f"({repr(per_id_fields[field])}) and bulk "
+                        f"({repr(bulk_value)}) in {self.override_file_path}"
+                    )
 
     def get_override(self, month: str, comment_id: str, field: str) -> Optional[str]:
         """Get override value for specific field if it exists.

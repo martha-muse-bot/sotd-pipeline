@@ -1,3 +1,23 @@
+# Extract-phase field overrides (comment_id → field → value).
+#
+# Per-comment:
+#   YYYY-MM:
+#     comment_id:
+#       soap: Some Brand - Scent
+#
+# Bulk (many comment IDs → one field value). Reserved month key: bulk.
+# If the same comment_id+field appears in both per-ID and bulk (or twice in
+# bulk), OverrideManager raises ValueError — no silent merge.
+#   YYYY-MM:
+#     bulk:
+#       - field: soap
+#         value: Unknown Mystery
+#         comment_ids: [id1, id2]
+#
+# "Unknown Mystery" is the canonical rewrite for mystery/Blind Date smushes;
+# match maps it to catalog Unknown / Smush (correct_matches). Do not use
+# trailing "Smush" in the override value — extract normalization strips it.
+
 2020-09:
   g764hh5:
     soap: Catie's Bubbles - Pine Barrens
@@ -117,9 +137,53 @@
     soap: u/ArcadeRehab - Vetiver Puck
   pc6r4fd:
     soap: u/ArcadeRehab - Azzurro Puck
+  bulk:
+    - field: soap
+      value: Unknown Mystery
+      comment_ids:
+        - pb8ci09
+        - pbfk7b3
 2026-10:
-  pggo7e7:
-    # Survives extract normalization (unlike "Unknown - Smush", which strips to "Unknown")
-    soap: Unknown Mystery
   phnejcv:
     razor: Wilkinson black plastic
+  bulk:
+    - field: soap
+      value: Unknown Mystery
+      comment_ids:
+        - pfea0m7
+        - pgg4ywa
+        - pgg84ui
+        - pggo7e7
+        - pggp65v
+        - pggtgo7
+        - pggwpvq
+        - pggzcyl
+        - pgh3pbd
+        - pgh8me3
+        - pghup3t
+        - pgi835b
+        - pgixnyn
+        - pgjjz2t
+        - pgjw4zc
+        - pgjx7jf
+        - pgk05ul
+        - pgk0fxn
+        - pgk2t1t
+        - pgk7f1r
+        - pgkmlqj
+        - pgkzyt3
+        - pgled80
+        - pgli7ug
+        - pglj456
+        - pglp0qn
+        - pglrve8
+        - pgm3kbg
+        - pgm851n
+        - pgm8rok
+        - pgm9rkz
+        - pgmbd89
+        - pgmbnw9
+        - pgmpxpv
+        - pgmtbpo
+        - pgmtbsj
+        - phpu8lu

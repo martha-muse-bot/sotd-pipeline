@@ -50,12 +50,9 @@ class SoapSampleEnricher(BaseEnricher):
         total_samples = result[2] if result else None
         extraction_remainder = result[3] if result else None
 
-        # Mystery/anonymous smushes (Blind Date swaps, "unknown something from u/…",
-        # unlabeled smush, etc.) are mapped via correct_matches to catalog Unknown /
-        # Smush. Many of those originals have no "(sample)" marker, so the
-        # normalization-difference path above leaves sample_type unset — force it
-        # here so sample aggregators still count them. (Catalog scent is "Smush";
-        # do not put trailing "smush" in extract text — normalization strips it.)
+        # Extract bulk-overrides rewrite mystery/Blind Date soaps to "Unknown Mystery",
+        # which matches catalog Unknown / Smush. That text has no "(sample)" marker, so
+        # force sample_type here for sample aggregators.
         if sample_type is None:
             matched = field_data.get("matched") or {}
             if isinstance(matched, dict):

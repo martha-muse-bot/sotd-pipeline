@@ -48,6 +48,28 @@ The override file uses YAML format with the following structure:
     brush: "Semogue 610"
 ```
 
+### Bulk Overrides
+
+Use the reserved month-level key `bulk` when many comment IDs share the same field value (e.g. mystery/Blind Date smushes rewritten to `Unknown Mystery`):
+
+```yaml
+2026-10:
+  phnejcv:
+    razor: Wilkinson black plastic
+  bulk:
+    - field: soap
+      value: Unknown Mystery
+      comment_ids:
+        - abc123
+        - def456
+```
+
+Rules:
+- `bulk` is not a comment ID; it expands into the same in-memory map as per-ID overrides
+- Each bulk entry requires `field`, `value`, and a non-empty `comment_ids` list
+- If the same `comment_id` + `field` appears in both a per-ID entry and bulk (or in two bulk entries), loading **fails with `ValueError`** — there is no silent winner
+- Per-ID and bulk on the **same comment but different fields** is allowed
+
 ### Valid Fields
 
 Only these core fields can be overridden:

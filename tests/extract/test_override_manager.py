@@ -491,3 +491,131 @@ class TestOverrideManager:
 
         with pytest.raises(ValueError, match="Invalid field"):
             manager.update_comment_overrides("2026-08", "abc", {"aftershave": "Foo"})
+
+    def test_load_overrides_bulk_expands(self, tmp_path):
+        """Bulk block expands into per-comment overrides."""
+        yaml_content = """
+2026-10:
+  bulk:
+    - field: soap
+      value: Unknown Mystery
+      comment_ids:
+        - abc123
+        - def456
+"""
+        override_file = tmp_path / "test.yaml"
+        override_file.write_text(yaml_content)
+        manager = OverrideManager(override_file)
+
+        manager.load_overrides()
+
+        assert manager.get_override("2026-10", "abc123", "soap") == "Unknown Mystery"
+        assert manager.get_override("2026-10", "def456", "soap") == "Unknown Mystery"
+        assert manager.get_override_summary()["total_overrides"] == 2
+
+    def test_load_overrides_bulk_and_per_id_different_fields_ok(self, tmp_path):
+        """Same comment may have bulk and per-ID overrides for different fields."""
+        yaml_content = """
+2026-10:
+  abc123:
+    razor: Merkur 34C
+  bulk:
+    - field: soap
+      value: Unknown Mystery
+      comment_ids:
+        - abc123
+"""
+        override_file = tmp_path / "test.yaml"
+        override_file.write_text(yaml_content)
+        manager = OverrideManager(override_file)
+
+        manager.load_overrides()
+
+        assert manager.get_override("2026-10", "abc123", "razor") == "Merkur 34C"
+        assert manager.get_override("2026-10", "abc123", "soap") == "Unknown Mystery"
+
+    def test_load_overrides_bulk_conflicts_with_per_id(self, tmp_path):
+        """Same comment+field in bulk and per-ID fails loudly."""
+        yaml_content = """
+2026-10:
+  abc123:
+    soap: Something Else
+  bulk:
+    - field: soap
+      value: Unknown Mystery
+      comment_ids:
+        - abc123
+"""
+        override_file = tmp_path / "test.yaml"
+        override_file.write_text(yaml_content)
+        manager = OverrideManager(override_file)
+
+        with pytest.raises(ValueError, match="Conflict.*abc123.*soap"):
+            manager.load_overrides()
+
+    def test_load_overrides_bulk_duplicate_comment_field(self, tmp_path):
+        """Same comment+field in two bulk entries fails loudly."""
+        yaml_content = """
+2026-10:
+  bulk:
+    - field: soap
+      value: Unknown Mystery
+      comment_ids:
+        - abc123
+    - field: soap
+      value: Other Value
+      comment_ids:
+        - abc123
+"""
+        override_file = tmp_path / "test.yaml"
+        override_file.write_text(yaml_content)
+        manager = OverrideManager(override_file)
+
+        with pytest.raises(ValueError, match="Conflict.*abc123.*soap"):
+            manager.load_overrides()
+
+    def test_load_overrides_bulk_invalid_field(self, tmp_path):
+        yaml_content = """
+2026-10:
+  bulk:
+    - field: aftershave
+      value: Foo
+      comment_ids:
+        - abc123
+"""
+        override_file = tmp_path / "test.yaml"
+        override_file.write_text(yaml_content)
+        manager = OverrideManager(override_file)
+
+        with pytest.raises(ValueError, match="Invalid field 'aftershave'"):
+            manager.load_overrides()
+
+    def test_load_overrides_bulk_empty_comment_ids(self, tmp_path):
+        yaml_content = """
+2026-10:
+  bulk:
+    - field: soap
+      value: Unknown Mystery
+      comment_ids: []
+"""
+        override_file = tmp_path / "test.yaml"
+        override_file.write_text(yaml_content)
+        manager = OverrideManager(override_file)
+
+        with pytest.raises(ValueError, match="comment_ids"):
+            manager.load_overrides()
+
+    def test_load_overrides_bulk_missing_keys(self, tmp_path):
+        yaml_content = """
+2026-10:
+  bulk:
+    - field: soap
+      comment_ids:
+        - abc123
+"""
+        override_file = tmp_path / "test.yaml"
+        override_file.write_text(yaml_content)
+        manager = OverrideManager(override_file)
+
+        with pytest.raises(ValueError, match="value"):
+            manager.load_overrides()
