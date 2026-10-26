@@ -110,7 +110,14 @@
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [{ "expr": "sotd_pipeline_run_duration_seconds", "unit": "s" }],
-      "fieldConfig": { "defaults": { "custom": { "fillOpacity": 15 } } }
+      "description": "One sample per nightly. Single samples render as dots (nightly cadence) — the line connects after two runs.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0,
+          "custom": { "fillOpacity": 15, "showPoints": "always", "pointSize": 6 }
+        }
+      }
     },
     {
       "id": 7,
@@ -122,7 +129,13 @@
       "targets": [
         { "expr": "sotd_pipeline_phase_duration_seconds", "legendFormat": "{{phase}} ({{scope}})", "unit": "s" }
       ],
-      "fieldConfig": { "defaults": { "custom": { "fillOpacity": 15 } } }
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0,
+          "custom": { "fillOpacity": 15, "showPoints": "always", "pointSize": 5 }
+        }
+      }
     },
     {
       "id": 8,
