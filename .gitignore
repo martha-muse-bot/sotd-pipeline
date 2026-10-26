@@ -26,6 +26,7 @@ data/matched_legacy/*.json
 data/threads/*.json
 data/community/*.json
 data/community/summaries/
+data/community/summaries_v1/
 data/aggregated/*.json
 data/aggregated/*/*.json
 data/correct_matches.yaml.backup
