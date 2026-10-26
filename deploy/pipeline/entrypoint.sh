@@ -26,5 +26,15 @@ cd "${APP_DIR}"
 # with "dubious ownership".
 git config --global --add safe.directory "${APP_DIR}"
 
+# Dashboard delivery: the shared nas-stacks Grafana provisions SOTD dashboards
+# from this mount. Each repo defines its own dashboards (ruling 2026-10-26) —
+# the pipeline image/checkout is the source of truth, copied out on every boot
+# so a new image version delivers new dashboards without touching nas-stacks.
+DASH_DIR="${SOTD_DASHBOARDS_DIR:-/dashboards}"
+if [ -d "${APP_DIR}/deploy/metrics/grafana/dashboards" ]; then
+  mkdir -p "${DASH_DIR}"
+  cp "${APP_DIR}"/deploy/metrics/grafana/dashboards/*.json "${DASH_DIR}/"
+fi
+
 python -m sotd.pipeline_supervisor.materialize  # writes ${APP_DIR}/praw.ini if needed
 exec python -m sotd.pipeline_supervisor.loop

@@ -242,17 +242,20 @@ published bundle, and the public site reflects the new run.
 
 ### Verification
 
-- **Metrics stack** (`deploy/compose-sotd-metrics.yml`, gitops from this
-  repo): Prometheus + Grafana on `metrics-net`, scraping
-  `sotd-pipeline:8000` (the `127.0.0.1:8100` host bind is only a curl
-  stopgap). Grafana is LAN-only by topology — no tunnel/NPM route exists;
-  open `http://<nas>:3000` (admin password via komodo env
-  `SOTD_GRAFANA_ADMIN_PASSWORD`). The provisioned **SOTD Pipeline**
-  dashboard covers: freshness ("hours since last publish", threshold
+- **Metrics**: scraped by the NAS **monitoring stack**
+  (`nas-stacks/stacks/monitoring/` — one shared Prometheus + Grafana on
+  `metrics-net`; the `127.0.0.1:8100` host bind is only a curl stopgap).
+  Ruling 2026-10-26: one Grafana, each repo defines its own metrics and
+  dashboards — the **SOTD Pipeline** dashboard JSON lives in this repo
+  (`deploy/metrics/grafana/dashboards/sotd-pipeline.json`) and the
+  pipeline container copies it to `/volume1/docker/sotd-metrics/dashboards`
+  on every boot (`deploy/pipeline/entrypoint.sh`); the monitoring stack's
+  `SOTD` folder provider picks it up within 60s. The scrape job and the
+  provider/mount wiring live in nas-stacks (added 2026-10-26, a80b502).
+  Dashboard covers: freshness ("hours since last publish", threshold
   ~26h), consecutive-failure count (>= 2 = systematically broken), run
   and phase-duration trends, records per phase, and publish-failure
-  history. Prometheus config and dashboards provision from
-  `deploy/metrics/` (bind-mounted read-only); retention 30d.
+  history. Grafana UI: `grafana.home.jmoore.org` (NPM), folder **SOTD**.
   Metrics exposed: `sotd_pipeline_last_run_timestamp_seconds`,
   `sotd_pipeline_last_run_status{phase}`,
   `sotd_pipeline_months_processed`,

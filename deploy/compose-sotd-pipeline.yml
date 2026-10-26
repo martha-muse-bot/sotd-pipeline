@@ -24,6 +24,9 @@ services:
       - /volume1/docker/sotd-pipeline/data:/data
       - /volume1/docker/sotd-pipeline/repo:/app
       - /volume1/docker/sotd-public/data:/bundle
+      # Dashboard delivery: entrypoint copies deploy/metrics/grafana/dashboards
+      # here on boot; the nas-stacks monitoring Grafana provisions from it.
+      - /volume1/docker/sotd-metrics/dashboards:/dashboards
     ports:
       - "127.0.0.1:8100:8000"   # /metrics for Prometheus scrape
     networks:
