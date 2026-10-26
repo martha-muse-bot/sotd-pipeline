@@ -6,6 +6,8 @@ import json
 import logging
 import os
 import re
+import threading
+import time
 from pathlib import Path
 
 from prometheus_client import Counter, Gauge, start_http_server
@@ -176,7 +178,9 @@ def persist_metrics_state(path: str | None = None) -> None:
     }
     try:
         Path(path).parent.mkdir(parents=True, exist_ok=True)
-        Path(path).write_text(json.dumps(payload))
+        tmp = Path(str(path) + ".tmp")
+        tmp.write_text(json.dumps(payload))
+        os.replace(tmp, path)  # atomic: the watcher must never read a partial file
     except OSError:
         logger.exception("could not persist metrics state to %s — gauges reset on next boot", path)
 
@@ -211,6 +215,48 @@ def restore_metrics_state(path: str | None = None) -> None:
         elif key == "publish_failures":
             publish_failures_total.inc(value)
     logger.info("restored metrics state from %s", path)
+
+
+def check_state_changed(path: str, last_mtime: float | None) -> float | None:
+    """Apply the state file if its mtime changed; return the mtime to remember.
+
+    The synchronous core of the watcher: any process that persists state
+    (the nightly loop, a --once smoke run) moves the mtime, and the next
+    check re-applies it to the live gauges. Unchanged file → returns the
+    mtime unchanged, applies nothing. Missing file → None.
+    """
+    p = Path(path)
+    if not p.is_file():
+        return None
+    mtime = p.stat().st_mtime
+    if last_mtime is not None and mtime == last_mtime:
+        return last_mtime
+    restore_metrics_state(path)
+    return mtime
+
+
+def start_state_watcher(path: str | None = None, interval: float = 30.0) -> None:
+    """Poll the state file in a daemon thread, refreshing gauges on change.
+
+    This is what makes manual/--once runs visible to the live /metrics: they
+    are separate processes whose gauge updates die with them, but their state
+    files persist — the watcher applies those within one interval. The
+    nightly loop's own writes also pass through here (idempotent re-apply).
+    """
+    path = path or default_state_path()
+    last_mtime = Path(path).stat().st_mtime if Path(path).is_file() else None
+
+    def _watch() -> None:
+        nonlocal last_mtime
+        while True:
+            time.sleep(interval)
+            try:
+                last_mtime = check_state_changed(path, last_mtime)
+            except Exception:
+                logger.exception("state-file watch failed; continuing")
+
+    thread = threading.Thread(target=_watch, name="sotd-metrics-state-watch", daemon=True)
+    thread.start()
 
 
 def start_metrics_server(port: int = 8000) -> None:

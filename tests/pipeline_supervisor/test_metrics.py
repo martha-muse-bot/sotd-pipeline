@@ -225,3 +225,53 @@ def test_restore_garbage_file_is_noop(tmp_path):
     bad = tmp_path / "bad.json"
     bad.write_text("not json{")
     restore_metrics_state(str(bad))  # no crash
+
+
+# --- state watcher ------------------------------------------------------------
+
+
+def test_check_state_changed_applies_and_dedupes(tmp_path):
+    from sotd.pipeline_supervisor.metrics import (
+        check_state_changed,
+        last_run_timestamp,
+        persist_metrics_state,
+    )
+
+    f = tmp_path / "state.json"
+    last_run_timestamp.set(1000)
+    persist_metrics_state(str(f))
+    mtime1 = check_state_changed(str(f), None)
+    assert mtime1 is not None
+    assert last_run_timestamp._value.get() == 1000  # applied
+
+    # unchanged file: no re-apply — change the gauge, re-check, gauge untouched
+    last_run_timestamp.set(0)
+    mtime2 = check_state_changed(str(f), mtime1)
+    assert mtime2 == mtime1
+    assert last_run_timestamp._value.get() == 0  # not re-applied
+
+    # changed file: re-applied
+    last_run_timestamp.set(2000)
+    persist_metrics_state(str(f))
+    last_run_timestamp.set(0)
+    check_state_changed(str(f), mtime2)
+    assert last_run_timestamp._value.get() == 2000
+
+
+def test_check_state_changed_missing_file(tmp_path):
+    from sotd.pipeline_supervisor.metrics import check_state_changed
+
+    assert check_state_changed(str(tmp_path / "nope.json"), None) is None
+
+
+def test_persist_is_atomic_no_partial_reads(tmp_path):
+    """persist writes via tmp+rename: a concurrent reader (the watcher) never
+    sees a partial file."""
+    from sotd.pipeline_supervisor.metrics import persist_metrics_state
+
+    f = tmp_path / "state.json"
+    persist_metrics_state(str(f))
+    import json
+
+    json.loads(f.read_text())  # valid JSON
+    assert not f.with_suffix(".json.tmp").exists()  # tmp renamed away

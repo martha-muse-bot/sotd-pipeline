@@ -31,6 +31,7 @@ from sotd.pipeline_supervisor.metrics import (
     run_duration_seconds,
     runs_total,
     set_last_run_timestamp,
+    start_state_watcher,
 )
 from sotd.pipeline_supervisor.publish import publish_bundle
 
@@ -290,6 +291,10 @@ def main() -> None:
         # Run-state gauges survive redeploys: restore from the /data volume
         # before the port serves traffic, or the freshness panel false-alarms.
         restore_metrics_state()
+        # Manual/--once runs persist state from a separate process — the
+        # watcher re-applies it to these live gauges within one interval,
+        # keeping Grafana fresh without a restart.
+        start_state_watcher()
     data_dir = Path("/data")
     repo_dir = Path("/app")
     bundle_dir = Path("/bundle")
