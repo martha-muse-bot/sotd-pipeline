@@ -118,6 +118,7 @@ tree, no truncation — streamed in deterministic parts).
 .venv/bin/python -m sotd.report.tools.community_query bodies --month 2026-08 --id t1_ovchl1k,t1_ovhanvs --max-chars 1200
 .venv/bin/python -m sotd.report.tools.community_query search --months 2026-03:2026-04 --query "group buy"
 .venv/bin/python -m sotd.report.tools.community_query posts --month 2026-08 --ids t3_id1,t3_id2   # id → author/date/title/selftext-head
+.venv/bin/python -m sotd.report.tools.community_query verify-ids --month 2026-08 summaries/2026-08.md  # provenance gate for written summaries
 .venv/bin/python -m sotd.report.tools.community_query gaps --month 2026-08
 .venv/bin/python -m sotd.report.tools.community_query gaps --month 2026-08 --summary             # headline + per-thread gap hotspots
 .venv/bin/python -m sotd.report.tools.community_query full 2026-08            # part 1 of N

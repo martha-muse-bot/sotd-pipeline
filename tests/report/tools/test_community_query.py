@@ -872,6 +872,55 @@ class TestGaps:
         assert "posts:" not in out or "gapped-post hotspots:" in out
 
 
+class TestVerifyIds:
+    """verify-ids: post-write provenance gate for summary files."""
+
+    def test_all_ids_valid(self, data_dir, tmp_path, capsys):
+        f = tmp_path / "summary.md"
+        f.write_text("Thread t3_disc said (t1_c4): final verdict (t1_c5).", encoding="utf-8")
+        code, out, _ = run(
+            capsys, ["--data-dir", str(data_dir), "verify-ids", "--month", "2026-08", str(f)]
+        )
+        assert code == 0
+        assert "all cited ids verified" in out
+
+    def test_unknown_ids_listed(self, data_dir, tmp_path, capsys):
+        f = tmp_path / "summary.md"
+        f.write_text(
+            "Thread t3_disc and the phantom t3_zzzzz9 comment t1_nope00.", encoding="utf-8"
+        )
+        code, out, _ = run(
+            capsys, ["--data-dir", str(data_dir), "verify-ids", "--month", "2026-08", str(f)]
+        )
+        assert code == 0
+        assert "UNKNOWN (2)" in out
+        assert "t3_zzzzz9" in out
+        assert "t1_nope00" in out
+
+    def test_missing_file_exits_1(self, data_dir, tmp_path, capsys):
+        code, _, err = run(
+            capsys,
+            [
+                "--data-dir",
+                str(data_dir),
+                "verify-ids",
+                "--month",
+                "2026-08",
+                str(tmp_path / "no.md"),
+            ],
+        )
+        assert code == 1
+
+    def test_no_ids_cited(self, data_dir, tmp_path, capsys):
+        f = tmp_path / "summary.md"
+        f.write_text("No ids in this prose at all.", encoding="utf-8")
+        code, out, _ = run(
+            capsys, ["--data-dir", str(data_dir), "verify-ids", "--month", "2026-08", str(f)]
+        )
+        assert code == 0
+        assert "no t1_/t3_ ids cited" in out
+
+
 class TestPosts:
     """posts: post metadata lookup for chosen ids."""
 
@@ -1454,6 +1503,84 @@ class TestFull:
         assert "(part 1 of " in out
         n = int(out.split("(part 1 of ")[1].split(")")[0])
         assert n >= 2  # 3 thread blocks at ~150 chars each must split into >=2 parts
+
+    def test_consecutive_duplicates_collapsed(self, tmp_path, capsys):
+        """Consecutive identical comments (LatherBot confirmation spam) collapse
+        to one line plus a pointer that keeps the collapsed ids; a non-consecutive
+        repeat stays rendered in full."""
+        comm = tmp_path / "community"
+        comm.mkdir()
+        comments = [
+            {
+                "id": "b1",
+                "thread_id": "p1",
+                "thread_title": "T1",
+                "parent_id": "t3_p1",
+                "author": "LatherBot",
+                "created_utc": "2026-04-01T01:00:00Z",
+                "body": "Entry confirmed",
+                "score": 1,
+                "is_submitter": False,
+            },
+            {
+                "id": "b2",
+                "thread_id": "p1",
+                "thread_title": "T1",
+                "parent_id": "t3_p1",
+                "author": "LatherBot",
+                "created_utc": "2026-04-01T01:01:00Z",
+                "body": "Entry confirmed",
+                "score": 1,
+                "is_submitter": False,
+            },
+            {
+                "id": "u1",
+                "thread_id": "p1",
+                "thread_title": "T1",
+                "parent_id": "t3_p1",
+                "author": "human",
+                "created_utc": "2026-04-01T02:00:00Z",
+                "body": "great lather",
+                "score": 1,
+                "is_submitter": False,
+            },
+            {
+                "id": "u2",
+                "thread_id": "p1",
+                "thread_title": "T1",
+                "parent_id": "t3_p1",
+                "author": "other",
+                "created_utc": "2026-04-01T03:00:00Z",
+                "body": "great lather",
+                "score": 1,
+                "is_submitter": False,
+            },
+        ]
+        make_community_file(
+            comm / "2026-04.json",
+            "2026-04",
+            posts=[
+                {
+                    "id": "p1",
+                    "title": "T1",
+                    "selftext": "",
+                    "author": "a",
+                    "created_utc": "2026-04-01T00:00:00Z",
+                    "score": 1,
+                    "num_comments": 4,
+                    "flair": None,
+                    "url": "u",
+                    "locked": False,
+                    "stickied": False,
+                    "in_pipeline": False,
+                }
+            ],
+            comments=comments,
+        )
+        code, out, _ = run(capsys, ["--data-dir", str(tmp_path), "full", "2026-04"])
+        assert code == 0
+        assert "(+1 identical: t1_b2)" in out
+        assert out.count("great lather") == 2  # both human repeats render in full
 
     def test_missing_month_exits_1(self, capsys):
         code, _, err = run(capsys, ["--data-dir", "/nonexistent", "full", "2025-01"])

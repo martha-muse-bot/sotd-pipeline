@@ -22,6 +22,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 from collections import Counter
 from collections.abc import Sequence
@@ -247,6 +248,13 @@ def build_parser() -> argparse.ArgumentParser:
         help="Headline counts + per-thread hotspot ranking instead of the full id list",
     )
 
+    verify = sub.add_parser(
+        "verify-ids",
+        help="Check every t1_/t3_ id cited in a text file against a month's record",
+    )
+    verify.add_argument("--month", required=True, help="Month (YYYY-MM) to check ids against")
+    verify.add_argument("file", help="Text file (e.g. a summary) whose ids should be validated")
+
     return parser
 
 
@@ -316,6 +324,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 print(cmd_posts(doc, ids))
             elif args.command == "gaps":
                 print(cmd_gaps(doc, as_json=args.json, summary=args.summary))
+            elif args.command == "verify-ids":
+                print(cmd_verify_ids(doc, args.file))
             else:
                 raise QueryError(f"Unknown command: {args.command}")
         return 0
@@ -393,13 +403,35 @@ def cmd_full(doc: dict, *, part: int = 1, chars_per_part: int = 600_000) -> str:
                 children.setdefault(c["parent_id"].removeprefix("t1_"), []).append(c)
 
             def walk(parent: str, depth: int) -> None:
+                prev: tuple | None = None  # (author, body) of the last rendered sibling
+                run_ids: list[str] = []
                 for c in sorted(children.get(parent, []), key=lambda x: x["created_utc"]):
                     body = _flatten_body(c["body"])
+                    key = (c.get("author"), body)
+                    if key == prev and body:
+                        # Consecutive identical comment from the same author under
+                        # the same parent — LatherBot confirmation spam renders as
+                        # one line plus a pointer that keeps the collapsed ids.
+                        run_ids.append(c["id"])
+                        walk(c["id"], depth + 1)
+                        continue
+                    if run_ids:
+                        lines.append(
+                            f"{'  ' * depth}(+{len(run_ids)} identical: "
+                            f"{', '.join(f't1_{i}' for i in run_ids)})"
+                        )
+                        run_ids = []
+                    prev = key
                     op = " (OP)" if c.get("is_submitter") else ""
                     lines.append(
                         f"{'  ' * depth}[{c['id']}] u/{c['author']} {c['created_utc'][:10]}{op}: {body}"
                     )
                     walk(c["id"], depth + 1)
+                if run_ids:
+                    lines.append(
+                        f"{'  ' * depth}(+{len(run_ids)} identical: "
+                        f"{', '.join(f't1_{i}' for i in run_ids)})"
+                    )
 
             lines.append(f"--- {len(cmts)} comments ---")
             walk(f"t3_{pid}", 0)
@@ -527,6 +559,10 @@ def cmd_thread(
 
 
 _AUTHOR_MARKERS = {None, "", "[deleted]", "[removed]"}
+# Reddit base36 ids cited with their t3_/t1_ prefix (the summary contract
+# requires the prefix, so verification matches prefixed citations). Lower
+# bound 2: any prefixed token is an id by contract.
+_ID_RE = re.compile(r"\b(?:t[13]_[a-z0-9]{2,8})\b")
 _CONTENT_MARKERS = ("[deleted]", "[removed]")
 
 
@@ -690,6 +726,44 @@ def cmd_gaps(doc: dict, *, as_json: bool = False, summary: bool = False) -> str:
             if c.get("body") in _CONTENT_MARKERS:
                 parts.append(f"body={c.get('body')}")
             lines.append("  " + "  ".join(parts))
+    return "\n".join(lines)
+
+
+def cmd_verify_ids(doc: dict, file_path: str) -> str:
+    """Post-write provenance gate: validate ids cited in a text file.
+
+    Extracts every t1_/t3_ id from the file (ids appear bare too — e.g. inside
+    `posts` output or notebook lines) and checks each against the month's
+    posts/comments. Ids spanning multiple months are out of scope: only the
+    named month's record is consulted, so an id from another month reports as
+    unknown (that is correct behavior for a per-month summary).
+    """
+    path = Path(file_path)
+    if not path.exists():
+        raise QueryError(f"No such file: {file_path}")
+    text = path.read_text(encoding="utf-8", errors="replace")
+    cited = set(_ID_RE.findall(text))
+    if not cited:
+        return f"{path.name}: no t1_/t3_ ids cited"
+
+    post_ids = {p["id"] for p in doc["data"].get("posts", [])}
+    comment_ids = {c["id"] for c in doc["data"].get("comments", [])}
+    known = post_ids | comment_ids
+
+    unknown = sorted(i for i in cited if i.removeprefix("t1_").removeprefix("t3_") not in known)
+    n_posts = sum(1 for i in cited if i.startswith("t3_") and i.removeprefix("t3_") in post_ids)
+    n_cmts = sum(1 for i in cited if i.startswith("t1_") and i.removeprefix("t1_") in comment_ids)
+    lines = [
+        f"{path.name}: {len(cited)} ids cited — {n_posts} t3_ (post) verified, "
+        f"{n_cmts} t1_ (comment) verified"
+    ]
+    if unknown:
+        lines.append(f"UNKNOWN ({len(unknown)}):")
+        for i in unknown:
+            lines.append(f"  {i}")
+        lines.append("unknown ids must be fixed or removed before shipping")
+    else:
+        lines.append("all cited ids verified against the month record")
     return "\n".join(lines)
 
 

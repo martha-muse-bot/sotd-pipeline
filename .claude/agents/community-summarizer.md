@@ -81,11 +81,17 @@ instead of guessing. One month per run.
    census misses them. For a post id→author/title lookup while writing, use
    `posts --month {month} --ids t3_x,t3_y` (selftext-head included, 200 chars).
 7. **Write the summary.** Create `data/community/summaries/{month}.md` following the
-   file contract below — the only write this agent performs. Re-Glob immediately
+   file contract below — the only write this agent performs (plus the notebook).
+   Re-Glob immediately
    before writing; if the file appeared meanwhile, stop and report instead of
    overwriting (Write silently overwrites). Every claim carries its `t3_`/`t1_` id
    inline. Neutral factual notes; significance flags are fine ("the challenge kicked
    off here — likely bullet-worthy"), drafted voice is not.
+   Then run the provenance gate before reporting:
+   `... community_query verify-ids --month {month} data/community/summaries/{month}.md`
+   — it extracts every cited id and checks it against the month record. Fix or
+   remove every UNKNOWN id (truncated ids, placeholder fragments like `t3_ef?`,
+   mid-id spaces) and re-run until it reports "all cited ids verified".
 8. **Report back** using the return format below.
 
 ## Community JSON record shape
