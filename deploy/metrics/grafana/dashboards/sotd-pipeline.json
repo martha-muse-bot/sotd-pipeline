@@ -1,0 +1,158 @@
+{
+  "title": "SOTD Pipeline",
+  "uid": "sotd-pipeline",
+  "tags": ["sotd"],
+  "timezone": "browser",
+  "schemaVersion": 41,
+  "version": 1,
+  "refresh": "1m",
+  "time": { "from": "now-7d", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Supervisor up",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 3, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "up{job=\"sotd-pipeline\"}" }],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "green", "value": 1 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "Hours since last publish",
+      "description": "Age of the public data bundle. Red past ~26h means the last nightly did not publish.",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 3, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "(time() - sotd_pipeline_publish_last_success_timestamp_seconds) / 3600",
+          "unit": "h"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "green", "value": 0 },
+              { "color": "yellow", "value": 26 },
+              { "color": "red", "value": 50 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "Consecutive failures",
+      "description": "0 after a success. >= 2 means the nightly is systematically broken.",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 3, "x": 7, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sotd_pipeline_consecutive_failures" }],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 1 },
+              { "color": "red", "value": 2 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "Next run",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 10, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "(sotd_pipeline_next_run_timestamp_seconds - time()) / 3600",
+          "unit": "h"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Phase status (last run)",
+      "description": "1=ok 0=failed, per phase. Publish failures are separated from pipeline failures here.",
+      "type": "table",
+      "gridPos": { "h": 4, "w": 10, "x": 14, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "sotd_pipeline_last_run_status", "format": "table", "instant": true }
+      ],
+      "transformations": [
+        { "id": "organize", "options": { "excludeByName": { "Time": true, "__name__": true, "job": true, "instance": true } } }
+      ],
+      "options": { "showHeader": true }
+    },
+    {
+      "id": 6,
+      "title": "Nightly run duration",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sotd_pipeline_run_duration_seconds", "unit": "s" }],
+      "fieldConfig": { "defaults": { "custom": { "fillOpacity": 15 } } }
+    },
+    {
+      "id": 7,
+      "title": "Phase durations by scope",
+      "description": "monthly = per-month fetch:aggregate runs; catchup = all-months match:aggregate.",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "sotd_pipeline_phase_duration_seconds", "legendFormat": "{{phase}} ({{scope}})", "unit": "s" }
+      ],
+      "fieldConfig": { "defaults": { "custom": { "fillOpacity": 15 } } }
+    },
+    {
+      "id": 8,
+      "title": "Records per phase",
+      "description": "Record counts parsed from run.py phase lines. A collapse here on a passing run = a data problem, not a crash.",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "sotd_pipeline_phase_records", "legendFormat": "{{phase}} ({{scope}})" }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "Months processed per run",
+      "type": "stat",
+      "gridPos": { "h": 8, "w": 4, "x": 12, "y": 12 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sotd_pipeline_months_processed" }]
+    },
+    {
+      "id": 10,
+      "title": "Publish failures (30d)",
+      "description": "Cumulative verify-gated publish failures.",
+      "type": "barchart",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 12 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "increase(sotd_pipeline_publish_failures_total[30d])" }
+      ]
+    }
+  ]
+}

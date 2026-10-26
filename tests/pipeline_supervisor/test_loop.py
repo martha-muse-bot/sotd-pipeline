@@ -384,3 +384,132 @@ def test_phase_durations_skipped_when_no_phase_lines(tmp_path, monkeypatch, capl
     got = phase_duration_seconds.labels(phase="fetch", scope="monthly")._value.get()
     assert got == 99.0
     assert any("phase" in r.message.lower() for r in caplog.records)
+
+
+# --- run-outcome and publish metrics ------------------------------------------
+
+
+def test_publish_freshness_gauge_set_on_success(tmp_path, monkeypatch):
+    repo, data, bundle = setup_dirs(tmp_path)
+    (data / ".catalog_hash").write_text("h1")
+    monkeypatch.setattr("sotd.pipeline_supervisor.loop.catalog_hash", lambda d: "h1")
+    from sotd.pipeline_supervisor.metrics import publish_last_success
+
+    before = publish_last_success._value.get()
+    run_nightly(
+        repo_dir=repo,
+        data_dir=data,
+        bundle_dir=bundle,
+        runner=fake_runner_ok,
+        months=("2026-10", "2026-09"),
+        all_months=("2026-10", "2026-05"),
+    )
+    assert publish_last_success._value.get() > before
+
+
+def test_publish_failures_counter_increments_on_publish_failure(tmp_path, monkeypatch):
+    repo, data, bundle = setup_dirs(tmp_path)
+    (data / ".catalog_hash").write_text("h1")
+    monkeypatch.setattr("sotd.pipeline_supervisor.loop.catalog_hash", lambda d: "h1")
+    # Remove a required bundle slice so the verifier fails the publish.
+    (data / "aggregated" / "product_usage" / "2026-10.json").unlink()
+    from sotd.pipeline_supervisor.metrics import publish_failures_total
+
+    before = publish_failures_total._value.get()
+    result = run_nightly(
+        repo_dir=repo,
+        data_dir=data,
+        bundle_dir=bundle,
+        runner=fake_runner_ok,
+        months=("2026-10", "2026-09"),
+        all_months=("2026-10", "2026-05"),
+    )
+    assert result.published is False
+    assert publish_failures_total._value.get() == before + 1
+
+
+def test_runs_total_and_consecutive_failures(tmp_path, monkeypatch):
+    repo, data, bundle = setup_dirs(tmp_path)
+    (data / ".catalog_hash").write_text("h1")
+    monkeypatch.setattr("sotd.pipeline_supervisor.loop.catalog_hash", lambda d: "h1")
+    from sotd.pipeline_supervisor.metrics import consecutive_failures, runs_total
+
+    run_nightly(
+        repo_dir=repo,
+        data_dir=data,
+        bundle_dir=bundle,
+        runner=fake_runner_ok,
+        months=("2026-10", "2026-09"),
+        all_months=("2026-10", "2026-05"),
+    )
+    ok_runs = runs_total._metrics.get(("ok",), None)
+    assert ok_runs is not None and ok_runs._value.get() >= 1
+    assert consecutive_failures._value.get() == 0
+
+    # A failing night (bad git pull) increments consecutive failures.
+    def failing_pull(cmd, **kw):
+        if cmd[:2] == ["git", "-C"]:
+            return subprocess.CompletedProcess(cmd, 1, stdout="", stderr="boom")
+        return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+
+    run_nightly(
+        repo_dir=repo,
+        data_dir=data,
+        bundle_dir=bundle,
+        runner=failing_pull,
+        months=("2026-10", "2026-09"),
+        all_months=("2026-10", "2026-05"),
+    )
+    assert consecutive_failures._value.get() == 1
+    failed_runs = runs_total._metrics.get(("failed",), None)
+    assert failed_runs is not None and failed_runs._value.get() >= 1
+
+
+def test_consecutive_failures_reset_by_success(tmp_path, monkeypatch):
+    repo, data, bundle = setup_dirs(tmp_path)
+    (data / ".catalog_hash").write_text("h1")
+    monkeypatch.setattr("sotd.pipeline_supervisor.loop.catalog_hash", lambda d: "h1")
+    from sotd.pipeline_supervisor.metrics import consecutive_failures
+
+    consecutive_failures.set(3)  # simulate prior failures
+    run_nightly(
+        repo_dir=repo,
+        data_dir=data,
+        bundle_dir=bundle,
+        runner=fake_runner_ok,
+        months=("2026-10", "2026-09"),
+        all_months=("2026-10", "2026-05"),
+    )
+    assert consecutive_failures._value.get() == 0
+
+
+def test_phase_records_set_from_stdout(tmp_path, monkeypatch):
+    repo, data, bundle = setup_dirs(tmp_path)
+    (data / ".catalog_hash").write_text("h1")
+    monkeypatch.setattr("sotd.pipeline_supervisor.loop.catalog_hash", lambda d: "h1")
+    from sotd.pipeline_supervisor.metrics import phase_records
+
+    records = {"fetch": 1234, "enrich": 900}
+    lines = [
+        f"  Phase {i + 1} ({p}):   1.00s OK" + (f" | {c:,} records" if p in records else "")
+        for i, (p, c) in enumerate(records.items())
+    ]
+    lines.append("  Phase 6 (aggregate):   2.00s OK")
+    stdout = "Phase Breakdown:\n" + "\n".join(lines) + "\n"
+    (data / "aggregated" / "annual").mkdir(exist_ok=True)
+
+    def runner_with_stdout(cmd, **kw):
+        if cmd[:3] == ["python", "run.py", "--month"]:
+            return subprocess.CompletedProcess(cmd, 0, stdout=stdout, stderr="")
+        return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+
+    run_nightly(
+        repo_dir=repo,
+        data_dir=data,
+        bundle_dir=bundle,
+        runner=runner_with_stdout,
+        months=("2026-10", "2026-09"),
+        all_months=("2026-10", "2026-05"),
+    )
+    for phase, count in records.items():
+        assert phase_records.labels(phase=phase, scope="monthly")._value.get() == count

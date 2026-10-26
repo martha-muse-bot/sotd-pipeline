@@ -5,6 +5,7 @@ from sotd.pipeline_supervisor.metrics import (
     last_run_status,
     months_processed,
     parse_phase_durations,
+    parse_phase_records,
     set_last_run_timestamp,
     start_metrics_server,
 )
@@ -105,3 +106,52 @@ def test_phase_duration_gauge_exists():
     assert phase_duration_seconds.labels(phase="fetch", scope="monthly")._value.get() == 1.0
     phase_duration_seconds.labels(phase="match", scope="catchup").set(2.0)
     assert phase_duration_seconds.labels(phase="match", scope="catchup")._value.get() == 2.0
+
+
+# --- parse_phase_records ------------------------------------------------------
+
+
+def test_parse_records_with_counts():
+    r = parse_phase_records(SAMPLE_PHASE_STDOUT)
+    assert r == {"fetch": 1234, "enrich": 900}
+
+
+def test_parse_records_ignores_records_per_second():
+    """'| 100 records/s' must not parse as a record count."""
+    line = "  Phase 1 (fetch):   12.34s OK | 1,234 records | 100 records/s\n"
+    assert parse_phase_records(line) == {"fetch": 1234}
+
+
+def test_parse_records_empty_when_no_counts():
+    out = "  Phase 1 (fetch):   12.34s OK\n  Phase 2 (extract):   0.56s OK\n"
+    assert parse_phase_records(out) == {}
+
+
+def test_parse_records_skips_failed_lines():
+    out = "  Phase 1 (fetch):   12.34s OK | 1,234 records\n  Phase 2 (extract):   0.56s FAILED | 5 records\n"
+    assert parse_phase_records(out) == {"fetch": 1234}
+
+
+def test_new_gauges_registered():
+    from sotd.pipeline_supervisor.metrics import (
+        consecutive_failures,
+        next_run_timestamp,
+        phase_records,
+        publish_failures_total,
+        publish_last_success,
+        runs_total,
+    )
+
+    phase_records.labels(phase="fetch", scope="monthly").set(100)
+    publish_last_success.set(1700000000)
+    publish_failures_total.inc()
+    runs_total.labels(outcome="ok").inc()
+    consecutive_failures.set(2)
+    next_run_timestamp.set(1700000100)
+    names = {m.name for m in REGISTRY.collect()}
+    assert "sotd_pipeline_phase_records" in names
+    assert "sotd_pipeline_publish_last_success_timestamp_seconds" in names
+    assert "sotd_pipeline_publish_failures" in names  # Counter: _total stripped by the client
+    assert "sotd_pipeline_runs" in names  # Counter: _total stripped by the client
+    assert "sotd_pipeline_consecutive_failures" in names
+    assert "sotd_pipeline_next_run_timestamp_seconds" in names

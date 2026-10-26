@@ -1,0 +1,11 @@
+apiVersion: 1
+
+providers:
+  - name: sotd-dashboards
+    orgId: 1
+    folder: SOTD
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 60
+    options:
+      path: /etc/grafana/dashboards

@@ -16,11 +16,17 @@ from zoneinfo import ZoneInfo
 from sotd.pipeline_supervisor.catalog_hash import catalog_hash
 from sotd.pipeline_supervisor.metrics import (
     catalog_catchup_success,
+    consecutive_failures,
     last_run_status,
     months_processed,
     parse_phase_durations,
+    parse_phase_records,
+    phase_records,
+    publish_failures_total,
+    publish_last_success,
     record_phase_durations,
     run_duration_seconds,
+    runs_total,
     set_last_run_timestamp,
 )
 from sotd.pipeline_supervisor.publish import publish_bundle
@@ -100,6 +106,7 @@ def run_nightly(
         logger.error("git pull failed: %s", "crashed" if pull is None else pull.stderr)
         last_run_status.labels(phase="pull").set(0)
         result.phases["pull"] = False
+        _record_run_outcome(result)
         return result
     last_run_status.labels(phase="pull").set(1)
     result.phases["pull"] = True
@@ -125,6 +132,7 @@ def run_nightly(
         # Phase failure aborts before publish — the public data keeps the
         # last good bundle, never a hole.
         result.published = publish_bundle(data_dir, bundle_dir)
+    _record_publish(result.published)
     _set_phase_status(result, "publish", {"daily": result.published})
 
     if hash_changed:
@@ -150,12 +158,45 @@ def run_nightly(
             if publish_bundle(data_dir, bundle_dir):
                 (data_dir / HASH_FILE).write_text(new_hash)
                 catalog_catchup_success.set(time.time())
+                _record_publish(True)
             else:
                 result.catchup_ok = False  # publish failed: retry hash next night
+                _record_publish(False)
                 _set_phase_status(result, "publish", {"daily": result.published, "catchup": False})
     months_processed.set(result.months_processed)
     run_duration_seconds.set(time.monotonic() - run_start)
+    _record_run_outcome(result)
     return result
+
+
+def _record_publish(ok: bool) -> None:
+    """Publish outcome metrics: freshness anchor + failure counter.
+
+    `publish_last_success` is the freshness anchor — dashboards derive
+    "hours since the public data was last published" from it. Called for
+    both the daily publish and the catchup publish; a None is a failure.
+    """
+    if ok:
+        publish_last_success.set(time.time())
+    else:
+        publish_failures_total.inc()
+
+
+def _record_run_outcome(result: RunResult) -> None:
+    """Nightly run outcome: runs_total{outcome} + consecutive_failures.
+
+    A run is OK when every executed phase succeeded (pull/fetch/publish, and
+    catchup when the catalog hash changed). consecutive_failures is the
+    alertable signal: >= 2 means the nightly is systematically broken, vs one
+    flaky night.
+    """
+    ok = bool(result.phases) and all(result.phases.values())
+    if ok:
+        runs_total.labels(outcome="ok").inc()
+        consecutive_failures.set(0)
+    else:
+        runs_total.labels(outcome="failed").inc()
+        consecutive_failures.inc()
 
 
 def _run_monthly(runner, repo_dir: Path, month: str) -> bool:
@@ -175,7 +216,7 @@ def _run_monthly(runner, repo_dir: Path, month: str) -> bool:
 
 
 def _record_phases(stdout: str, context: str, ok: bool) -> None:
-    """Parse phase durations from run.py stdout and set the gauges.
+    """Parse phase durations and record counts from run.py stdout; set gauges.
 
     OK phases from a failed run are emitted too (real completed work). No
     parseable phase lines — warn and emit nothing; metrics must never crash
@@ -191,6 +232,8 @@ def _record_phases(stdout: str, context: str, ok: bool) -> None:
         )
         return
     record_phase_durations(durations, context=context)
+    for phase, count in parse_phase_records(stdout).items():
+        phase_records.labels(phase=phase, scope=context).set(count)
 
 
 def _set_phase_status(result: RunResult, phase: str, outcomes: dict) -> None:
@@ -234,7 +277,7 @@ def main() -> None:
     if not args.once:
         # The metrics port belongs to the long-running loop process; a --once
         # smoke run inside the same container must not try to take it.
-        from sotd.pipeline_supervisor.metrics import start_metrics_server
+        from sotd.pipeline_supervisor.metrics import next_run_timestamp, start_metrics_server
 
         start_metrics_server(8000)
     data_dir = Path("/data")
@@ -248,6 +291,7 @@ def main() -> None:
         if args.once:
             # Smoke mode: skip the wait, run one cycle now, exit.
             target = now
+        next_run_timestamp.set(target.timestamp())
         time.sleep((target - now).total_seconds())
         set_last_run_timestamp(time.time())
         try:

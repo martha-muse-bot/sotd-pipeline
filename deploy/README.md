@@ -242,15 +242,27 @@ published bundle, and the public site reflects the new run.
 
 ### Verification
 
-- **Prometheus target up**: add a scrape job targeting the NAS host on
-  port **8100** (the compose file binds `127.0.0.1:8100:8000` on the
-  NAS — the host-port binding keeps metrics off any bridged network the
-  NAS exposes; the container itself is on `metrics-net` only). Metrics
-  exposed: `sotd_pipeline_last_run_timestamp_seconds`,
+- **Metrics stack** (`deploy/compose-sotd-metrics.yml`, gitops from this
+  repo): Prometheus + Grafana on `metrics-net`, scraping
+  `sotd-pipeline:8000` (the `127.0.0.1:8100` host bind is only a curl
+  stopgap). Grafana is LAN-only by topology — no tunnel/NPM route exists;
+  open `http://<nas>:3000` (admin password via komodo env
+  `SOTD_GRAFANA_ADMIN_PASSWORD`). The provisioned **SOTD Pipeline**
+  dashboard covers: freshness ("hours since last publish", threshold
+  ~26h), consecutive-failure count (>= 2 = systematically broken), run
+  and phase-duration trends, records per phase, and publish-failure
+  history. Prometheus config and dashboards provision from
+  `deploy/metrics/` (bind-mounted read-only); retention 30d.
+  Metrics exposed: `sotd_pipeline_last_run_timestamp_seconds`,
   `sotd_pipeline_last_run_status{phase}`,
   `sotd_pipeline_months_processed`,
   `sotd_pipeline_catalog_catchup_last_success_timestamp_seconds`,
-  `sotd_pipeline_phase_duration_seconds{phase, scope}`, and
+  `sotd_pipeline_phase_duration_seconds{phase, scope}`,
+  `sotd_pipeline_phase_records{phase, scope}`,
+  `sotd_pipeline_publish_last_success_timestamp_seconds`,
+  `sotd_pipeline_publish_failures_total`, `sotd_pipeline_runs_total{outcome}`,
+  `sotd_pipeline_consecutive_failures`,
+  `sotd_pipeline_next_run_timestamp_seconds`, and
   `sotd_pipeline_run_duration_seconds`.
   Phase labels on `last_run_status`: `pull`, `fetch` (the whole
   `fetch:aggregate` monthly run — 0 if ANY month failed), `publish`, and

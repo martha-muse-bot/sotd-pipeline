@@ -1,0 +1,10 @@
+# Prometheus scrape config for the SOTD metrics stack.
+# Targets the nightly pipeline supervisor (deploy/compose-sotd-pipeline.yml)
+# on the shared metrics-net; a 15s interval on a nightly batch is generous.
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: sotd-pipeline
+    static_configs:
+      - targets: ["sotd-pipeline:8000"]

@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import re
 
-from prometheus_client import Gauge, start_http_server
+from prometheus_client import Counter, Gauge, start_http_server
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +25,28 @@ run_duration_seconds = Gauge(
     "sotd_pipeline_run_duration_seconds",
     "Whole nightly cycle wall time (pull through final publish)",
 )
+phase_records = Gauge(
+    "sotd_pipeline_phase_records",
+    "Record count parsed from run.py's phase lines (last-run semantics)",
+    ["phase", "scope"],
+)
+publish_last_success = Gauge(
+    "sotd_pipeline_publish_last_success_timestamp_seconds",
+    "Epoch of the last successful verify-gated publish",
+)
+publish_failures_total = Counter(
+    "sotd_pipeline_publish_failures_total",
+    "Verify-gated publish attempts that failed",
+)
+runs_total = Counter("sotd_pipeline_runs_total", "Nightly runs by outcome", ["outcome"])
+consecutive_failures = Gauge(
+    "sotd_pipeline_consecutive_failures",
+    "Consecutive nightly runs that ended in failure (0 after a success)",
+)
+next_run_timestamp = Gauge(
+    "sotd_pipeline_next_run_timestamp_seconds",
+    "Epoch of the scheduled next nightly run",
+)
 
 # run.py's Phase Breakdown line (run.py:441):
 #   "  Phase 1 (fetch):   12.34s ✓ | 1,234 records"
@@ -32,7 +54,10 @@ run_duration_seconds = Gauge(
 # marks the failed phase with ✗ — that line is skipped (no duration metric
 # for a phase that failed); earlier OK phases are kept, since that time was
 # really spent.
-_PHASE_LINE_RE = re.compile(r"Phase\s+\d+\s+\((?P<phase>[a-z_]+)\):\s+(?P<dur>[\d.]+)s")
+_PHASE_LINE_RE = re.compile(
+    r"Phase\s+\d+\s+\((?P<phase>[a-z_]+)\):\s+(?P<dur>[\d.]+)s"
+    r"(?:[^|]*\|\s*(?P<records>[\d,]+)\s+records(?=\s*\||\s*$))?"
+)
 _FAILED_MARKS = ("✗", "✘", "FAILED")
 
 
@@ -48,15 +73,38 @@ def parse_phase_durations(stdout: str) -> dict[str, float]:
     parseable — the caller logs a warning and emits nothing.
     """
     out: dict[str, float] = {}
-    for line in (stdout or "").splitlines():
-        if any(mark in line for mark in _FAILED_MARKS):
-            continue
+    for line in _phase_lines(stdout):
         if m := _PHASE_LINE_RE.search(line):
             try:
                 out[m.group("phase")] = float(m.group("dur"))
             except ValueError:
                 # pathological duration (e.g. "1.2.3") — skip the line, never
                 # let metrics parsing abort the run
+                continue
+    return out
+
+
+def _phase_lines(stdout: str) -> list[str]:
+    return [ln for ln in (stdout or "").splitlines() if not any(mk in ln for mk in _FAILED_MARKS)]
+
+
+def parse_phase_records(stdout: str) -> dict[str, int]:
+    """Parse per-phase record counts from run.py's "Phase Breakdown" stdout.
+
+    Only phases whose line carries the "| N records" field appear (duration-
+    only lines have no count). Same failed-line exclusion as durations. A
+    sudden record-count collapse on a passing run is a data problem the
+    ok/failed gauges cannot show — this gauge is that tripwire.
+    """
+    out: dict[str, int] = {}
+    for line in _phase_lines(stdout):
+        if m := _PHASE_LINE_RE.search(line):
+            raw = m.group("records")
+            if raw is None:
+                continue
+            try:
+                out[m.group("phase")] = int(raw.replace(",", ""))
+            except ValueError:
                 continue
     return out
 
