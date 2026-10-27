@@ -67,7 +67,7 @@ export function updatedAtLabel(
   generatedAt: string | null | undefined,
   dataThrough: string | null | undefined,
   latestMonth: string | null | undefined,
-  timeZone?: string,
+  timeZone?: string
 ): string | null {
   if (!generatedAt) return null;
   const d = new Date(generatedAt);
