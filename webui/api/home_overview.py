@@ -67,6 +67,7 @@ class Overview(BaseModel):
     generated_at: Optional[str] = None
     # True coverage end: the latest posted SOTD date processed (YYYY-MM-DD);
     # the current month is partial, so coverage is not the month itself.
+    # API-only — the public UI shows just the update stamp.
     data_through: Optional[str] = None
     pulse: List[PulsePoint]
     tiles: Optional[Tiles] = None

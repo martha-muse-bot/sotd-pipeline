@@ -141,7 +141,7 @@ export default function HomeDashboard() {
 
   const series = buildPulseSeries(overview.pulse);
   const latest = overview.latest_month;
-  const freshness = updatedAtLabel(overview.generated_at, overview.data_through, latest);
+  const freshness = updatedAtLabel(overview.generated_at);
 
   return (
     <div className='space-y-4'>

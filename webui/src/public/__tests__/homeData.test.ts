@@ -36,43 +36,29 @@ describe('buildMovers', () => {
 });
 
 describe('updatedAtLabel', () => {
-  // Tests pin the update stamp to UTC for exact assertions; the component
-  // passes no zone so viewers get their local time.
+  // Tests pin the stamp to UTC for exact assertions; the component passes
+  // no zone so viewers get their local time.
   const UTC = 'UTC';
 
-  it('combines exact coverage date and publish time', () => {
-    expect(updatedAtLabel('2026-10-26T02:10:00+00:00', '2026-09-30', '2026-09', UTC)).toBe(
-      'Data through Sep 30, 2026 · updated Oct 26, 2026, 2:10 AM UTC'
-    );
-  });
-  it('prefers the exact posted date for partial current months', () => {
-    expect(updatedAtLabel('2026-10-26T02:10:00+00:00', '2026-10-24', '2026-10', UTC)).toBe(
-      'Data through Oct 24, 2026 · updated Oct 26, 2026, 2:10 AM UTC'
-    );
-  });
-  it('falls back to the coverage month when no exact date is known', () => {
-    expect(updatedAtLabel('2026-10-26T02:10:00+00:00', null, '2026-09', UTC)).toBe(
-      'Data through Sep 2026 · updated Oct 26, 2026, 2:10 AM UTC'
-    );
-  });
-  it('falls back to the date alone without coverage info', () => {
-    expect(updatedAtLabel('2026-10-26T02:10:00+00:00', null, null, UTC)).toBe(
+  it('formats the stamp with full date, time, and zone', () => {
+    expect(updatedAtLabel('2026-10-26T02:10:00+00:00', UTC)).toBe(
       'Updated Oct 26, 2026, 2:10 AM UTC'
     );
   });
-  it('renders the update stamp in the given zone (UTC vs Chicago)', () => {
-    expect(updatedAtLabel('2026-10-26T02:10:00+00:00', null, null, 'America/Chicago')).toBe(
+  it('renders the stamp in the given zone (UTC vs Chicago)', () => {
+    expect(updatedAtLabel('2026-10-26T02:10:00+00:00', 'America/Chicago')).toBe(
       'Updated Oct 25, 2026, 9:10 PM CDT'
     );
   });
-  it('returns null for missing or unparseable stamps', () => {
-    expect(updatedAtLabel(null, '2026-09-30', '2026-09', UTC)).toBeNull();
-    expect(updatedAtLabel(undefined, '2026-09-30', '2026-09', UTC)).toBeNull();
-    expect(updatedAtLabel('not a date', '2026-09-30', '2026-09', UTC)).toBeNull();
-  });
-  it('treats a malformed coverage date as absent (month fallback)', () => {
-    expect(updatedAtLabel('2026-10-26T02:10:00+00:00', 'October', '2026-10', UTC)).toBe(
-      'Data through Oct 2026 · updated Oct 26, 2026, 2:10 AM UTC'
+  it('renders local time when no zone is passed', () => {
+    // Structure only — the runner's zone varies (CI is UTC, dev is not).
+    expect(updatedAtLabel('2026-10-26T02:10:00+00:00')).toMatch(
+      /^Updated Oct 2[56], 2026, \d{1,2}:\d{2} [AP]M [A-Z]+$/
     );
+  });
+  it('returns null for missing or unparseable stamps', () => {
+    expect(updatedAtLabel(null, UTC)).toBeNull();
+    expect(updatedAtLabel(undefined, UTC)).toBeNull();
+    expect(updatedAtLabel('not a date', UTC)).toBeNull();
   });
 });

@@ -50,11 +50,9 @@ describe('HomeDashboard freshness line', () => {
       </MemoryRouter>
     );
     const line = await screen.findByTestId('freshness');
-    // The update stamp renders in the viewer's (test runner's) local zone —
+    // The stamp renders in the viewer's (test runner's) local zone —
     // homeData.test.ts pins exact strings; here only the structure is pinned.
-    expect(line.textContent).toMatch(
-      /^Data through Oct 24, 2026 · updated \w+ \d{1,2}, \d{4}, \d{1,2}:\d{2} [AP]M [A-Z]+$/
-    );
+    expect(line.textContent).toMatch(/^Updated \w+ \d{1,2}, \d{4}, \d{1,2}:\d{2} [AP]M [A-Z]+$/);
   });
 
   it('omits the freshness line for pre-generated_at payloads', async () => {

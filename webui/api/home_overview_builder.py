@@ -183,7 +183,9 @@ def build_overview(
         }
 
     # Coverage end = newest SOTD date actually processed (the current month
-    # is partial, so the month itself is not "through").
+    # is partial, so the month itself is not "through"). Not shown in the UI —
+    # the update stamp conveys freshness — but kept in the API for consumers
+    # that want exact coverage.
     posted = [d for u in (ua.get("users") or {}).values() for d in (u.get("posted_dates") or [])]
     data_through: Optional[str] = max(posted) if posted else None
 

@@ -56,17 +56,13 @@ export function buildMovers(movers: ApiMover[]): MoverRow[] {
   });
 }
 
-/** "Data through <date> · updated <datetime>", or null when no stamp
- * (pre-generated_at bundles) or an unparseable stamp — never crash the page.
- * Coverage prefers the exact last posted date (the current month is partial);
- * falls back to the month label for bundles without it. Coverage is a
- * date-only value rendered pinned to UTC (a timezone shift would misreport
- * it); the update stamp renders in the viewer's local time (pass `timeZone`
- * to pin it — tests do). */
+/** "Updated <datetime>", or null when no stamp (pre-generated_at bundles)
+ * or an unparseable stamp — never crash the page. The nightly fetches the
+ * current month through "today", so the update stamp alone conveys both
+ * freshness and coverage. Renders in the viewer's local time (pass
+ * `timeZone` to pin it — tests do). */
 export function updatedAtLabel(
   generatedAt: string | null | undefined,
-  dataThrough: string | null | undefined,
-  latestMonth: string | null | undefined,
   timeZone?: string
 ): string | null {
   if (!generatedAt) return null;
@@ -81,16 +77,5 @@ export function updatedAtLabel(
     timeZone,
     timeZoneName: 'short',
   }).format(d);
-  if (dataThrough && /^\d{4}-\d{2}-\d{2}$/.test(dataThrough)) {
-    const through = new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      timeZone: 'UTC', // date-only strings parse as UTC midnight — keep it
-    }).format(new Date(dataThrough));
-    return `Data through ${through} · updated ${when}`;
-  }
-  return latestMonth
-    ? `Data through ${monthLabel(latestMonth)} · updated ${when}`
-    : `Updated ${when}`;
+  return `Updated ${when}`;
 }
