@@ -1,4 +1,4 @@
-import { buildMovers, buildPulseSeries, monthLabel, updatedAtLabel } from '../homeData';
+import { buildMovers, buildPulseSeries, coverageLabel, monthLabel } from '../homeData';
 
 describe('monthLabel', () => {
   it('formats YYYY-MM as Mon YYYY', () => {
@@ -35,30 +35,27 @@ describe('buildMovers', () => {
   });
 });
 
-describe('updatedAtLabel', () => {
-  // Tests pin the stamp to UTC for exact assertions; the component passes
-  // no zone so viewers get their local time.
+describe('coverageLabel', () => {
+  // Tests pin the zone for exact assertions; the component passes no zone
+  // so viewers get their local time for timestamps.
   const UTC = 'UTC';
 
-  it('formats the stamp with full date, time, and zone', () => {
-    expect(updatedAtLabel('2026-10-26T02:10:00+00:00', UTC)).toBe(
-      'Updated Oct 26, 2026, 2:10 AM UTC'
+  it('renders a publish-time ISO stamp in the given zone', () => {
+    expect(coverageLabel('2026-10-27T14:06:59Z', UTC)).toBe(
+      'Data through Oct 27, 2026, 2:06 PM UTC'
     );
   });
-  it('renders the stamp in the given zone (UTC vs Chicago)', () => {
-    expect(updatedAtLabel('2026-10-26T02:10:00+00:00', 'America/Chicago')).toBe(
-      'Updated Oct 25, 2026, 9:10 PM CDT'
+  it('renders timestamps in the viewer zone when not pinned (UTC vs Chicago)', () => {
+    expect(coverageLabel('2026-10-27T14:06:59Z', 'America/Chicago')).toBe(
+      'Data through Oct 27, 2026, 9:06 AM CDT'
     );
   });
-  it('renders local time when no zone is passed', () => {
-    // Structure only — the runner's zone varies (CI is UTC, dev is not).
-    expect(updatedAtLabel('2026-10-26T02:10:00+00:00')).toMatch(
-      /^Updated Oct 2[56], 2026, \d{1,2}:\d{2} [AP]M [A-Z]+$/
-    );
+  it('renders a date-only fallback value pinned to UTC', () => {
+    expect(coverageLabel('2026-10-24', 'America/Chicago')).toBe('Data through Oct 24, 2026');
   });
-  it('returns null for missing or unparseable stamps', () => {
-    expect(updatedAtLabel(null, UTC)).toBeNull();
-    expect(updatedAtLabel(undefined, UTC)).toBeNull();
-    expect(updatedAtLabel('not a date', UTC)).toBeNull();
+  it('returns null for missing or unparseable values', () => {
+    expect(coverageLabel(null, UTC)).toBeNull();
+    expect(coverageLabel(undefined, UTC)).toBeNull();
+    expect(coverageLabel('not a date', UTC)).toBeNull();
   });
 });

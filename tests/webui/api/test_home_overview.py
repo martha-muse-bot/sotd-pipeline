@@ -226,6 +226,40 @@ def test_overview_includes_generated_at_and_data_through(client, tmp_path):
     assert empty["data_through"] is None
 
 
+def test_write_precomputed_stamps_enriched_timestamp(client, tmp_path):
+    """At publish time the builder has enriched/ available: data_through
+    becomes the newest SOTD comment timestamp (max created_utc)."""
+    from webui.api import home_overview_builder
+
+    enriched = tmp_path / "enriched"
+    enriched.mkdir()
+    (enriched / "2026-10.json").write_text(
+        json.dumps(
+            {
+                "data": [
+                    {"id": "a", "created_utc": "2026-10-24T18:00:00Z"},
+                    {"id": "b", "created_utc": "2026-10-27T14:06:59Z"},
+                    {"id": "c", "created_utc": "2026-10-25T09:00:00Z"},
+                ],
+                "meta": {},
+            }
+        )
+    )
+    out = home_overview_builder.write_precomputed(tmp_path)
+    payload = json.loads(out.read_text())
+    assert payload["data_through"] == "2026-10-27T14:06:59Z"
+
+
+def test_write_precomputed_falls_back_to_posted_date(client, tmp_path):
+    """No enriched/ for the latest month → walk back; none at all → keep the
+    day-granularity value from posted_dates."""
+    from webui.api import home_overview_builder
+
+    out = home_overview_builder.write_precomputed(tmp_path)
+    payload = json.loads(out.read_text())
+    assert payload["data_through"] == "2026-10-24"  # day-granularity fallback
+
+
 def test_stale_bundle_without_generated_at_serves_none(client, tmp_path):
     """A precomputed overview from before the generated_at field must serve
     with generated_at/data_through=None (old bundles stay readable)."""

@@ -65,9 +65,10 @@ class Overview(BaseModel):
     # UTC ISO stamp of when the payload was computed/published; None for
     # precomputed bundles written before the field existed.
     generated_at: Optional[str] = None
-    # True coverage end: the latest posted SOTD date processed (YYYY-MM-DD);
-    # the current month is partial, so coverage is not the month itself.
-    # API-only — the public UI shows just the update stamp.
+    # Coverage end — the newest SOTD post/comment the data includes. At
+    # publish time (enriched/ available) an ISO timestamp; the request-path
+    # fallback computes day granularity (YYYY-MM-DD). The public UI's
+    # freshness line renders this.
     data_through: Optional[str] = None
     pulse: List[PulsePoint]
     tiles: Optional[Tiles] = None

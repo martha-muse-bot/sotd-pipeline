@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { buildMovers, buildPulseSeries, monthLabel, updatedAtLabel } from './homeData';
+import { buildMovers, buildPulseSeries, coverageLabel, monthLabel } from './homeData';
 
 interface PulsePoint {
   month: string;
@@ -141,7 +141,7 @@ export default function HomeDashboard() {
 
   const series = buildPulseSeries(overview.pulse);
   const latest = overview.latest_month;
-  const freshness = updatedAtLabel(overview.generated_at);
+  const freshness = coverageLabel(overview.data_through);
 
   return (
     <div className='space-y-4'>

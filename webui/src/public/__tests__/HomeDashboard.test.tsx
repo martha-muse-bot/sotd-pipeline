@@ -50,12 +50,12 @@ describe('HomeDashboard freshness line', () => {
       </MemoryRouter>
     );
     const line = await screen.findByTestId('freshness');
-    // The stamp renders in the viewer's (test runner's) local zone —
-    // homeData.test.ts pins exact strings; here only the structure is pinned.
-    expect(line.textContent).toMatch(/^Updated \w+ \d{1,2}, \d{4}, \d{1,2}:\d{2} [AP]M [A-Z]+$/);
+    // The fixture carries a date-only data_through (fallback shape) — the
+    // timestamp shape's exact strings are pinned in homeData.test.ts.
+    expect(line.textContent).toBe('Data through Oct 24, 2026');
   });
 
-  it('omits the freshness line for pre-generated_at payloads', async () => {
+  it('omits the freshness line when no coverage value is present', async () => {
     const original = global.fetch;
     // @ts-expect-error jsdom lacks fetch; override with a stampless payload
     global.fetch = jest.fn(() =>

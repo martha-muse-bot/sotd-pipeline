@@ -212,10 +212,39 @@ def build_overview(
     }
 
 
+def _newest_enriched_timestamp(data_dir: Path) -> Optional[str]:
+    """Newest SOTD comment timestamp (max created_utc, ISO) from enriched/.
+
+    Called only at publish time, where the full pipeline data exists (Mac or
+    the pipeline container) — the public container never reads enriched/.
+    Walks back over months whose enriched file is missing/unreadable; None
+    when no enriched data is available at all.
+    """
+    enriched_dir = data_dir / "enriched"
+    for path in sorted(enriched_dir.glob("????-??.json"), reverse=True):
+        enriched = _load(path)
+        if not enriched:
+            continue
+        newest = max(
+            (r.get("created_utc") or "" for r in enriched.get("data") or []),
+            default="",
+        )
+        if newest:
+            return newest
+    return None
+
+
 def write_precomputed(data_dir: Path) -> Path:
     """Build the overview for the latest month and write it into the bundle
-    (aggregated/home_overview.json) so publish copies it to the NAS."""
+    (aggregated/home_overview.json) so publish copies it to the NAS.
+
+    data_through: where enriched/ is available this is the newest SOTD
+    comment timestamp (the exact coverage end); otherwise the day-granularity
+    value from build_overview (max posted date) stands."""
     payload = build_overview(data_dir)
+    ts = _newest_enriched_timestamp(data_dir)
+    if ts is not None:
+        payload["data_through"] = ts
     out = data_dir / "aggregated" / OUTPUT_NAME
     tmp = out.with_suffix(".json.tmp")
     with tmp.open("w") as f:

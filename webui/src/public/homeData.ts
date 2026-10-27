@@ -56,17 +56,27 @@ export function buildMovers(movers: ApiMover[]): MoverRow[] {
   });
 }
 
-/** "Updated <datetime>", or null when no stamp (pre-generated_at bundles)
- * or an unparseable stamp — never crash the page. The nightly fetches the
- * current month through "today", so the update stamp alone conveys both
- * freshness and coverage. Renders in the viewer's local time (pass
- * `timeZone` to pin it — tests do). */
-export function updatedAtLabel(
-  generatedAt: string | null | undefined,
+/** "Data through <coverage end>", or null when no value — never crash the
+ * page. The bundle stamps the newest SOTD comment timestamp (ISO) at publish
+ * time; the request-path fallback carries a date-only string. Timestamps
+ * render in the viewer's local time (pass `timeZone` to pin it — tests do);
+ * date-only values render pinned to UTC (a timezone shift would misreport
+ * them). */
+export function coverageLabel(
+  dataThrough: string | null | undefined,
   timeZone?: string
 ): string | null {
-  if (!generatedAt) return null;
-  const d = new Date(generatedAt);
+  if (!dataThrough) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dataThrough)) {
+    const through = new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      timeZone: 'UTC', // date-only strings parse as UTC midnight — keep it
+    }).format(new Date(dataThrough));
+    return `Data through ${through}`;
+  }
+  const d = new Date(dataThrough);
   if (isNaN(d.getTime())) return null;
   const when = new Intl.DateTimeFormat('en-US', {
     year: 'numeric',
@@ -77,5 +87,5 @@ export function updatedAtLabel(
     timeZone,
     timeZoneName: 'short',
   }).format(d);
-  return `Updated ${when}`;
+  return `Data through ${when}`;
 }
