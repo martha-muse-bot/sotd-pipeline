@@ -23,7 +23,7 @@ export default function PublicHome() {
   return (
     <div>
       <h1 className='text-2xl font-bold mb-2'>SOTD Analytics</h1>
-      <p className='text-gray-400 mb-6'>
+      <p className='text-gray-400 mb-2'>
         Read-only statistics from the r/wetshaving Shave of the Day pipeline.
       </p>
       <HomeDashboard />
