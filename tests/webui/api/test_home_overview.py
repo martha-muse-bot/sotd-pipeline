@@ -26,7 +26,11 @@ def bundle(tmp_path: Path) -> Path:
                             "user": f"user{i}",
                             "posted_days": posted[m][i],
                             "missed_days": 0,
-                            "posted_dates": [],
+                            "posted_dates": (
+                                ["2026-10-01", "2026-10-24", "2026-10-03"]
+                                if m == "2026-10" and i == 0
+                                else ["2026-10-12"] if m == "2026-10" else []
+                            ),
                             "comment_ids": [],
                             "comments_by_date": {},
                             "razors": [],
@@ -195,6 +199,57 @@ def test_movers_vs_prior_of_selected_month(client, tmp_path):
     mover = next(m for m in body["movers"]["razors"] if m["name"] == "Gillette NEW")
     # Sept usage 3 vs Aug usage 3 → held rank → delta 0
     assert mover["delta"] == 0
+
+
+def test_overview_includes_generated_at_and_data_through(client, tmp_path):
+    """The build path stamps generated_at (ISO-8601, UTC) and the true
+    coverage end (latest posted date — the current month is partial)."""
+    from datetime import datetime, timezone
+
+    from webui.api import home_overview_builder
+
+    body = client.get("/api/home/overview").json()
+    stamp = body["generated_at"]
+    assert stamp is not None
+    parsed = datetime.fromisoformat(stamp)
+    assert parsed.tzinfo is not None
+    # The stamp must be plausibly recent (within a day) — it is computed,
+    # not copied from data.
+    assert abs((datetime.now(timezone.utc) - parsed).total_seconds()) < 24 * 3600
+    assert body["data_through"] == "2026-10-24"  # max posted date, not month end
+    # And the builder itself carries both on every payload shape.
+    payload = home_overview_builder.build_overview(tmp_path)
+    assert payload["generated_at"] is not None
+    assert payload["data_through"] == "2026-10-24"
+    empty = home_overview_builder.build_overview(tmp_path / "empty")
+    assert empty["generated_at"] is not None
+    assert empty["data_through"] is None
+
+
+def test_stale_bundle_without_generated_at_serves_none(client, tmp_path):
+    """A precomputed overview from before the generated_at field must serve
+    with generated_at/data_through=None (old bundles stay readable)."""
+    (tmp_path / "aggregated" / "home_overview.json").write_text(
+        json.dumps(
+            {
+                "latest_month": "2026-10",
+                "pulse": [{"month": "2026-10", "posts": 7}],
+                "tiles": {
+                    "posts": 7,
+                    "shavers": 3,
+                    "top_razor": None,
+                    "top_blade": None,
+                    "top_soap": None,
+                    "top_brush": None,
+                },
+                "movers": {"razors": [], "soaps": [], "blades": []},
+            }
+        )
+    )
+    body = client.get("/api/home/overview").json()
+    assert body["generated_at"] is None
+    assert body["data_through"] is None
+    assert body["tiles"]["posts"] == 7
 
 
 # --- precomputed-payload fast path -------------------------------------------

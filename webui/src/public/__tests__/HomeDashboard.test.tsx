@@ -13,6 +13,8 @@ beforeAll(() => {
       json: () =>
         Promise.resolve({
           latest_month: '2026-10',
+          generated_at: '2026-10-26T02:10:00+00:00',
+          data_through: '2026-10-24',
           pulse: [
             { month: '2026-09', posts: 10 },
             { month: '2026-10', posts: 7 },
@@ -38,6 +40,49 @@ beforeAll(() => {
 afterAll(() => {
   // @ts-expect-error test teardown
   delete global.fetch;
+});
+
+describe('HomeDashboard freshness line', () => {
+  it('renders the data-freshness line at the top', async () => {
+    render(
+      <MemoryRouter>
+        <HomeDashboard />
+      </MemoryRouter>
+    );
+    const line = await screen.findByTestId('freshness');
+    // The update stamp renders in the viewer's (test runner's) local zone —
+    // homeData.test.ts pins exact strings; here only the structure is pinned.
+    expect(line.textContent).toMatch(
+      /^Data through Oct 24, 2026 · updated \w+ \d{1,2}, \d{4}, \d{1,2}:\d{2} [AP]M [A-Z]+$/
+    );
+  });
+
+  it('omits the freshness line for pre-generated_at payloads', async () => {
+    const original = global.fetch;
+    // @ts-expect-error jsdom lacks fetch; override with a stampless payload
+    global.fetch = jest.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            latest_month: '2026-10',
+            generated_at: null,
+            data_through: null,
+            pulse: [{ month: '2026-10', posts: 7 }],
+            tiles: null,
+            movers: { razors: [], soaps: [], blades: [] },
+          }),
+      })
+    );
+    render(
+      <MemoryRouter>
+        <HomeDashboard />
+      </MemoryRouter>
+    );
+    await screen.findByText('The Community Pulse');
+    expect(screen.queryByTestId('freshness')).toBeNull();
+    global.fetch = original;
+  });
 });
 
 describe('HomeDashboard mover links', () => {

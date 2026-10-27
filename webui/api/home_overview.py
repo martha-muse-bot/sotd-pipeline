@@ -62,6 +62,12 @@ class Movers(BaseModel):
 
 class Overview(BaseModel):
     latest_month: Optional[str] = None
+    # UTC ISO stamp of when the payload was computed/published; None for
+    # precomputed bundles written before the field existed.
+    generated_at: Optional[str] = None
+    # True coverage end: the latest posted SOTD date processed (YYYY-MM-DD);
+    # the current month is partial, so coverage is not the month itself.
+    data_through: Optional[str] = None
     pulse: List[PulsePoint]
     tiles: Optional[Tiles] = None
     movers: Movers
@@ -164,6 +170,8 @@ def _overview_from_payload(payload: Dict[str, Any]) -> Overview:
     tiles = Tiles(**payload["tiles"]) if payload.get("tiles") else None
     return Overview(
         latest_month=payload.get("latest_month"),
+        generated_at=payload.get("generated_at"),
+        data_through=payload.get("data_through"),
         pulse=pulse,
         tiles=tiles,
         movers=Movers(

@@ -134,6 +134,13 @@ def _movers_for(current: dict, prior: dict, field: str) -> List[Dict[str, Any]]:
     return [{"name": n, "count": c, "delta": d, "is_new": new} for c, d, new, n in scored[:5]]
 
 
+def _utc_now_iso() -> str:
+    """Freshness stamp for the payload: when it was computed/published."""
+    from datetime import datetime, timezone
+
+    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+
 def build_overview(
     data_dir: Path,
     month: Optional[str] = None,
@@ -150,7 +157,12 @@ def build_overview(
 
     months = sorted(p.stem for p in ua_dir.glob("????-??.json"))
     if not months:
-        return {"pulse": [], "movers": {"razors": [], "soaps": [], "blades": []}}
+        return {
+            "generated_at": _utc_now_iso(),
+            "data_through": None,
+            "pulse": [],
+            "movers": {"razors": [], "soaps": [], "blades": []},
+        }
 
     if pulse is None:
         pulse = _pulse_series(ua_dir, months)
@@ -163,10 +175,17 @@ def build_overview(
     ua = _load(ua_dir / f"{latest}.json")
     if pu is None or ua is None:
         return {
+            "generated_at": _utc_now_iso(),
+            "data_through": None,
             "latest_month": latest,
             "pulse": pulse,
             "movers": {"razors": [], "soaps": [], "blades": []},
         }
+
+    # Coverage end = newest SOTD date actually processed (the current month
+    # is partial, so the month itself is not "through").
+    posted = [d for u in (ua.get("users") or {}).values() for d in (u.get("posted_dates") or [])]
+    data_through: Optional[str] = max(posted) if posted else None
 
     posts_for_latest = next((p["posts"] for p in pulse if p["month"] == latest), 0)
     tiles = {
@@ -181,7 +200,14 @@ def build_overview(
 
     movers = {field: _movers_for(pu, prior, field) for field in ("razors", "soaps", "blades")}
 
-    return {"latest_month": latest, "pulse": pulse, "tiles": tiles, "movers": movers}
+    return {
+        "generated_at": _utc_now_iso(),
+        "data_through": data_through,
+        "latest_month": latest,
+        "pulse": pulse,
+        "tiles": tiles,
+        "movers": movers,
+    }
 
 
 def write_precomputed(data_dir: Path) -> Path:

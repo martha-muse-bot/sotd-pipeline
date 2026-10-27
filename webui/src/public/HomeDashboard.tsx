@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { buildMovers, buildPulseSeries, monthLabel } from './homeData';
+import { buildMovers, buildPulseSeries, monthLabel, updatedAtLabel } from './homeData';
 
 interface PulsePoint {
   month: string;
@@ -17,6 +17,8 @@ interface Mover {
 
 interface Overview {
   latest_month: string | null;
+  generated_at: string | null;
+  data_through: string | null;
   pulse: PulsePoint[];
   tiles: {
     posts: number;
@@ -139,9 +141,15 @@ export default function HomeDashboard() {
 
   const series = buildPulseSeries(overview.pulse);
   const latest = overview.latest_month;
+  const freshness = updatedAtLabel(overview.generated_at, overview.data_through, latest);
 
   return (
     <div className='space-y-4'>
+      {freshness && (
+        <p className='text-xs text-gray-500' data-testid='freshness'>
+          {freshness}
+        </p>
+      )}
       {/* Community pulse hero */}
       <div className='rounded-lg bg-gray-800 p-4'>
         <div className='flex items-baseline justify-between mb-2'>
