@@ -34,10 +34,14 @@ def setup_enrichers(override_manager: Optional[EnrichmentOverrideManager] = None
     _current_override_manager = override_manager
 
     if _enrichers_setup:
-        # Enrichers already registered, just update override manager in BrushEnricher
-        # Find BrushEnricher and update its override_manager
+        # Enrichers already registered, just update the override manager on
+        # every enricher that accepts one. Previously only BrushEnricher was
+        # updated here, so StraightRazorEnricher kept override_manager=None
+        # on repeat calls (the production path: run.py calls setup_enrichers()
+        # once with no manager, then per month with the month's manager) and
+        # its grind/width/point/steel overrides never applied.
         for enricher in enricher_registry.get_all_enrichers():
-            if isinstance(enricher, BrushEnricher):
+            if hasattr(enricher, "override_manager"):
                 enricher.override_manager = override_manager
         return
 
