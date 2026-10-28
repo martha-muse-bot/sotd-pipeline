@@ -2560,11 +2560,6 @@ Rockwell:
     patterns:
       - rockwell.*2C
       - 2C
-  6C:
-    patterns:
-      - rockwell.*6C
-      - rockwell
-      - 6c
   6S:
     patterns:
       - rockwell.*6S
@@ -2573,6 +2568,11 @@ Rockwell:
     patterns:
       - 'rockwell.*\bT2?\b'
       - t2
+  6C:
+    patterns:
+      - rockwell.*6C
+      - rockwell
+      - 6c
 Rocky Mountain Barber:
   Double Edge Safety Razor:
     patterns:
