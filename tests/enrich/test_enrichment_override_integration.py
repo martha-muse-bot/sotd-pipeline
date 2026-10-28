@@ -241,3 +241,47 @@ class TestEnrichmentOverrideIntegration:
         # Verify explicit override for second month
         assert len(enriched_2026_02) == 1
         assert enriched_2026_02[0]["brush"]["enriched"]["fiber"] == "Badger"
+
+    def test_repeat_setup_updates_straight_razor_override_manager(self, tmp_path):
+        """Repeat setup_enrichers() must update StraightRazorEnricher.
+
+        Production path (sotd/enrich/run.py) calls setup_enrichers() once
+        with no manager, then once per month with that month's manager.
+        Previously only BrushEnricher was updated on repeat calls, so the
+        StraightRazorEnricher kept override_manager=None and its
+        grind/width/point/steel overrides never applied in real runs.
+        """
+        override_file = tmp_path / "enrichment_overrides.yaml"
+        override_file.write_text("""
+2026-01:
+  m77:
+    razor:
+      grind: wedge
+""")
+
+        override_manager = EnrichmentOverrideManager(override_file)
+        override_manager.load_overrides()
+
+        # Production call order: bare setup first, manager setup second
+        setup_enrichers()
+        setup_enrichers(override_manager=override_manager)
+
+        comments = [
+            {
+                "id": "m77",
+                "_month": "2026-01",
+                "razor": {
+                    "matched": {
+                        "brand": "Dovo",
+                        "model": "Straight",
+                        "format": "Straight",
+                    },
+                },
+                "razor_extracted": "Dovo 5/8",
+            }
+        ]
+
+        enriched_comments = enrich_comments(comments, ["Dovo 5/8"])
+
+        assert len(enriched_comments) == 1
+        assert enriched_comments[0]["razor"]["enriched"]["grind"] == "wedge"
