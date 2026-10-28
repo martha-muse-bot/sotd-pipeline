@@ -3058,6 +3058,7 @@ Declaration Grooming:
       patterns:
       - (declaration grooming|\bdg\b|cha.*lux).*yuzu.*rose
       - (declaration grooming|\bdg\b|cha.*lux).*yrp
+      - (declaration grooming|\bdg\b).*yusuf.*rose.*patchouli
       wsdb_slug: declaration-grooming-yuzurosepatchouli-soap
 Delmy:
   patterns:
