@@ -3056,7 +3056,7 @@ Declaration Grooming:
       wsdb_slug: declaration-grooming-weinstrasse-soap
     Yuzu/Rose/Patchouli:
       patterns:
-      - (declaration grooming|\bdg\b|cha.*lux).*yuzu.*rose
+      - (declaration grooming|\bdg\b|cha.*lux).*yu[zs]u.*rose
       - (declaration grooming|\bdg\b|cha.*lux).*yrp
       wsdb_slug: declaration-grooming-yuzurosepatchouli-soap
 Delmy:
