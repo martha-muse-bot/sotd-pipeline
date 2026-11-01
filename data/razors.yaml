@@ -1379,6 +1379,11 @@ Henkotsu:
     format: Straight
     patterns:
       - ^(?!.*\bac\b).*henkotsu.*kami
+Heinrich Klein:
+  Straight:
+    format: Straight
+    patterns:
+      - heinrich.*klein.*(straight|\d{1,2}/(8|16)|hollow|ground)
 Heritage:
   Adjustable:
     patterns:
