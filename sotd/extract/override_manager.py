@@ -7,6 +7,8 @@ from typing import Any, Dict, List, Optional
 
 import yaml
 
+from sotd.utils.extract_normalization import normalize_for_matching
+
 logger = logging.getLogger(__name__)
 
 
@@ -371,22 +373,34 @@ class OverrideManager:
             )
 
     def apply_override(
-        self, field_data: Optional[Dict[str, str]], override_value: str, field_exists: bool
+        self,
+        field_data: Optional[Dict[str, str]],
+        override_value: str,
+        field_exists: bool,
+        field: Optional[str] = None,
     ) -> Dict[str, str]:
         """Apply override to field data, creating or modifying as needed.
+
+        The override value is normalized with the same
+        `normalize_for_matching` pipeline parsed fields go through, so
+        downstream matching sees a single normalization regime. The raw
+        override text is kept in "original".
 
         Args:
             field_data: Existing field data dict or None if field doesn't exist
             override_value: Value to use for override
             field_exists: Whether the field existed in original data
+            field: Field name (razor/blade/brush/soap) for field-specific
+                normalization; None runs only the field-agnostic steps
 
         Returns:
             Modified or created field data dict
         """
+        normalized_value = normalize_for_matching(override_value, field=field)
         if field_exists and field_data is not None:
             # Override existing field
             result = field_data.copy()
-            result["normalized"] = override_value
+            result["normalized"] = normalized_value
             result["overridden"] = "Normalized"
             logger.debug(
                 "Applied override to existing field: %s -> %s",
@@ -399,7 +413,7 @@ class OverrideManager:
             logger.debug("Created new field from override: %s", override_value)
             return {
                 "original": override_value,
-                "normalized": override_value,
+                "normalized": normalized_value,
                 "overridden": "Original,Normalized",
             }
 
