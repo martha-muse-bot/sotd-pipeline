@@ -371,6 +371,54 @@ class TestOverrideManager:
         assert result["normalized"] == "Koraat"
         assert result["overridden"] == "Original,Normalized"
 
+    def test_apply_override_strips_usage_count_existing_field(self):
+        """Override values must be normalized like parsed fields: usage
+        counts stripped from normalized, raw text kept in original."""
+        manager = OverrideManager(Path("test.yaml"))
+        field_data = {"original": "Schick", "normalized": "Schick"}
+
+        result = manager.apply_override(
+            field_data, "Shick Injector, 2nd use", True, field="blade"
+        )
+
+        assert result["original"] == "Schick"  # Preserved from parsed data
+        assert "2nd use" not in result["normalized"]
+        assert result["normalized"] == "Shick Injector"
+        assert result["overridden"] == "Normalized"
+
+    def test_apply_override_strips_usage_count_new_field(self):
+        """Same normalization on the create-new-field branch."""
+        manager = OverrideManager(Path("test.yaml"))
+
+        result = manager.apply_override(
+            None, "Shick Injector, 2nd use", False, field="blade"
+        )
+
+        assert result["original"] == "Shick Injector, 2nd use"  # Raw text kept
+        assert result["normalized"] == "Shick Injector"
+        assert result["overridden"] == "Original,Normalized"
+
+    def test_apply_override_field_specific_normalization(self):
+        """The field argument drives field-specific steps (razor handle
+        indicators stripped, like the parsed-field path)."""
+        manager = OverrideManager(Path("test.yaml"))
+
+        result = manager.apply_override(
+            None, "Merkur 34C (ebony handle)", False, field="razor"
+        )
+
+        from sotd.utils.extract_normalization import normalize_for_matching
+
+        assert result["normalized"] == normalize_for_matching(
+            "Merkur 34C (ebony handle)", field="razor"
+        )
+        # Handle indicator removed on the razor path, retained without a field
+        result_no_field = manager.apply_override(
+            None, "Merkur 34C (ebony handle)", False
+        )
+        assert result["normalized"] == "Merkur 34C"
+        assert result_no_field["normalized"] != result["normalized"]
+
     def test_has_overrides_false(self):
         """Test has_overrides when no overrides are loaded."""
         manager = OverrideManager(Path("test.yaml"))
