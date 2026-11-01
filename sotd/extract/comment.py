@@ -166,7 +166,7 @@ def parse_comment(
                 if override_value:
                     field_exists = field in result
                     result[field] = override_manager.apply_override(
-                        result.get(field), override_value, field_exists
+                        result.get(field), override_value, field_exists, field=field
                     )
 
     ordered_comment = OrderedDict()
