@@ -667,3 +667,123 @@ class TestOverrideManager:
 
         with pytest.raises(ValueError, match="value"):
             manager.load_overrides()
+
+    def test_update_comment_overrides_preserves_bulk_and_header(self, tmp_path):
+        """Editing an unrelated comment must not explode bulk entries or drop the header."""
+        yaml_content = """# Extract-phase field overrides.
+# Bulk documented here.
+
+2026-10:
+  abc123:
+    razor: Gillette Tech
+  bulk:
+    - field: soap
+      value: Unknown Mystery
+      comment_ids:
+        - id1
+        - id2
+"""
+        override_file = tmp_path / "overrides.yaml"
+        override_file.write_text(yaml_content)
+        manager = OverrideManager(override_file)
+
+        result = manager.update_comment_overrides("2026-10", "zzz999", {"blade": "Astra SP"})
+        assert result == {"blade": "Astra SP"}
+
+        text = override_file.read_text()
+        assert text.startswith("# Extract-phase field overrides.\n# Bulk documented here.\n")
+
+        import yaml as pyyaml
+
+        data = pyyaml.safe_load(text)
+        assert data["2026-10"]["bulk"] == [
+            {"field": "soap", "value": "Unknown Mystery", "comment_ids": ["id1", "id2"]}
+        ]
+        # bulk IDs must not be materialized as per-ID entries
+        assert "id1" not in data["2026-10"]
+        assert "id2" not in data["2026-10"]
+        # the unrelated edit landed
+        assert data["2026-10"]["zzz999"] == {"blade": "Astra SP"}
+        assert data["2026-10"]["abc123"] == {"razor": "Gillette Tech"}
+
+        # merged view still resolves bulk overrides after the round-trip
+        manager2 = OverrideManager(override_file)
+        manager2.load_overrides()
+        assert manager2.get_override("2026-10", "id1", "soap") == "Unknown Mystery"
+        assert manager2.get_override("2026-10", "id2", "soap") == "Unknown Mystery"
+
+    def test_update_comment_overrides_extracts_bulk_comment_on_edit(self, tmp_path):
+        """Editing a bulk-covered field extracts that comment from bulk; others stay."""
+        yaml_content = """2026-10:
+  bulk:
+    - field: soap
+      value: Unknown Mystery
+      comment_ids:
+        - id1
+        - id2
+"""
+        override_file = tmp_path / "overrides.yaml"
+        override_file.write_text(yaml_content)
+        manager = OverrideManager(override_file)
+
+        result = manager.update_comment_overrides("2026-10", "id1", {"soap": "Barrister and Mann"})
+        assert result == {"soap": "Barrister and Mann"}
+
+        import yaml as pyyaml
+
+        data = pyyaml.safe_load(override_file.read_text())
+        assert data["2026-10"]["bulk"] == [
+            {"field": "soap", "value": "Unknown Mystery", "comment_ids": ["id2"]}
+        ]
+        assert data["2026-10"]["id1"] == {"soap": "Barrister and Mann"}
+
+        manager2 = OverrideManager(override_file)
+        manager2.load_overrides()
+        assert manager2.get_override("2026-10", "id1", "soap") == "Barrister and Mann"
+        assert manager2.get_override("2026-10", "id2", "soap") == "Unknown Mystery"
+
+    def test_update_comment_overrides_deleting_bulk_field_removes_from_bulk(self, tmp_path):
+        """Deleting a bulk-covered field pulls the comment out of bulk without a per-ID entry."""
+        yaml_content = """2026-10:
+  bulk:
+    - field: soap
+      value: Unknown Mystery
+      comment_ids:
+        - id1
+        - id2
+"""
+        override_file = tmp_path / "overrides.yaml"
+        override_file.write_text(yaml_content)
+        manager = OverrideManager(override_file)
+
+        result = manager.update_comment_overrides("2026-10", "id1", {"soap": None})
+        assert result == {}
+
+        import yaml as pyyaml
+
+        data = pyyaml.safe_load(override_file.read_text())
+        assert data["2026-10"]["bulk"] == [
+            {"field": "soap", "value": "Unknown Mystery", "comment_ids": ["id2"]}
+        ]
+        assert "id1" not in data["2026-10"]
+
+    def test_update_comment_overrides_prunes_emptied_bulk_entry(self, tmp_path):
+        """Extracting the last ID of a bulk entry drops the bulk key entirely."""
+        yaml_content = """2026-10:
+  bulk:
+    - field: soap
+      value: Unknown Mystery
+      comment_ids:
+        - id1
+"""
+        override_file = tmp_path / "overrides.yaml"
+        override_file.write_text(yaml_content)
+        manager = OverrideManager(override_file)
+
+        manager.update_comment_overrides("2026-10", "id1", {"soap": "Stirling"})
+
+        import yaml as pyyaml
+
+        data = pyyaml.safe_load(override_file.read_text())
+        assert "bulk" not in data["2026-10"]
+        assert data["2026-10"]["id1"] == {"soap": "Stirling"}
