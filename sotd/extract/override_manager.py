@@ -3,7 +3,7 @@
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set
 
 import yaml
 
@@ -27,6 +27,13 @@ class OverrideManager:
         self.override_file_path = override_file_path
         self.overrides: Dict[str, Dict[str, Dict[str, str]]] = {}
         self._file_lines: Optional[List[str]] = None
+        # Bulk entries as loaded, kept so a write round-trip preserves the
+        # compact bulk form instead of exploding into per-ID entries.
+        self._bulk_entries: Dict[str, List[Dict[str, Any]]] = {}
+        # month -> comment_id -> fields covered by a bulk entry
+        self._bulk_covered: Dict[str, Dict[str, Set[str]]] = {}
+        # Leading comment block of the file, re-emitted on write.
+        self._header_lines: List[str] = []
 
     def _find_field_line_number(self, month: str, comment_id: str, field: str) -> Optional[int]:
         """Find the line number where a field appears in the YAML file.
@@ -106,6 +113,11 @@ class OverrideManager:
             logger.debug("Override file not found: %s", self.override_file_path)
             return
 
+        # Bulk/header state is rebuilt from the file on every load.
+        self._bulk_entries = {}
+        self._bulk_covered = {}
+        self._header_lines = []
+
         try:
             with self.override_file_path.open("r", encoding="utf-8") as f:
                 self._file_lines = f.readlines()
@@ -129,6 +141,14 @@ class OverrideManager:
         if not isinstance(content, dict):
             raise ValueError("Override file must contain a dictionary at root level")
 
+        # Keep the leading comment block so a write round-trip does not
+        # silently delete the file header.
+        for line in self._file_lines or []:
+            if not line.strip() or line.lstrip().startswith("#"):
+                self._header_lines.append(line)
+            else:
+                break
+
         # Validate and load overrides (per-ID + optional month-level bulk)
         total_override_count = 0
         for month, month_data in content.items():
@@ -136,6 +156,7 @@ class OverrideManager:
                 raise ValueError(f"Month '{month}' must contain a dictionary of comment overrides")
 
             bulk_map = self._parse_bulk_overrides(month, month_data.get(self.BULK_KEY))
+            self._remember_bulk_entries(month, month_data.get(self.BULK_KEY))
             per_id_map: Dict[str, Dict[str, str]] = {}
 
             for comment_id, field_data in month_data.items():
@@ -311,6 +332,51 @@ class OverrideManager:
 
         return bulk_map
 
+    def _remember_bulk_entries(self, month: str, bulk_data: Any) -> None:
+        """Keep the compact bulk representation for write round-trips.
+
+        `load_overrides` expands bulk into the merged `self.overrides` map;
+        this records the original entries (and which comment+field pairs they
+        cover) so `_write_overrides_file` can re-emit them unchanged instead
+        of exploding every bulk ID into a per-ID entry.
+        """
+        entries: List[Dict[str, Any]] = []
+        covered: Dict[str, Set[str]] = {}
+        if isinstance(bulk_data, list):
+            for entry in bulk_data:
+                if not isinstance(entry, dict):
+                    continue
+                comment_ids = [
+                    str(cid).strip() for cid in entry.get("comment_ids", []) if str(cid).strip()
+                ]
+                if not comment_ids:
+                    continue
+                field = entry.get("field")
+                value = entry.get("value")
+                entries.append({"field": field, "value": value, "comment_ids": comment_ids})
+                for cid in comment_ids:
+                    covered.setdefault(cid, set()).add(field)
+        self._bulk_entries[month] = entries
+        self._bulk_covered[month] = covered
+
+    def _extract_from_bulk(self, month: str, comment_id: str, fields: Set[str]) -> None:
+        """Remove a comment from bulk entries for the fields an edit touched.
+
+        A web-UI edit of a bulk-covered comment+field becomes an explicit
+        per-ID override; the bulk entry keeps applying to its other IDs.
+        """
+        entries = self._bulk_entries.get(month, [])
+        for entry in entries:
+            if entry["field"] in fields and comment_id in entry["comment_ids"]:
+                entry["comment_ids"].remove(comment_id)
+        self._bulk_entries[month] = [e for e in entries if e["comment_ids"]]
+        covered = self._bulk_covered.get(month, {}).get(comment_id, set())
+        covered -= fields
+        if covered:
+            self._bulk_covered[month][comment_id] = covered
+        elif month in self._bulk_covered:
+            self._bulk_covered[month].pop(comment_id, None)
+
     def _raise_on_override_conflicts(
         self,
         month: str,
@@ -438,17 +504,51 @@ class OverrideManager:
         return stripped
 
     def _write_overrides_file(self) -> None:
-        """Atomically write current overrides to the YAML file."""
-        from sotd.utils.file_io import save_yaml_data
+        """Atomically write current overrides to the YAML file.
 
-        # Sort months and comment IDs for stable, readable output
-        ordered: Dict[str, Dict[str, Dict[str, str]]] = {}
+        Bulk entries are re-emitted in their compact form (per-ID pairs that
+        are still bulk-covered are excluded), and the file's leading comment
+        header is preserved.
+        """
+        ordered: Dict[str, Any] = {}
         for month in sorted(self.overrides.keys()):
             month_data = self.overrides[month]
-            ordered[month] = {
-                comment_id: dict(fields) for comment_id, fields in sorted(month_data.items())
-            }
-        save_yaml_data(ordered, self.override_file_path)
+            month_out: Dict[str, Any] = {}
+            covered = self._bulk_covered.get(month, {})
+            for comment_id in sorted(month_data.keys()):
+                per_id = {
+                    field: value
+                    for field, value in month_data[comment_id].items()
+                    if field not in covered.get(comment_id, set())
+                }
+                if per_id:
+                    month_out[comment_id] = per_id
+            bulk_entries = self._bulk_entries.get(month, [])
+            if bulk_entries:
+                month_out[self.BULK_KEY] = [
+                    {
+                        "field": entry["field"],
+                        "value": entry["value"],
+                        "comment_ids": list(entry["comment_ids"]),
+                    }
+                    for entry in bulk_entries
+                ]
+            if month_out:
+                ordered[month] = month_out
+
+        temp_path = self.override_file_path.with_suffix(".tmp")
+        try:
+            with temp_path.open("w", encoding="utf-8") as f:
+                for line in self._header_lines:
+                    f.write(line if line.endswith("\n") else line + "\n")
+                yaml.dump(ordered, f, default_flow_style=False, allow_unicode=True)
+            temp_path.replace(self.override_file_path)
+        finally:
+            if temp_path.exists():
+                try:
+                    temp_path.unlink()
+                except OSError:
+                    pass
         self._file_lines = None
 
     def update_comment_overrides(
@@ -484,6 +584,14 @@ class OverrideManager:
                 comment_overrides.pop(field, None)
             else:
                 comment_overrides[field] = self._validate_override_value(field, value)
+
+        # An edit that touches a bulk-covered comment+field extracts that
+        # comment from the bulk entry (becoming an explicit per-ID override);
+        # the bulk entry keeps applying to its remaining IDs.
+        bulk_covered = self._bulk_covered.get(month, {}).get(comment_id, set())
+        touched_bulk = bulk_covered & set(fields)
+        if touched_bulk:
+            self._extract_from_bulk(month, comment_id, touched_bulk)
 
         if month not in self.overrides:
             self.overrides[month] = {}
