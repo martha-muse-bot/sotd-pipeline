@@ -354,7 +354,9 @@ def fetch_top_level_comments_parallel(
         submissions: List of Reddit submissions to fetch comments for
         max_workers: Maximum number of worker threads (default: 3)
         chunk_size: Number of submissions per worker chunk (default: 1)
-        timeout: Timeout in seconds for each worker (default: 30)
+        timeout: Timeout in seconds for each submission's fetch (default: 30).
+            This is a per-future wait, NOT a budget for the whole batch — the
+            batch always runs to completion and completed work is retained.
         adaptive_workers: Whether to adjust worker count based on rate limits
         fallback_to_sequential: Whether to fall back to sequential processing if parallel fails
         return_metrics: Whether to return performance metrics along with results
@@ -444,12 +446,18 @@ def fetch_top_level_comments_parallel(
                 for i, submission in enumerate(submissions)
             }
 
-            # Collect results as they complete
+            # Collect results as they complete. There is intentionally no
+            # total-batch timeout here: as_completed(timeout=...) is a budget
+            # for the ENTIRE batch, and exceeding it used to raise TimeoutError
+            # that discarded completed work and re-fetched every submission
+            # sequentially. Containment is per-future instead — a submission
+            # that fails contributes [] but never aborts the batch. (Same
+            # shape as community._fetch_comment_records.)
             completed_count = 0
-            for future in concurrent.futures.as_completed(future_to_index, timeout=timeout):
+            for future in concurrent.futures.as_completed(future_to_index):
                 index = future_to_index[future]
                 try:
-                    submission_id, comments = future.result()
+                    submission_id, comments = future.result(timeout=timeout)
                     parallel_results[index] = comments
                     completed_count += 1
                 except concurrent.futures.TimeoutError:
