@@ -2994,6 +2994,11 @@ The Cajun Blade:
     format: AC
     patterns:
       - cajun.*cottonmouth
+The Hamburg Ring:
+  Straight:
+    format: Straight
+    patterns:
+      - the.*hamburg.*ring.*(straight|\d{1,2}/(8|16)|hollow|ground)
 The Holy Black:
   Shavette:
     format: Shavette (Half DE)
