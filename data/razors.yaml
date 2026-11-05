@@ -57,11 +57,13 @@ Above the Tie:
     patterns:
       - (?:\batt\b|tie).*se[- ]?1
       - (?:atlas|bamboo|calypso|colossus|kronos).*se1
-      - (?:\batt\b|tie).*se[- ]?[12].*(?:atlas|bamboo|calypso|colossus|kronos)
+      - (?:\batt\b|tie).*se[- ]?1.*(?:atlas|bamboo|calypso|colossus|kronos)
   SE2:
     format: AC
     patterns:
       - (?:\batt\b|tie).*se[- ]?2
+      - (?:atlas|bamboo|calypso|colossus|kronos).*se2
+      - (?:\batt\b|tie).*se[- ]?2.*(?:atlas|bamboo|calypso|colossus|kronos)
   Windsor:
     patterns:
       - \b(?:att|tie)\b.*sb90(?# PAD FOR PRIORITY LENGTH xxxxxxxxxxxx)
