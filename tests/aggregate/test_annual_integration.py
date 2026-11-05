@@ -5,13 +5,18 @@ Tests the complete annual aggregation workflow including CLI integration,
 component interaction, data flow, logging, and error handling.
 """
 
+import json
 import tempfile
 from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
 
-from sotd.aggregate.annual_engine import AnnualAggregationEngine, process_annual
+from sotd.aggregate.annual_engine import (
+    AnnualAggregationEngine,
+    process_annual,
+    process_single_annual,
+)
 from sotd.aggregate.annual_loader import load_annual_data
 from sotd.utils.file_io import save_json_data
 
@@ -211,19 +216,57 @@ class TestAnnualAggregatorIntegration:
             assert len(metadata["missing_months"]) == 11  # 12 - 1
 
     def test_cli_integration_with_no_data(self, temp_data_dir):
-        """Test CLI integration when no monthly data exists."""
+        """Test CLI integration when no monthly data exists.
+
+        A year with no loadable months writes no annual file: an empty
+        year is not an aggregation, and the file would be mistaken for a
+        complete year by skip-if-exists on later runs.
+        """
         with patch("sotd.aggregate.annual_engine.save_annual_data") as mock_save:
-            process_annual("2024", temp_data_dir, debug=False, force=True)
+            result = process_annual("2024", temp_data_dir, debug=False, force=True)
 
-            mock_save.assert_called_once()
+            mock_save.assert_not_called()
+            assert result is False
 
-            saved_data = mock_save.call_args[0][0]  # aggregated_data
-            metadata = saved_data["metadata"]
-            assert metadata["year"] == "2024"
-            assert metadata["total_shaves"] == 0
-            assert metadata["unique_shavers"] == 0
-            assert len(metadata["included_months"]) == 0
-            assert len(metadata["missing_months"]) == 12
+    def test_second_run_without_force_does_not_overwrite(
+        self, temp_data_dir, sample_monthly_data
+    ):
+        """Second process_annual with force=False leaves the existing file alone."""
+        for month, data in sample_monthly_data.items():
+            month_file = temp_data_dir / f"{month}.json"
+            save_json_data(data, month_file)
+
+        annual_file = temp_data_dir / "annual" / "2024.json"
+
+        # First run writes the annual file.
+        assert process_annual("2024", temp_data_dir.parent, debug=False, force=True) is True
+        assert annual_file.exists()
+
+        # Sentinel-modify it, then re-run without force.
+        saved = json.loads(annual_file.read_text())
+        saved["_sentinel"] = "do-not-overwrite"
+        annual_file.write_text(json.dumps(saved))
+
+        assert process_annual("2024", temp_data_dir.parent, debug=False, force=False) is False
+        assert json.loads(annual_file.read_text()).get("_sentinel") == "do-not-overwrite"
+
+        # ...while force=True still regenerates it.
+        assert process_annual("2024", temp_data_dir.parent, debug=False, force=True) is True
+        assert "_sentinel" not in json.loads(annual_file.read_text())
+
+    def test_empty_year_writes_no_file(self, temp_data_dir):
+        """process_annual on a year with no monthly files writes no annual file."""
+        annual_file = temp_data_dir / "annual" / "2025.json"
+
+        assert process_annual("2025", temp_data_dir.parent, debug=False, force=True) is False
+        assert not annual_file.exists()
+
+    def test_process_single_annual_returns_none_when_skipped(self, temp_data_dir):
+        """Skipped years report None (not 'completed') to the parallel path."""
+        assert (
+            process_single_annual("2025", temp_data_dir.parent, debug=False, force=True)
+            is None
+        )
 
     def test_component_interaction_and_data_flow(self, temp_data_dir, sample_monthly_data):
         """Test interaction between loader, engine, and saver components."""
@@ -278,21 +321,30 @@ class TestAnnualAggregatorIntegration:
             assert "Loaded 2 months of data" in log_output
             assert "Annual aggregation for 2024 completed" in log_output
 
-    def test_error_handling_across_components(self, temp_data_dir):
+    def test_error_handling_across_components(
+        self, temp_data_dir, sample_monthly_data
+    ):
         """Test error handling across all components."""
         # Create corrupted monthly file
         corrupted_file = temp_data_dir / "2024-01.json"
         corrupted_file.write_text("invalid json content")
 
+        # ...plus one valid month, so the year is not empty and the
+        # aggregation proceeds with the corrupted month listed missing.
+        month_file = temp_data_dir / "2024-02.json"
+        save_json_data(sample_monthly_data["2024-02"], month_file)
+
         with patch("sotd.aggregate.annual_engine.save_annual_data") as mock_save:
             # Should handle JSONDecodeError gracefully
-            process_annual("2024", temp_data_dir, debug=False, force=True)
+            # Pass the parent directory since process_annual expects data_dir/aggregated
+            process_annual("2024", temp_data_dir.parent, debug=False, force=True)
 
             # Should still save data with missing month
             mock_save.assert_called_once()
             saved_data = mock_save.call_args[0][0]  # aggregated_data
             metadata = saved_data["metadata"]
             assert "2024-01" in metadata["missing_months"]
+            assert "2024-02" in metadata["included_months"]
 
     def test_performance_of_complete_workflow(self, temp_data_dir):
         """Test performance of complete annual aggregation workflow."""
@@ -395,7 +447,8 @@ class TestAnnualAggregatorIntegration:
 
         with patch("sotd.aggregate.annual_engine.save_annual_data") as mock_save:
             # Test that annual aggregation follows same patterns as monthly
-            process_annual("2024", temp_data_dir, debug=False, force=True)
+            # Pass the parent directory since process_annual expects data_dir/aggregated
+            process_annual("2024", temp_data_dir.parent, debug=False, force=True)
 
             mock_save.assert_called_once()
 
@@ -406,13 +459,14 @@ class TestAnnualAggregatorIntegration:
             for product_type in ["razors", "blades", "brushes", "soaps"]:
                 assert product_type in saved_data
                 assert isinstance(saved_data[product_type], list)
-                # Each product should have name, shaves, unique_users, position
+                # Each product should have name, shaves, unique_users, rank
+                # (annual rows rank with `rank`, not the monthly `position`)
                 if saved_data[product_type]:
                     product = saved_data[product_type][0]
                     assert "name" in product
                     assert "shaves" in product
                     assert "unique_users" in product
-                    assert "position" in product
+                    assert "rank" in product
 
     def test_cli_error_flow_handling(self, temp_data_dir):
         """Test CLI error flow handling for various error scenarios."""
@@ -424,16 +478,11 @@ class TestAnnualAggregatorIntegration:
         non_existent_dir = temp_data_dir / "nonexistent"
 
         with patch("sotd.aggregate.annual_engine.save_annual_data") as mock_save:
-            process_annual("2024", non_existent_dir, debug=False, force=True)
+            result = process_annual("2024", non_existent_dir, debug=False, force=True)
 
-            # Should still succeed but with no data
-            mock_save.assert_called_once()
-
-            saved_data = mock_save.call_args[0][0]  # aggregated_data
-            metadata = saved_data["metadata"]
-            assert metadata["year"] == "2024"
-            assert metadata["total_shaves"] == 0
-            assert len(metadata["missing_months"]) == 12
+            # No monthly data exists, so no annual file is written.
+            mock_save.assert_not_called()
+            assert result is False
 
     def test_comprehensive_range_functionality_validation(self, temp_data_dir, sample_monthly_data):
         """Test comprehensive validation of annual aggregation functionality."""
@@ -443,7 +492,8 @@ class TestAnnualAggregatorIntegration:
             save_json_data(data, month_file)
 
         with patch("sotd.aggregate.annual_engine.save_annual_data") as mock_save:
-            process_annual("2024", temp_data_dir, debug=False, force=True)
+            # Pass the parent directory since process_annual expects data_dir/aggregated
+            process_annual("2024", temp_data_dir.parent, debug=False, force=True)
 
             mock_save.assert_called_once()
 
