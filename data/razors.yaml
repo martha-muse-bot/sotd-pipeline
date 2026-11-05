@@ -1929,6 +1929,11 @@ Mühle:
   Unspecified:
     patterns:
       - m[uü]hle
+New England Razor Co.:
+  Straight:
+    format: Straight
+    patterns:
+      - new.*england.*(straight|\d{1,2}/(8|16)|hollow|ground)
 Nobel:
   Kamisori:
     format: Straight
