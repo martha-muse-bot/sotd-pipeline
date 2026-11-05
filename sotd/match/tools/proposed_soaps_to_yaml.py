@@ -150,9 +150,7 @@ def convert_proposed_months(
             missing.append(month)
 
     if not kept_all and missing:
-        raise FileNotFoundError(
-            "No proposed files found for months: " + ", ".join(missing)
-        )
+        raise FileNotFoundError("No proposed files found for months: " + ", ".join(missing))
 
     fragment = build_catalog_fragment(kept_all)
     write_catalog_yaml(fragment, out_path, force=force)

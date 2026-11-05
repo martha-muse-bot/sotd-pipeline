@@ -73,9 +73,7 @@ class BaseMatcher:
             # A missing correct_matches file is fine (returns {} above). Any
             # OTHER load failure must surface loudly: silently falling back
             # to regex-only matching would corrupt the whole run.
-            raise ValueError(
-                f"Failed to load correct matches file {field_file}: {e}"
-            ) from e
+            raise ValueError(f"Failed to load correct matches file {field_file}: {e}") from e
 
     def _get_normalized_text(self, value: str) -> str:
         """
