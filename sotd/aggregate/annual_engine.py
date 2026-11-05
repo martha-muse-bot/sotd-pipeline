@@ -1611,7 +1611,7 @@ def save_annual_data(aggregated_data: Dict[str, Any], year: str, data_dir: Path)
     save_json_data(aggregated_data, file_path, indent=2)
 
 
-def process_annual(year: str, data_dir: Path, debug: bool = False, force: bool = False) -> None:
+def process_annual(year: str, data_dir: Path, debug: bool = False, force: bool = False) -> bool:
     """
     Process annual aggregation for a single year with performance monitoring.
 
@@ -1620,6 +1620,11 @@ def process_annual(year: str, data_dir: Path, debug: bool = False, force: bool =
         data_dir: Data directory containing monthly aggregated files
         debug: Enable debug logging
         force: Force regeneration of existing files
+
+    Returns:
+        True if the annual file was written, False if skipped (output
+        already exists and force is not set, or no monthly data was
+        available for the year)
     """
     monitor = AnnualPerformanceMonitor(year)
     monitor.start_total_timing()
@@ -1629,6 +1634,12 @@ def process_annual(year: str, data_dir: Path, debug: bool = False, force: bool =
             logger.debug(f"Processing annual aggregation for {year}")
             logger.debug(f"Data directory: {data_dir}")
             logger.debug(f"Force: {force}")
+
+        # Check if output already exists and force is not set
+        output_path = data_dir / "aggregated" / "annual" / f"{year}.json"
+        if output_path.exists() and not force:
+            logger.debug(f"  {year}: output exists")
+            return False
 
         # Load monthly data from the aggregated subdirectory
         monthly_data_dir = data_dir / "aggregated"
@@ -1645,6 +1656,15 @@ def process_annual(year: str, data_dir: Path, debug: bool = False, force: bool =
             logger.debug(f"Loaded {len(monthly_data)} months of data")
             logger.debug(f"Included months: {included_months}")
             logger.debug(f"Missing months: {missing_months}")
+
+        # Refuse to write an annual file when no month was included:
+        # an empty year is not an aggregation, and the file would be
+        # mistaken for a complete year by skip-if-exists on later runs.
+        if not included_months:
+            logger.warning(
+                f"No monthly data available for {year}; skipping annual aggregation"
+            )
+            return False
 
         # Aggregate monthly data (will handle empty data gracefully)
         monitor.start_processing_timing()
@@ -1671,6 +1691,8 @@ def process_annual(year: str, data_dir: Path, debug: bool = False, force: bool =
         if debug:
             logger.debug(f"Annual aggregation for {year} completed")
 
+        return True
+
     finally:
         monitor.end_total_timing()
         if debug:
@@ -1692,7 +1714,9 @@ def process_single_annual(
         Dictionary with processing results or error information, or None if skipped
     """
     try:
-        process_annual(year, data_dir, debug=debug, force=force)
+        processed = process_annual(year, data_dir, debug=debug, force=force)
+        if not processed:
+            return None
         return {
             "year": year,
             "status": "completed",
