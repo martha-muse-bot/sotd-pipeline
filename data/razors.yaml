@@ -79,6 +79,9 @@ Alpha:
     format: AC
     patterns:
       - alpha.*claymore
+  Eclipse:
+    patterns:
+      - alpha.*eclipse
   Futura:
     patterns:
       - alpha.*futura
@@ -148,10 +151,10 @@ Ascender:
     patterns:
       - ascender.*skyline
 Assured for Men:
-  Dollar Tree Safety Razor:
+  Safety Razor:
     patterns:
       - dollar.*tree
-      - assured.*safety.*razor
+      - assured.*saf[et]+y.*razor
   TTO:
     patterns:
       - assured.*men.*tto
@@ -741,6 +744,7 @@ EldrormR Industries:
     patterns:
       - 'mm\s*24\s*scrub'
       - scrub.*four
+      - scrubty-4
 Enders:
   Speed Shaver:
     format: Other
@@ -1209,7 +1213,7 @@ Gillette:
       - gil.*super click
   Super Speed:
     patterns:
-      - (gil.*)?super.*speed
+      - (gil.*)?su\w+r.*speed
       - (red|black|blue|flare|flair).*tip
       - 'gil.*\bss\b'
       - (?<!\.)\b(?:\d{2}|19\d{2})\b \bss\b
@@ -1402,6 +1406,10 @@ Homelike:
   START:
     patterns:
       - Homelike.*start
+Hone:
+  15A:
+    patterns:
+      - hone.*15a
 Iberia:
   14 Doble Temple:
     format: Straight
@@ -1981,6 +1989,7 @@ Other DE:
       - german travel razor
       - pazor.*batch
       - unbranded.*oc
+      - \bde\b
 Other DE Clone:
   "":
     patterns:
@@ -2210,14 +2219,21 @@ Parker:
     format: Shavette (Half DE)
     patterns:
       - parker.*srb.*shavette
+      - parker.*shavette.*srb
   SRW Shavette:
     format: Shavette (Half DE)
     patterns:
-      - parker.*srw
+      - parker.*srw.*shavette
+      - parker.*shavette.*srw
   SRX Shavette:
     format: Shavette (Half DE)
     patterns:
-      - parker.*srx
+      - parker.*srx.*shavette
+      - parker.*shavette.*srx
+  Shavette:
+    format: Shavette (Half DE)
+    patterns:
+      - parker.*shavette
   Semi Slant:
     patterns:
       - parker.*semi.*sla
@@ -2386,6 +2402,9 @@ RazoRock:
     format: Half DE
     patterns:
       - eco
+  EZ1:
+    patterns:
+      - razorock.*ez1
   Game Changer:
     patterns:
       - game.*changer?
@@ -2569,6 +2588,9 @@ Rockwell:
     patterns:
       - rockwell.*6S
       - 6s
+  Setpoint:
+    patterns:
+      - rockwell.*setpoint
   T2:
     patterns:
       - 'rockwell.*\bT2?\b'
@@ -2979,6 +3001,11 @@ Thomas Turner & Co.:
     patterns:
       - thomas.*turner(?:.*\d{1,2}/(8|16))?
 Timeless:
+  ALSB45:
+    patterns:
+      - time?less?\b.*al(umini?um)?\b
+      - timelessal
+      - timeless.*alsb45
   Razor:
     patterns:
       - \btime?less?\b.*(\.?\d\d)?
@@ -3217,6 +3244,7 @@ Wilkinson Sword:
       - wilk.*classic
       - wil\w+son.*sword.*classic
       - wilkinson.*(sword.*)?black
+      - ^Gillette black plastic$ #https://www.reddit.com/r/Wetshaving/comments/1xak9br/tuesday_lather_games_sotd_thread_oct_20_2026/19re7apnjotsy/
 Wizamet:
   Junior P-1:
     patterns:
@@ -3271,6 +3299,9 @@ Yaqi:
   Bohemia:
     patterns:
       - yaqi.*bohem
+  Castor:
+    patterns:
+      - yaqi.*castor
   DLC:
     patterns:
       - yaqi.*dlc
@@ -3293,6 +3324,10 @@ Yaqi:
   Knight Helmet:
     patterns:
       - yaqi.*knight.*helmet
+  Matte Black: # https://www.aliexpress.com/i/2251832693119228.html
+    patterns:
+      - yaqi.*matte.*black
+      - yaqi.*black.*matte
   Open Comb:
     patterns:
       - yaqi.*open.*comb(.*head)?

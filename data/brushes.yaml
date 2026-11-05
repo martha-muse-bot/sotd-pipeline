@@ -1845,6 +1845,23 @@ known_knot_based_brushes:
       fiber: Synthetic
       patterns:
         - \b2\s*bed\b
+  Boti:
+    Enlightener:
+      fiber: Badger
+      patterns:
+        - boti.*enlightener
+    Knight:
+      fiber: Synthetic
+      patterns:
+        - ^(?!.*viking).*knight
+    N3C:
+      fiber: Synthetic
+      patterns:
+        - boti.*n3c
+    SHD Silk HMW Silvertip Badger:
+      fiber: Badger
+      patterns:
+        - boti.*silk
   Chisel & Hound:
     fiber: Badger
     knot_size_mm: 26
@@ -2667,6 +2684,10 @@ other_brushes:
     default: Synthetic
     patterns:
       - bassion
+  Beau Brummel:
+    default: Boar
+    patterns:
+      - beau.*brummel
   Beaumont:
     default: Badger
     patterns:

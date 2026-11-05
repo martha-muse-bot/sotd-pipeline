@@ -49,6 +49,7 @@ AC:
     - feather professional artist club
     - feather professional blades
     - featherbpro
+    - kodiak shaving - feather artists club professional
     Pro Light:
     - feather - ac professional light
     - feather - professional light
@@ -100,6 +101,7 @@ AC:
     - feather softguard ac
   Generic:
     Artist Club:
+    - unknown ac blade that came with the shavette
     - unknown artist club
     Kai Clone:
     - chinese kai clone
@@ -198,6 +200,7 @@ Cartridge/Disposable:
       - harry's 5 blade cartridge with lubricating strip
       - harry's cartridge
       - harry's five blade cartridge
+      - personna - single blade face razor
       - personna - twin pivot
       - personna single blade disposable
       - personna twin pivot plus
@@ -298,6 +301,7 @@ DE:
     - gillette 7 o'clock (black) u
     - gillette 7 o'clock - super platinum
     - gillette 7 o'clock black
+    - gillette 7 o'clock black - 3rd and final 2 pass shave
     - gillette 7 o'clock black platinum
     - gillette 7 o'clock black super platinum
     - gillette 7 o'clock black, platinum
@@ -320,6 +324,7 @@ DE:
     - gillette 7oc super platinum
     - gillette 7oc super platinum [?]
     - gillette 7oclock black
+    - gillette 7oclock super platinum
     - gillette 7sp
     - gillette 7sp ss
     - gillette platinum black 7'oclock
@@ -360,6 +365,7 @@ DE:
     - gillette 7 o'clock super stainless (green), de - 1/2
     - gillette 7 o'clock super stainless (green), de 1/2 blade
     - gillette 7 o'clock super stainless green
+    - gillette 7 o'clock super stainless green - 3rd and final 2 pass shave
     - gillette 7 o'clock super stainless green box
     - gillette 7 o'clock super stainless green pack
     - gillette 7 o'clock super stainless/green
@@ -450,6 +456,8 @@ DE:
     - astra superior platinum double edge
     - astra superior platinum double edge (first use)
     - astra superior platinum green
+    - astra superior platinum green - 1st 2 pass shave
+    - astra superior platinum green- 2nd 2 pass shave
     - astra superior platinum, de
     - astra superior platinum- 5th and final 2 pass shave
     - astras
@@ -593,6 +601,7 @@ DE:
     - derby
     - derby - extra
     - derby - extra - stainless
+    - derby - extra stainless
     - derby extra
     - derby extra - green
     - derby extra - super stainless
@@ -616,6 +625,7 @@ DE:
     - derby ss
   Dorco:
     Prime Platinum:
+    - dorco - prime
     - dorco - prime platinum
     - dorco prime
     - dorco prime platinum
@@ -669,6 +679,7 @@ DE:
     - feather (de)
     - feather (marathon)
     - feather - black
+    - feather - brazilian version
     - feather - de stainless
     - feather - hi stainless
     - feather - hi stainless, de
@@ -731,6 +742,10 @@ DE:
     - flydear super platinum
     - flydear- super platinum
     - modified flydear 🤦🏻♂️
+  Funeraria La Milagrosa S.A.:
+    DE:
+    - venezuelan blade - funeraria la milagrosa
+    - venezuelan blades - funeraria la milagrosa s.a
   Generic:
     DE:
     - nameless chinese blade that came with a razor - one use only
@@ -774,6 +789,7 @@ DE:
     - gilette nacet
     - gillet nacet
     - gillete nacet
+    - gillett nacet
     - gillette - nacet
     - gillette - nacet (marathon)
     - 'gillette - nacet (use #10 i think)'
@@ -787,6 +803,7 @@ DE:
     - gillette -nacet
     - gillette nacet
     - gillette nacet (?)
+    - gillette nacet (lost count - too lazy to figure it out)
     - gillette nacet (thanks to u/gfdoto!)
     - gillette nacet (very old)
     - gillette nacet - 1st 2 pass shave
@@ -892,8 +909,10 @@ DE:
     - gillete silver blue
     - gillete silver blue (1rst use)
     - gillett silver blue
+    - gillette - gillette silver blue
     - gillette - silver blie
     - gillette - silver blue
+    - gillette - silver blue (gibbs)
     - gillette - silver blue half
     - gillette - silverblue
     - gillette -silver blue
@@ -903,12 +922,15 @@ DE:
     - gillette silve blue
     - gillette silver blue
     - gillette silver blue (?)
+    - gillette silver blue - 1st 2 pass shave
     - gillette silver blue - 1st shave
     - gillette silver blue - 3rd 2 pass shave
     - gillette silver blue - 3rd shave
     - gillette silver blue - 4th shave. going for 5
     - gillette silver blue - 5th and final 2 pass shave
     - gillette silver blue stainless
+    - gillette silver blue- 2nd 2 pass shave
+    - gillette silver blue- 3rd and final 2 pass shave
     - gillette silver blue- 4th and final 2 pass shave
     - gillette silver blue; second shave
     - gillette silver blues
@@ -918,6 +940,7 @@ DE:
     - silver blue
     - silverblue
     Spoiler:
+    - gillette - spoiler
     - gillette spoiler
     - gillette vintage spoiler
     Sputnik:
@@ -974,6 +997,7 @@ DE:
     - wilkinson sword (brazil)
     - wilkinson sword brazil
     Winner:
+    - gillette - winner
     - gillette winner
     - gillette winner special stainless
     - gillette winner stainless
@@ -1001,6 +1025,9 @@ DE:
   GreatMax:
     Super Platinum:
     - greatmax
+  Hoffritz:
+    Stainless:
+    - hoffritz - stainless
   Inglish:
     Super Stainless:
     - inglish stainless
@@ -1012,6 +1039,7 @@ DE:
     - kai
     - kai - stainless
     - kai - stainless de
+    - kai blue
     - kai razor stainless
     - kai stainless
     - kai stainless steel
@@ -1030,6 +1058,7 @@ DE:
     - king c gillette (chinese) - 2nd 2 pass shave
     - king c gillette - 1st 2 pass shave
     - king c gillette - 1st try
+    - king c gillette - 2nd 2 pass shave
     - king c gillette - 2nd shav
     - king c gillette - 4th and final 2 pass shave
     - king c gillette - 4th and final shave
@@ -1047,6 +1076,7 @@ DE:
     - kingston ultra
   L3VEL3:
     Platinum:
+    - l3vel3 - platinum
     - l3vel3 platinum
   Ladas:
     Super Stainless:
@@ -1060,6 +1090,9 @@ DE:
     - laser ultra
     - laser ultra triple coated
     - lazer triple coated
+  Leaf:
+    Super Platinum:
+    - leaf - super platinum
   Leningrad:
     DE:
     - ленинград
@@ -1114,6 +1147,8 @@ DE:
     - magicol super platinum
     - matgicol
     - matgicol (came with my henson)
+    - matgicol (included with henson razor)
+    - matgicol platinum
     - matgicol super platinum
   Merkur:
     Super Platinum:
@@ -1177,6 +1212,8 @@ DE:
     - gem personna
     - gem platinum diamond glide
     - gem platinum diamond glide - de
+    - gemdiamondglide
+    - persona - pdg
     - persona gem diamond glide
     - persona gem platinum diamond glide
     - personna - gem - platinum diamond glide
@@ -1190,6 +1227,7 @@ DE:
     - personna gem de blade
     - personna gem diamond glide
     - personna gem diamond glide - 2nd 2 pass shave
+    - personna gem diamond platinum glide
     - personna gem diamondglide
     - personna gem double edge
     - personna gem hi stainless - 1st 2 pass shave
@@ -1205,12 +1243,14 @@ DE:
     - personna gpdg
     - personna pdg
     - personna platinum diamond glide
+    - personna platinum diamond glide gem de
     - personna platinum gem diamond glide de
     - personna- gem platinum diamond glide
     Lab Blue:
     - accuforge
     - accuforge - microcoat
     - accuforge pro premium
+    - accutec - accuforge
     - accutec accuforge
     - gilette lab blue
     - persona - lab blue
@@ -1236,6 +1276,7 @@ DE:
     - personna lab blue
     - personna lab blue (verona, va. usa)
     - personna lab blue super
+    - personna lab blue 🇺🇸
     - personna labs
     - personna super (aka lab blue)
     - personna super comfort coated (aka lab blue)
@@ -1410,6 +1451,7 @@ DE:
     Stainless (DE):
     - schick (?)
     - schick - 2002
+    - schick - de stainless
     - schick - de stainless steel
     - schick - double edge
     - schick - stainless steel de
@@ -1419,6 +1461,7 @@ DE:
     - schick japan
     - schick stainless
     - schick, de
+    - shick - de stainless
     - shick - double edge stainless steel
     - shick de blade
   Shark:
@@ -1452,6 +1495,7 @@ DE:
     - sharp 7am plus high platinum
     Hi Chromium:
     - durablade sharp hi chromium
+    - sharp - hi chromium
     - sharp chromium
     - sharp hi chromium
     Hi Platinum:
@@ -1516,6 +1560,7 @@ DE:
     - super max stainless
     - super- super-max super stainless
     - super-max - stainless
+    - super-max stainless
     - super-max super stainless
     - supermax
     - supermax red
@@ -1682,7 +1727,10 @@ DE:
     - voskhod ss
     - voskhod super stainless
     - voskhod teflon
+    - voskhod teflon - 1st 2 pass shave
+    - voskhod teflon - 2nd 2 pass shave
     - voskhod teflon coated
+    - voskhod teflon- 3rd and final 2 pass shave
     - voskhod, teflon coated
   Walgreens:
     2 Edge:
@@ -1691,11 +1739,13 @@ DE:
     Classic:
     - chinese gillette wilkinson
     - gillette wilkinson (saloon pack)
+    - gillette wilkinson saloon pack
     - tbd (wilkinson sword)
     - wilkenson sword
     - wilkerson sword
     - wilkinson
     - wilkinson - stainless super sword edge
+    - wilkinson - super sword edge
     - wilkinson - sword
     - wilkinson classic
     - wilkinson classic - 1st 2 pass shave
@@ -1710,6 +1760,7 @@ DE:
     - wilkinson sword (german)
     - wilkinson sword (target)
     - wilkinson sword - (germany - 4)
+    - wilkinson sword - 3rd and final 2 pass shave
     - wilkinson sword - germany
     - wilkinson sword 2
     - wilkinson sword 2nd 2 pass shave
@@ -1728,6 +1779,8 @@ DE:
     - wilkinson sword- original (german)
     Light Brigade:
     - wilkinson sword light brigade
+    Super Sword Edge:
+    - wilkinson - sword edge
   Willy's:
     Premium:
     - willy's
@@ -1791,6 +1844,7 @@ GEM:
     - gem blue star (uncoated)
   PAL:
     Blue Blade (GEM):
+    - gem pal
     - pal - single edge carbon steel blue
     - pal blue carbon
     - pal se gem blade
@@ -1802,6 +1856,7 @@ GEM:
     - accuforge gem microcoat
     - accuforge pro ptfe gem
     - accutec
+    - accutec - gem
     - accutec - pro premium coated
     - accutec - pro se (aka gem ptfe)
     - accutec - pro single edge
@@ -1851,6 +1906,7 @@ GEM:
     - persona ptfe (good riddance)
     - personna - gem ptfe
     - personna - gem ptfe coated
+    - personna - ptfe - ss gem blade
     - personna - ptfe coated
     - personna gem
     - personna gem ptfe
@@ -1890,6 +1946,7 @@ Hair Shaper:
   Diane:
     Hair Shaper:
     - diane
+    - diane - double edge razor blades
     - diane hair shaper
   Feather:
     Cut Special:
@@ -1980,12 +2037,14 @@ Half DE:
     SE:
     - leaf
     - leaf - leaf single-edge
+    - leaf - single blade
     - leaf - single edge
     - leaf - single-edge blade
     - leaf single edge
     - leaf single-edge blades
     - leaf ss
     - leaf super platinum
+    - leaf- single edge
   Misaki:
     Platinum SE:
     - misaka - platinum
@@ -2001,6 +2060,7 @@ Injector:
     - vintage unbranded injector
   Parker:
     Injector:
+    - parker - injector
     - parker injector
     - parker ss injector
   Personna:

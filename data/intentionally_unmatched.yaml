@@ -204,6 +204,12 @@ brush:
     - file: 2026-09.json
       id: phjb2dq
       source: user
+  arko 2-n-1 travel brush:
+    added_date: '2026-11-01'
+    comment_ids:
+    - file: 2026-11.json
+      id: 19ry42nwuf36q
+      source: user
   banana:
     added_date: '2025-07-28'
     comment_ids:
@@ -228,6 +234,18 @@ brush:
     - file: 2026-09.json
       id: pfar898
       source: user
+  brushless:
+    added_date: '2026-11-01'
+    comment_ids:
+    - file: 2026-11.json
+      id: 19rg16uuzyhhd
+      source: user
+  caliper sock:
+    added_date: '2026-11-01'
+    comment_ids:
+    - file: 2026-11.json
+      id: 19rxnzsyxxq77
+      source: user
   chronnocrafts english lavender:
     added_date: '2025-08-10'
     comment_ids:
@@ -246,6 +264,18 @@ brush:
     - file: 2026-09.json
       id: pf2f14x
       source: user
+  custom:
+    added_date: '2026-11-01'
+    comment_ids:
+    - file: 2026-11.json
+      id: 19ryb944j2uw3
+      source: user
+  dewey, shavem, and howe chief justice:
+    added_date: '2026-11-01'
+    comment_ids:
+    - file: 2026-11.json
+      id: 19rx0mevgkpuo
+      source: user
   do:
     added_date: '2025-07-28'
     comment_ids:
@@ -257,6 +287,12 @@ brush:
     comment_ids:
     - file: 2025-06.json
       id: mx5zrlm
+      source: user
+  fork?:
+    added_date: '2026-11-01'
+    comment_ids:
+    - file: 2026-11.json
+      id: 19rh1ylevjhtt
       source: user
   gum sulcular brush:
     added_date: '2025-08-10'
@@ -300,6 +336,12 @@ brush:
     - file: 2026-10.json
       id: phk6dvr
       source: user
+  kitchen silicone brushes:
+    added_date: '2026-11-01'
+    comment_ids:
+    - file: 2026-11.json
+      id: 19rmkz0v2wm4g
+      source: user
   left hand:
     added_date: '2026-10-18'
     comment_ids:
@@ -329,6 +371,12 @@ brush:
     comment_ids:
     - file: 2025-06.json
       id: mykchyc
+      source: user
+  my fugly brush:
+    added_date: '2026-11-01'
+    comment_ids:
+    - file: 2026-11.json
+      id: 19rx3so40cmao
       source: user
   my hand:
     added_date: '2025-07-19'
@@ -420,6 +468,12 @@ brush:
     - file: 2026-09.json
       id: pf7vjrp
       source: user
+  norpro basting brush:
+    added_date: '2026-11-01'
+    comment_ids:
+    - file: 2026-11.json
+      id: 19rfcv4i2pssi
+      source: user
   not applicable:
     added_date: '2025-07-28'
     comment_ids:
@@ -431,6 +485,12 @@ brush:
     comment_ids:
     - file: 2026-07.json
       id: oufz592
+      source: user
+  'null':
+    added_date: '2026-11-01'
+    comment_ids:
+    - file: 2026-11.json
+      id: 19rw116t0tfkx
       source: user
   nutribullet immersion blender / hand:
     added_date: '2026-10-20'
@@ -473,6 +533,12 @@ brush:
     comment_ids:
     - file: 2025-02.json
       id: myf7jya
+      source: user
+  rubber spatula:
+    added_date: '2026-11-01'
+    comment_ids:
+    - file: 2026-11.json
+      id: 19rg4hmpaa5fm
       source: user
   ryobi one+ hp brushless impact driver - grant's 4" flat soft bristle brush:
     added_date: '2026-10-18'

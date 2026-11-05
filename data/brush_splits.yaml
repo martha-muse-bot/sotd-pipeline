@@ -165,7 +165,7 @@ Grizzly Bay Sophisticated Kaos Bar-Bear w/ V25 Fanchurian Badger:
   system_reasoning: Single component brush
 Grizzly Bay w/ V21:
   handle: null
-  knot: Grizzly Bay w/ V21
+  knot: null
   match_type: null
   corrected: false
   validated_at: null
@@ -337,6 +337,17 @@ Rudy Vey B&B Forum Brush sOC knot:
   - file: 2025-12.json
     comment_ids:
     - nvtmv6r
+Sherwood 5100 - TDR DG B6:
+  handle: Sherwood 5100 - TDR
+  knot: DG B6
+  match_type: null
+  corrected: false
+  validated_at: null
+  should_not_split: false
+  occurrences:
+  - file: 2026-10.json
+    comment_ids:
+    - 19rnfhcii5y4j
 Unbranded - Marble w/ Maggard G5C Synthetic:
   handle: Unbranded - Marble
   knot: Maggard G5C Synthetic

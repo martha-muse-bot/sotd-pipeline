@@ -38,7 +38,7 @@ AC:
   Generic:
     Artist Club:
       patterns:
-        - (generic|unbranded|unknown).*artist\s*club
+        - (generic|unbranded|unknown).*(artist\s*club|\bac\b)
     Kai Clone:
       patterns:
         - kai.*clone
@@ -347,6 +347,10 @@ DE:
     Super Platinum:
       patterns:
         - flydear
+  Funeraria La Milagrosa S.A.: # https://postimg.cc/xJRf6gCd
+    DE:
+      patterns:
+        - funeraria.*milagrosa
   Generic:
     DE:
       patterns:
@@ -459,6 +463,10 @@ DE:
     Super Platinum:
       patterns:
         - greatmax
+  Hoffritz:
+    Stainless: # https://hairmaker.gr/en/collectibles-razor-blades/1317-hoffritz-stainless-collectable-razor-blade.html
+      patterns:
+        - hof+ritz
   Inglish:
     Super Stainless:
       patterns:
@@ -495,6 +503,10 @@ DE:
     Ultra:
       patterns:
         - la[sz]er
+  Leaf:
+    Super Platinum: # https://www.reddit.com/r/Wetshaving/comments/1xibynv/comment/19rxmopx971ky/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
+      patterns:
+        - leaf.*(plat)?
   Leningrad:
     DE:
       patterns:
@@ -928,6 +940,9 @@ DE:
     Light Brigade:
       patterns:
         - light.*brigade
+    Super Sword Edge: #vintage blade
+      patterns:
+        - wilk.*sword.*edge
   Willy's:
     Premium:
       patterns:
@@ -1003,6 +1018,7 @@ GEM:
       patterns:
         - \bpal\b.*blue
         - \bpal\b.*gem
+        - gem.*\bpal\b
 Hair Shaper:
   Annie:
     Hair Shaper:

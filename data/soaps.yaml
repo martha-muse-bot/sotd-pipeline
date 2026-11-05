@@ -367,6 +367,9 @@ Areffa Soap:
     Kentucky Bourbon:
       patterns:
       - areffa.*kentucky bourbon
+    Phantom of Kiev: # https://areffasoap.com/en/phantom-of-kyiv/
+      patterns:
+      - aref+a.*phantom.*kyiv
     Raudr Reyk (Red Smoke):
       entries: null
       patterns:
@@ -602,6 +605,9 @@ Ariana & Evans:
     Plum & Bliss:
       patterns:
       - plum.*bliss
+    Posion Hemlock:
+      patterns:
+      - posion hemlock # https://www.therazorcompany.com/products/ariana-evans-poison-hemlock-shaving-soap-4oz
     Pomegranate & Wood:
       patterns:
       - (arian|a&e|pedro).*pomegranate
@@ -662,6 +668,9 @@ Ariana & Evans:
       patterns:
       - (ariana|a&e|club).*grave
       wsdb_slug: ariana-and-evans-the-graveyard-soap
+    The Kingdom: # https://thirstybadger.ca/shaving-fragrance-homage/
+      patterns:
+        - (arian|a&e).*kingdom
     The Novelist:
       patterns:
       - (ariana|a&e|club).*novelist
@@ -714,8 +723,9 @@ Ariana & Evans:
       - warrior.*howling fjord
       wsdb_slug: ariana-and-evans-warrior-of-howling-fjord-soap
     Watermelon Cachaca:
+      format: Cream
       patterns:
-      - watermelon.*cachaca
+      - watermelon.*cach?ach?a # https://aegrooming.com/products/watermelon-cachaca-shaving-cream     
     Which One's Pink?:
       patterns:
       - which one'?s pink
