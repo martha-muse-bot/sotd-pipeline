@@ -1,6 +1,9 @@
+from pathlib import Path
+
 import pytest
 import yaml
-from sotd.match.base_matcher import BaseMatcher
+
+from sotd.match.base_matcher import BaseMatcher, clear_catalog_cache
 
 
 def write_temp_yaml(path, data):
@@ -10,6 +13,12 @@ def write_temp_yaml(path, data):
 
 class TestBaseMatcher:
     """Test cases for BaseMatcher structured data handling."""
+
+    @pytest.fixture(autouse=True)
+    def _clear_catalog_cache(self):
+        clear_catalog_cache()
+        yield
+        clear_catalog_cache()
 
     @pytest.fixture
     def temp_catalog(self, tmp_path):
@@ -28,12 +37,21 @@ class TestBaseMatcher:
         write_temp_yaml(tags_path, tags)
         return tags_path
 
-    def make_matcher(self, catalog_path, tags_path):
+    def make_matcher(
+        self,
+        catalog_path,
+        tags_path,
+        correct_matches_path: Path | None = None,
+    ):
         class TempMatcher(BaseMatcher):
             def _load_competition_tags(self):
                 return yaml.safe_load(open(tags_path, "r", encoding="utf-8"))
 
-        return TempMatcher(catalog_path, "razor")
+        return TempMatcher(
+            catalog_path,
+            "razor",
+            correct_matches_path=correct_matches_path,
+        )
 
     def test_get_normalized_text_structured(self, temp_catalog, temp_tags):
         matcher = self.make_matcher(temp_catalog, temp_tags)
@@ -113,3 +131,21 @@ class TestBaseMatcher:
         matcher = self.make_matcher(temp_catalog, temp_tags)
         result = matcher._check_correct_matches("")
         assert result is None
+
+    def test_corrupt_correct_matches_file_raises(self, temp_catalog, temp_tags, tmp_path):
+        """Malformed correct_matches YAML must fail fast, not silently return {}."""
+        cm_dir = tmp_path / "correct_matches"
+        cm_dir.mkdir()
+        # Tab-indented YAML triggers yaml.scanner.ScannerError
+        (cm_dir / "razor.yaml").write_text("Brand:\n\tModel: []\n", encoding="utf-8")
+
+        with pytest.raises(ValueError, match="Failed to load correct matches file"):
+            self.make_matcher(temp_catalog, temp_tags, correct_matches_path=cm_dir)
+
+    def test_missing_correct_matches_file_returns_empty(self, temp_catalog, temp_tags, tmp_path):
+        """Missing field file is fine — continue with empty correct_matches."""
+        cm_dir = tmp_path / "correct_matches"
+        cm_dir.mkdir()
+
+        matcher = self.make_matcher(temp_catalog, temp_tags, correct_matches_path=cm_dir)
+        assert matcher.correct_matches == {}
