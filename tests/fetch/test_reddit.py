@@ -1514,6 +1514,66 @@ class TestParallelCommentFetching:
         )
         assert len(results) == 3
 
+    def test_parallel_fetch_batch_exceeding_timeout_retains_completed_work(self, monkeypatch):
+        """A batch whose combined fetch exceeds `timeout` must not discard completed work.
+
+        Regression test for the batch-timeout flaw: `as_completed(timeout=...)`
+        is a budget for the ENTIRE batch, so a slow batch raised TimeoutError,
+        discarded the completed futures, and re-fetched everything
+        sequentially. Containment is per-future instead.
+        """
+        mock_submissions = [
+            MockSubmission("sub1", "Thread 1", 10),
+            MockSubmission("sub2", "Thread 2", 15),
+        ]
+
+        fetch_calls = []
+
+        def mock_fetch_comments(submission):
+            fetch_calls.append(submission.id)
+            time.sleep(0.6)  # combined fetch (~1.2s) exceeds the 0.25s batch budget
+            return [MockComment(f"c{submission.id}", f"Comment {submission.id}")]
+
+        monkeypatch.setattr("sotd.fetch.reddit.fetch_top_level_comments", mock_fetch_comments)
+
+        from sotd.fetch.reddit import fetch_top_level_comments_parallel
+
+        results, metrics = fetch_top_level_comments_parallel(
+            mock_submissions, max_workers=2, timeout=0.25, return_metrics=True
+        )
+
+        # Completed work is retained: no sequential fallback, no re-fetch.
+        assert metrics["processing_mode"] == "parallel"
+        assert sorted(fetch_calls) == ["sub1", "sub2"]
+        assert len(results) == 2
+        assert [c.id for c in results[0]] == ["csub1"]
+        assert [c.id for c in results[1]] == ["csub2"]
+
+    def test_parallel_fetch_one_failing_submission_does_not_abort_batch(self, monkeypatch):
+        """Per-future containment: a failing submission contributes [] but never
+        aborts the batch."""
+        mock_submissions = [
+            MockSubmission("good", "Thread 1", 10),
+            MockSubmission("bad", "Thread 2", 15),
+            MockSubmission("good2", "Thread 3", 8),
+        ]
+
+        def mock_fetch_comments(submission):
+            if submission.id == "bad":
+                raise RuntimeError("boom")
+            return [MockComment(f"c{submission.id}", f"Comment {submission.id}")]
+
+        monkeypatch.setattr("sotd.fetch.reddit.fetch_top_level_comments", mock_fetch_comments)
+
+        from sotd.fetch.reddit import fetch_top_level_comments_parallel
+
+        results = fetch_top_level_comments_parallel(mock_submissions, max_workers=2)
+
+        assert len(results) == 3
+        assert [c.id for c in results[0]] == ["cgood"]
+        assert results[1] == []
+        assert [c.id for c in results[2]] == ["cgood2"]
+
 
 # --------------------------------------------------------------------------- #
 # Thread Override Tests                                                        #
