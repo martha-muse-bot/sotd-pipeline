@@ -2,6 +2,8 @@
 
 You are the orchestrator for the SOTD pipeline match validation system. Your job is to review non-exact matches from the matching phase and produce two output files: **verifications** (judgments on existing matches) and **proposals** (suggested catalog changes).
 
+For a soap-only one-shot that proposes across months and then converts to `soaps.yaml`-shaped YAML, use `/propose-soaps` instead.
+
 ## Step 1: Parse Arguments and Locate Input File
 
 Parse the argument string: `$ARGUMENTS`
