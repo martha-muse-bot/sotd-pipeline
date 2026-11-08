@@ -253,16 +253,12 @@ class ParallelMonthProcessor:
         """
         if phase_name == "extract":
             total_shaves = sum(r.get("meta", {}).get("shave_count", 0) for r in completed_results)
-            total_missing = sum(
-                r.get("meta", {}).get("missing_count", 0) for r in completed_results
-            )
             total_skipped = sum(
                 r.get("meta", {}).get("skipped_count", 0) for r in completed_results
             )
 
             logger.info("\nExtraction Summary:")
             logger.info(f"  Total Shaves: {total_shaves:,}")
-            logger.info(f"  Total Missing: {total_missing:,}")
             logger.info(f"  Total Skipped: {total_skipped:,}")
 
         elif phase_name == "enrich":
