@@ -39,17 +39,12 @@ def _process_month(
             logger.warning("Skipped missing input file: %s/comments/%s.json", base_path, ym)
         return None
 
-    extracted = []
-    missing = []
-    skipped = []
-
-    for c in all_comments.get("data", []):
-        has_field = any(k in c for k in ("razor", "blade", "brush", "soap"))
-        if has_field:
-            extracted.append(c)
-        else:
-            missing.append(c)
-
+    # run_extraction_for_month already splits parsed from unparsed comments:
+    # "data" holds only comments with at least one extracted field, and
+    # "skipped" holds the truly unparsed ones. Do not re-split "data" here —
+    # every entry in it has a field, so a re-split would report a permanently
+    # empty "missing" bucket while the real loss hides in "skipped".
+    extracted = all_comments.get("data", [])
     skipped = all_comments.get("skipped", [])
 
     result = {
@@ -57,11 +52,9 @@ def _process_month(
             "month": ym,
             "extracted_at": datetime.utcnow().replace(tzinfo=timezone.utc).isoformat(),
             "shave_count": len(extracted),
-            "missing_count": len(missing),
             "skipped_count": len(skipped),
         },
         "data": extracted,
-        "missing": missing,
         "skipped": skipped,
     }
     out_path = base_path / "extracted" / f"{year:04d}-{month:02d}.json"
@@ -134,16 +127,34 @@ def run(args) -> None:
 
     # Convert results to expected format for summary
     summary_results = []
+    error_months = set()
     for result in results:
-        if "error" not in result and result:
+        if "error" in result:
+            error_months.add(result["month"])
+        elif result:
             summary_results.append(
                 {
                     "month": result["meta"]["month"],
                     "shave_count": result["meta"]["shave_count"],
-                    "missing_count": result["meta"]["missing_count"],
                     "skipped_count": result["meta"]["skipped_count"],
                 }
             )
+
+    # Months with a missing comments/YYYY-MM.json input file return None from
+    # _process_month and never reach the summary — warn instead of letting a
+    # gap over a backfill look like success.
+    processed_months = {r["month"] for r in summary_results} | error_months
+    dropped_months = [
+        f"{year:04d}-{month:02d}"
+        for year, month in months
+        if f"{year:04d}-{month:02d}" not in processed_months
+    ]
+    if dropped_months:
+        logger.warning(
+            "Skipped %d month(s) with missing input files: %s",
+            len(dropped_months),
+            ", ".join(dropped_months),
+        )
 
     # Print summary using standardized formatter
     if len(months) == 1:
@@ -165,8 +176,7 @@ def run(args) -> None:
 
         total_stats = {
             "total_records": sum(r["shave_count"] for r in summary_results),
-            "total_missing": sum(r["missing_count"] for r in summary_results),
-            "total_skipped": sum(r["missing_count"] for r in summary_results),
+            "total_skipped": sum(r["skipped_count"] for r in summary_results),
         }
         summary = PipelineOutputFormatter.format_multi_month_summary(
             "extract", start_str, end_str, total_stats
