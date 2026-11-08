@@ -106,7 +106,6 @@ class PipelineOutputFormatter:
             return (
                 f"SOTD {phase} complete for {month}: "
                 f"{stats.get('shave_count', 0)} shaves extracted, "
-                f"{stats.get('missing_count', 0)} missing, "
                 f"{stats.get('skipped_count', 0)} skipped"
             )
         elif phase == "match":
@@ -144,6 +143,12 @@ class PipelineOutputFormatter:
                 f"{stats.get('total_threads', 0)} threads, "
                 f"{stats.get('total_comments', 0)} comments, "
                 f"{total_missing} missing day{'s' if total_missing != 1 else ''}"
+            )
+        elif phase == "extract":
+            return (
+                f"SOTD {phase} complete for {start_month}…{end_month}: "
+                f"{stats.get('total_records', 0):,} records processed, "
+                f"{stats.get('total_skipped', 0):,} skipped"
             )
         else:
             return (
