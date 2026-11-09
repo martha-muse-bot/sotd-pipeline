@@ -463,6 +463,10 @@ Case:
     format: Straight
     patterns:
       - case.*ability
+  Temperite:
+    format: Straight
+    patterns:
+      - case.*temperite.*(straight|\d{1,2}/(8|16)|hollow|ground)
 Caveem:
   Safety Razor:
     patterns:
