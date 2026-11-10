@@ -6,6 +6,29 @@ from sotd.utils.aliases import FIELD_ALIASES
 # Cache for next field stop pattern (built once, reused)
 _next_field_stop_pattern: Optional[str] = None
 
+# Cache for compiled per-alias patterns (built once per alias, reused).
+# get_patterns() rebuilds 17 long pattern strings per call — each embedding
+# the multi-kilobyte next-field stop lookahead — and re.search() on a fresh
+# string re-hashes/re-compiles it every time. At 19 aliases x 17 patterns
+# per comment that dominated extract time (profiled: ~7.6 ms/comment,
+# almost all of it in re._compile on rebuilt strings).
+_compiled_patterns_cache: dict[str, list[re.Pattern[str]]] = {}
+
+
+def get_compiled_patterns(alias: str) -> list[re.Pattern[str]]:
+    """
+    Compiled form of get_patterns(alias), built once per alias and reused.
+
+    Returns the same list (same order, same patterns) as get_patterns(),
+    compiled with re.IGNORECASE. Safe to share across comments: patterns
+    are stateless.
+    """
+    cached = _compiled_patterns_cache.get(alias)
+    if cached is None:
+        cached = [re.compile(pattern, flags=re.IGNORECASE) for pattern in get_patterns(alias)]
+        _compiled_patterns_cache[alias] = cached
+    return cached
+
 
 def _build_next_field_stop_pattern() -> str:
     """
@@ -70,14 +93,18 @@ def extract_field(line: str, field: str) -> Optional[str]:
     return _extract_field_line(line, field)
 
 
-def extract_field_with_pattern(line: str, field: str, pattern: str) -> Optional[str]:
+def extract_field_with_pattern(
+    line: str, field: str, pattern: str | re.Pattern[str]
+) -> Optional[str]:
     """
     Try a specific pattern on a line for a field.
 
     Args:
         line: The line to check
         field: The field name (razor, blade, brush, soap)
-        pattern: The regex pattern to try
+        pattern: The regex pattern to try, as a string or a compiled
+            pattern (compiled patterns from get_compiled_patterns() avoid
+            re-compiling the same pattern string on every call)
 
     Returns:
         Extracted value if pattern matches, None otherwise
@@ -90,7 +117,10 @@ def extract_field_with_pattern(line: str, field: str, pattern: str) -> Optional[
 
     # Use search instead of match to handle fields that appear in the middle of a line
     # (e.g., when multiple fields are on the same line)
-    match = re.search(pattern, line, flags=re.IGNORECASE)
+    if isinstance(pattern, re.Pattern):
+        match = pattern.search(line)
+    else:
+        match = re.search(pattern, line, flags=re.IGNORECASE)
     if match:
         value = match.group(1).strip()
         # Filter out values that are just field markers (e.g., "**") or empty

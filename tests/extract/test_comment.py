@@ -629,3 +629,53 @@ def test_parse_comment_does_not_join_trailing_dash_across_blank_line():
     result = parse_comment(comment)
     assert result is not None
     assert result["soap"]["original"] == "Stirling - Christmas Eve -"
+
+
+def test_parse_comment_prefilter_alias_as_substring():
+    """A line containing an alias only inside a longer word extracts nothing.
+
+    Guards the alias prefilter: "razorback" contains "razor" as a
+    substring, so the line is admitted, but the \\brazor\\b pattern must
+    still not match.
+    """
+    comment = {"body": "My razorback knife is sharp.\n* **Soap:** Tabac"}
+    result = parse_comment(comment)
+    assert result is not None
+    assert "razor" not in result
+    assert result["soap"]["original"] == "Tabac"
+
+
+def test_parse_comment_prefilter_combined_alias():
+    """A combined soap alias ("Soap & A/S") still extracts via the prefilter."""
+    comment = {"body": "* Soap & A/S: Tabac\n* **Razor:** Blackbird"}
+    result = parse_comment(comment)
+    assert result is not None
+    assert result["soap"]["original"] == "Tabac"
+    assert result["razor"]["original"] == "Blackbird"
+
+
+def test_parse_comment_prefilter_skips_non_field_lines():
+    """Many narrative lines without any alias do not disturb extraction."""
+    comment = {
+        "body": "\n".join(
+            [
+                "Great shave today, really enjoyed it.",
+                "The lather was thick and slick.",
+                "No nicks or irritation at all.",
+                "Will definitely use this combo again.",
+                "* **Razor:** Blackbird",
+                "Finished with a cold water rinse.",
+            ]
+        )
+    }
+    result = parse_comment(comment)
+    assert result is not None
+    assert result["razor"]["original"] == "Blackbird"
+
+
+def test_field_patterns_cached():
+    """Per-field pattern lists are built once and reused across comments."""
+    from sotd.extract.comment import _get_field_patterns
+
+    assert _get_field_patterns("razor") is _get_field_patterns("razor")
+    assert _get_field_patterns("soap") is _get_field_patterns("soap")

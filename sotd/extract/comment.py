@@ -5,7 +5,7 @@ from collections import OrderedDict
 from pathlib import Path
 from typing import Optional
 
-from sotd.extract.fields import extract_field_with_pattern, get_patterns
+from sotd.extract.fields import extract_field_with_pattern, get_compiled_patterns
 from sotd.extract.override_manager import OverrideManager
 from sotd.utils.aliases import FIELD_ALIASES
 from sotd.utils.extract_normalization import normalize_for_matching
@@ -76,6 +76,61 @@ def _maybe_join_wrapped_continuation(value: str, lines: list[str], line_index: i
     return f"{value} {next_line}"
 
 
+# Per-field (alias, compiled pattern) lists, built once and reused.
+# Previously parse_comment rebuilt all 17 pattern strings per alias on
+# every comment (19 aliases x 17 patterns, each embedding the multi-
+# kilobyte next-field stop lookahead) and re.search() re-compiled them.
+_FieldPatterns = tuple[
+    list[tuple[str, str]],  # (alias, lowercased alias) for the prefilter
+    list[tuple[str, re.Pattern[str]]],  # high-priority (alias, pattern)
+    list[tuple[str, re.Pattern[str]]],  # low-priority (alias, pattern)
+]
+_FIELD_PATTERNS: dict[str, _FieldPatterns] = {}
+
+
+def _get_field_patterns(field: str) -> _FieldPatterns:
+    """Return a field's cached (aliases, high, low) pattern lists.
+
+    High priority is patterns 0-14b (all but the last per alias), low
+    priority is pattern 15 (ambiguous, last per alias) — the same split
+    parse_comment used when it built these lists per comment.
+    """
+    cached = _FIELD_PATTERNS.get(field)
+    if cached is not None:
+        return cached
+
+    aliases = FIELD_ALIASES.get(field, [field])
+    alias_lowers = [(alias, alias.lower()) for alias in aliases]
+    high: list[tuple[str, re.Pattern[str]]] = []
+    low: list[tuple[str, re.Pattern[str]]] = []
+    for alias in aliases:
+        compiled = get_compiled_patterns(alias)
+        for pattern_num, pattern in enumerate(compiled):
+            # All except the last pattern are high priority
+            if pattern_num < len(compiled) - 1:
+                high.append((alias, pattern))
+            else:
+                low.append((alias, pattern))
+
+    cached = (alias_lowers, high, low)
+    _FIELD_PATTERNS[field] = cached
+    return cached
+
+
+def _aliases_present(
+    alias_lowers: list[tuple[str, str]], normalized_line: str
+) -> set[str]:
+    """Aliases whose literal text occurs on this line (case-insensitive).
+
+    Every extraction pattern for an alias contains that alias literally,
+    so a line without the alias text can never match any of its patterns
+    and the caller may skip those (alias, pattern) pairs. The line is
+    whitespace-collapsed first, so irregular spacing only ever admits
+    extra candidates — it can never hide a line the pattern could match.
+    """
+    return {alias for alias, lower in alias_lowers if lower in normalized_line}
+
+
 def parse_comment(
     comment: dict,
     override_manager: Optional[OverrideManager] = None,
@@ -91,6 +146,10 @@ def parse_comment(
 
     result = {}
 
+    # Normalized lines for the alias prefilter: lowercased with runs of
+    # whitespace collapsed, computed once per comment.
+    normalized_lines = [" ".join(line.lower().split()) for line in lines]
+
     # Process fields with line-by-line extraction and priority buckets
     # Algorithm:
     # 1. First pass: For each line (in order), try all high-priority patterns (0-14b with explicit markers)
@@ -102,27 +161,21 @@ def parse_comment(
         if field in result:
             continue  # Already found this field
 
-        # Get all aliases for this field
-        aliases = FIELD_ALIASES.get(field, [field])
-
-        # Collect all patterns grouped by priority bucket
-        # High priority: patterns 0-14b (indices 0-15) with explicit markers (:,-,=)
-        # Low priority: pattern 15 (index 16) with ambiguous format (no explicit markers)
-        high_priority_patterns = []  # Patterns 0-14b (explicit markers)
-        low_priority_patterns = []  # Pattern 15 (ambiguous)
-
-        for alias in aliases:
-            alias_patterns = get_patterns(alias)
-            for pattern_num, pattern in enumerate(alias_patterns):
-                # Pattern 15 (ambiguous) is at index 16, all others are high priority
-                if pattern_num < len(alias_patterns) - 1:  # All except last pattern
-                    high_priority_patterns.append((alias, pattern))
-                else:  # Last pattern is low priority (pattern 15)
-                    low_priority_patterns.append((alias, pattern))
+        # Per-field (alias, compiled pattern) lists, built once and reused
+        alias_lowers, high_priority_patterns, low_priority_patterns = _get_field_patterns(field)
 
         # First pass: Try high-priority patterns line by line
         for line_index, line in enumerate(lines):
+            # Cheap keyword prefilter: only try an alias's patterns on
+            # lines that contain that alias's literal text. Attempt order
+            # within a line is unchanged (alias order, then pattern order),
+            # so the first match found is the same as before.
+            present = _aliases_present(alias_lowers, normalized_lines[line_index])
+            if not present:
+                continue
             for alias, pattern in high_priority_patterns:
+                if alias not in present:
+                    continue
                 value = extract_field_with_pattern(line, field, pattern)
                 if value:
                     value = _maybe_join_wrapped_continuation(value, lines, line_index)
@@ -135,7 +188,12 @@ def parse_comment(
         # Second pass: Try low-priority patterns line by line (only if no match found)
         if field not in result:
             for line_index, line in enumerate(lines):
+                present = _aliases_present(alias_lowers, normalized_lines[line_index])
+                if not present:
+                    continue
                 for alias, pattern in low_priority_patterns:
+                    if alias not in present:
+                        continue
                     value = extract_field_with_pattern(line, field, pattern)
                     if value:
                         value = _maybe_join_wrapped_continuation(value, lines, line_index)
