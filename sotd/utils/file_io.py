@@ -49,6 +49,39 @@ def save_json_data(data: Dict[str, Any], file_path: Path, indent: int = 2) -> No
         raise e
 
 
+def save_text_data(content: str, file_path: Path) -> None:
+    """
+    Save text data with atomic writes and proper formatting.
+
+    Args:
+        content: String content to save
+        file_path: Path to save the file
+
+    Raises:
+        OSError: If file cannot be written
+        TypeError: If content cannot be written as text
+    """
+    # Ensure directory exists
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Create temporary file for atomic write
+    temp_path = file_path.with_suffix(".tmp")
+
+    try:
+        with temp_path.open("w", encoding="utf-8") as f:
+            f.write(content)
+
+        # Atomic move
+        temp_path.replace(file_path)
+        logger.debug(f"Saved text data to {file_path}")
+
+    except (OSError, TypeError) as e:
+        # Clean up temp file if it exists
+        if temp_path.exists():
+            temp_path.unlink()
+        raise e
+
+
 def load_json_data(file_path: Path) -> Dict[str, Any]:
     """
     Load JSON data with error handling.
@@ -205,6 +238,7 @@ def backup_file(file_path: Path, backup_suffix: str = ".backup") -> Optional[Pat
 
 __all__ = [
     "save_json_data",
+    "save_text_data",
     "load_json_data",
     "save_yaml_data",
     "load_yaml_data",
