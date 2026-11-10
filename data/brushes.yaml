@@ -2236,6 +2236,9 @@ known_knot_based_brushes:
     V31:
       patterns:
         - grizz.*v31\b
+    V32:
+      patterns:
+        - grizz.*v32\b
   Long Shaving:
     Reserve:
       fiber: Badger

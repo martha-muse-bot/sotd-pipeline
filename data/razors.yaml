@@ -120,7 +120,7 @@ Anton Wingen Jr.:
   Red Point:
     format: Straight
     patterns:
-      - wingen.*red point
+      - wing[ea]n.*red point
     straight:
       - ^(?!.*red point).*wingen.*(straight|\d{1,2}/(8|16)|ground)
 A.R. Justice:
@@ -281,6 +281,10 @@ Berkeley:
   Shave Selector:
     patterns:
       - berkeley
+Bigelow Parkin:
+  Folding Travel Razor:
+    patterns:
+    - bigelow.*parkin.*fold
 Bismarck:
   Straight:
     format: Straight
@@ -1391,11 +1395,6 @@ Henkotsu:
     format: Straight
     patterns:
       - ^(?!.*\bac\b).*henkotsu.*kami
-Heinrich Klein:
-  Straight:
-    format: Straight
-    patterns:
-      - heinrich.*klein.*(straight|\d{1,2}/(8|16)|hollow|ground)
 Heritage:
   Adjustable:
     patterns:
@@ -1414,7 +1413,11 @@ Hibbard Spencer Bartlett & Co:
 Hoffritz:
   Slant:
     patterns:
-      - "hoff?ritz(.*\bslant\b)?"
+      - hof+ritz
+      - hof+ritz.*slant
+  Travel Razor:
+    patterns:
+      - hof+ritz.*travel
 Homelike:
   START:
     patterns:
@@ -1524,7 +1527,7 @@ Joseph Elliot:
   Straight:
     format: Straight
     patterns:
-      - (?:joseph|jos\.?|jo\.).*el+iot
+      - joseph.*el+iot(?:.*\d{1,2}/(8|16))?
 Joseph Rodgers & Sons:
   The Royal Razor:
     format: Straight
@@ -1929,11 +1932,6 @@ Mühle:
   Unspecified:
     patterns:
       - m[uü]hle
-New England Razor Co.:
-  Straight:
-    format: Straight
-    patterns:
-      - new.*england.*(straight|\d{1,2}/(8|16)|hollow|ground)
 Nobel:
   Kamisori:
     format: Straight
@@ -2999,11 +2997,6 @@ The Cajun Blade:
     format: AC
     patterns:
       - cajun.*cottonmouth
-The Hamburg Ring:
-  Straight:
-    format: Straight
-    patterns:
-      - the.*hamburg.*ring.*(straight|\d{1,2}/(8|16)|hollow|ground)
 The Holy Black:
   Shavette:
     format: Shavette (Half DE)
@@ -3325,6 +3318,9 @@ Yaqi:
   Castor:
     patterns:
       - yaqi.*castor
+  Cobbled:
+    patterns:
+      - yaqi.*cobbl?ed
   DLC:
     patterns:
       - yaqi.*dlc

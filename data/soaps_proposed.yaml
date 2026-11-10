@@ -1,420 +1,99 @@
-Abbate Y La Mantia:
-  Marduk:
-    patterns:
-    - abbate.*marduk
-    entries:
-    - abbate y la mantia - marduk
-Ariana & Evans:
-  Aqua de Boracay:
-    patterns:
-    - aqua.*de.*boracay
-    entries:
-    - ariana & evans - aqua de boracay
-  Tobacco Cashmere:
-    patterns:
-    - (ariana|pedro|club).*tobacco.*cashmere
-    entries:
-    - a&e - tobacco cashmere
-  Tobacco Oud:
-    patterns:
-    - (ariana|pedro|club).*tobacco.*oud
-    entries:
-    - ariana & evans - tobacco oud
-Australian Private Reserve:
-  Bombora:
-    patterns:
-    - bombora
-    entries:
-    - australian private reserve - bombora
-  Fenchurch:
-    patterns:
-    - fenchurch
-    entries:
-    - australian private reserve - fenchurch
-  Passione:
-    patterns:
-    - passione
-    entries:
-    - australian private reserve - passione
-  Torchwood:
-    patterns:
-    - torchwood
-    entries:
-    - australian private reserve - torchwood
-Ballenclaugh:
-  Honey & Tobacco:
-    patterns:
-    - ballenclaugh.*honey.*&.*tobacco
-    entries:
-    - ballenclaugh - honey & tobacco
-Barrister and Mann:
-  Latha Limon:
-    patterns:
-    - barri.*latha.*limon
-    entries:
-    - barrister and mann - latha limon
-  Mélange:
-    patterns:
-    - m[eé]lange
-    entries:
-    - b+m - melange
-    - b+m - mélange
-    - barrister & mann - melange (omnibus)
-    - barrister and mann - melange
-    - barrister and mann - mélange
-    - barrister and mann melange
-  Ravish:
-    patterns:
-    - barri.*ravish
-    entries:
-    - barrister and mann - ravish
-Bartigan & Stark:
-  Campione:
-    patterns:
-    - campione
-    entries:
-    - bartigan & stark - campione
-Black Ship Grooming:
-  Barnacle Bob:
-    patterns:
-    - barnacle.*bob
-    entries:
-    - black ship grooming - barnacle bob
-Böker:
-  Tobacco:
-    patterns:
-    - boker.*tobacco
-    entries:
-    - böker - tobacco
-Catie's Bubbles:
-  Florentine Fern:
-    patterns:
-    - florentine.*fern
-    entries:
-    - catie's bubbles - florentine fern
-  Le Nude:
-    patterns:
-    - (cbubs|cati).*le.*nude
-    entries:
-    - catie's bubbles - le nude
-  Reflection:
-    patterns:
-    - (cbubs|cati).*reflection
-    entries:
-    - catie's bubbles - reflection
-  Saturday Morning:
-    patterns:
-    - saturday.*morning
-    entries:
-    - catie's bubbles - saturday morning
-  Un Jour Gris:
-    patterns:
-    - un.*jour.*gris
-    entries:
-    - catie's bubbles - un jour gris
-Chicago Grooming Co.:
-  Canaan:
-    patterns:
-    - (chicago|oleo).*canaan
-    entries:
-    - oleo soapworks - canaan
-  Polar:
-    patterns:
-    - (chicago|oleo).*polar
-    entries:
-    - oleo soapworks - polar
-  Sandy Cheeks:
-    patterns:
-    - (chicago|oleo).*sandy.*cheeks
-    entries:
-    - oleo soapworks - sandy cheeks
-ChronnoCrafts SoapWorks:
-  Shake:
-    patterns:
-    - (chronnocrafts|soapworks).*shake
-    entries:
-    - chronnocrafts soapworks - shake
-Col. Ichabod Conk:
-  Lime:
-    patterns:
-    - col.*lime
-    entries:
-    - col. conk - lime
-Crown Shaving Co:
-  Farad's Tobacco:
-    patterns:
-    - crown.*farad's.*tobacco
-    entries:
-    - crown shaving co. - farad's tobacco
-Crowne & Crane:
-  Green Tea:
-    patterns:
-    - crown.*green.*tea
-    entries:
-    - crowne & crane - green tea
-  Tobacco and Amber:
-    patterns:
-    - crown.*tobacco.*and.*amber
-    entries:
-    - crowne and crane tobacco and amber
-    - crowne and crane- tobacco and amber
-Declaration Grooming:
-  Bandwagon:
-    patterns:
-    - declaration.*bandwagon
-    entries:
-    - declaration grooming - bandwagon
-  Convergence:
-    patterns:
-    - declaration.*convergence
-    entries:
-    - declaration grooming - convergence
-  Cuir et Épices:
-    patterns:
-    - cuir.*et.*[eé]pices
-    entries:
-    - declaration grooming - cuir et épices
-  Dayman:
-    patterns:
-    - declaration.*dayman
-    entries:
-    - declaration grooming - dayman
-  Nightman:
-    patterns:
-    - declaration.*nightman
-    entries:
-    - declaration grooming - nightman
-  Persephone:
-    patterns:
-    - declaration.*persephone
-    entries:
-    - declaration grooming - persephone
-  Santal Auster:
-    patterns:
-    - declaration.*santal.*auster
-    entries:
-    - chatillon lux/declaration grooming - santal auster
-  Semicolon:
-    patterns:
-    - declaration.*semicolon
-    entries:
-    - declaration grooming - semicolon
-  Taum Sauk:
-    patterns:
-    - declaration.*taum.*sauk
-    entries:
-    - chatillon lux/declaration grooming - taum sauk
-Eufros:
-  Tobacco:
-    patterns:
-    - (eufros|jabon).*tobacco
-    entries:
-    - eufros - tobacco
-Fanzine Saponifications:
-  Almost There:
-    patterns:
-    - (saponifications|fanzine).*almost.*there
-    entries:
-    - fanzine saponifications - almost there
-  Bubblegum Rose:
-    patterns:
-    - (saponifications|fanzine).*bubblegum.*rose
-    entries:
-    - fanzine saponifications - bubblegum rose
-  Cool Bro Dude Man:
-    patterns:
-    - cool.*bro.*dude.*man
-    entries:
-    - fanzine saponifications - cool bro dude man
-Grooming Dept:
-  Tobacco Oud:
-    patterns:
-    - dept.*tobacco.*oud
-    entries:
-    - grooming dept - tobacco oud
-House of Mammoth:
-  Ausflug:
-    patterns:
-    - ausflug
-    entries:
-    - house of mammoth - ausflug
-  Cirrus:
-    patterns:
-    - (mammoth|hom|hou).*cirrus
-    entries:
-    - mammoth soaps - cirrus
-House of Mann:
-  Tobacco Pushers:
-    patterns:
-    - (house|mann).*tobacco.*pushers
-    entries:
-    - house of mann - tobacco pushers
-Los Jabones de Joserra:
-  Passion Incense:
-    patterns:
-    - passion.*incense
-    entries:
-    - los jabones de joserra - passion incense
-MacDuff's Soap Company:
-  Summer Cabin:
-    patterns:
-    - mcd.*summer.*cabin
-    entries:
-    - macduffs - summer cabin
-  Trail Tobacco:
-    patterns:
-    - mcd.*trail.*tobacco
-    entries:
-    - macduff's co. - trail tobacco
-    - macduff's company trail tobacco
-    - macduff's trail tobacco
-    - macduffs company - trail tobacco
-  Wild Rose Country:
-    patterns:
-    - mcd.*wild.*rose.*country
-    entries:
-    - macduffs co. wild rose country
-Maggard Razors:
-  Groves of Italy:
-    patterns:
-    - groves.*of.*italy
-    entries:
-    - maggard razors - groves of italy
-  Leather & Tobacco:
-    patterns:
-    - (maggards|maggard).*leather.*&.*tobacco
-    entries:
-    - maggard razors - leather & tobacco
-Mickey Lee Soapworks:
-  The Kraken:
-    patterns:
-    - (mickey|mls).*the.*kraken
-    entries:
-    - mickey lee soapworks - the kraken
-Moon Soaps:
-  Havana:
-    patterns:
-    - moon.*havana
+Central Texas Soaps:
+  Down at the River:
     entries:
-    - moon soaps - havana
-Murphy and McNeil:
-  Olde Bushmalt:
+    - Central Texas Soaps - Down at the River
     patterns:
-    - olde.*bushmalt
+    - down.*at.*the.*river
+Consolidated Breadheaters Soapworks:    
+  Trouble in the Dark no. 1:
     entries:
-    - murphy and mcneil - olde bushmalt
-  Tobac Fanaile:
+    - Consolidated Breadheaters Soapworks - Trouble in the Dark no. 1
     patterns:
-    - tobac.*fanaile
+    - trouble.*in.*the.*dark.*no\..*1
+Creative Void Shaving:
+  Dark Gatlinburg:
     entries:
-    - murphy and mcneil tobac fanaile
-Mystic Water:
-  Sweet Briar (Pipe Tobacco):
+    - Creative Void Shaving- Dark Gatlinburg
     patterns:
-    - sweet.*briar.*\(pipe.*tobacco\)
+    - dark.*gatlinburg
+Death Mask Cupcake:
+  The Lather:
     entries:
-    - mystic water - sweet briar (pipe tobacco)
-Obsessive Soap Perfectionist:
-  Old Gold:
+    - Death Mask Cupcake - The Lather
     patterns:
-    - obsessive.*old.*gold
+    - (cupcake|death|mask).*the.*lather
+Impressive Donut's Kitchen:
+  Djonut Djelicatessen Djonut Djglaze:
     entries:
-    - obsessive soap perfectionist - old gold
-PAA:
-  Future Fiction:
+    - Impressive Donut's Kitchen - Djonut Djelicatessen Djonut Djglaze
     patterns:
-    - future.*fiction
+    - djonut.*djelicatessen.*djonut.*djglaze
+Jersey Prick Soap Co:
+  From Jersey With Love:
     entries:
-    - paa - future fiction
-Red House Farm:
-  Tofino:
+    - Jersey Prick Soap Co. - From Jersey With Love
     patterns:
-    - red.*tofino
+    - from.*jersey.*with.*love
+Monster:
+  Mash:
     entries:
-    - red house farm - tofino
-Saponificio Varesino:
-  Manna di Sicilia:
+    - Monster - Mash
     patterns:
-    - manna.*di.*sicilia
+    - monster.*mash
+NAOSS:
+  Necronana:
     entries:
-    - saponificio varesino - manna di sicilia
-Shave Dandy:
-  Coconut Cow:
+    - NAOSS - Necronana
     patterns:
-    - coconut.*cow
+    - necronana
+Nothing Matters Shave Co:
+  War and Spice:
     entries:
-    - shave dandy - coconut cow
-Siliski Soaps:
-  Apothecary Cellar:
+    - Nothing Matters Shave Co - War and Spice
     patterns:
-    - apothecary.*cellar
+    - (matters|nothing).*war.*and.*spice
+Ye Old ChronnoCrafts Soapworx:
+  Dancin' with the Devil:
     entries:
-    - siliski soaps - apothecary cellar
-Southern Witchcrafts:
-  Grey Phetiver:
+    - Ye Old ChronnoCrafts Soapworx - Dancin' with the Devil
     patterns:
-    - grey.*phetiver
+    - dancin'.*with.*the.*devil
+You done messed up Soapworks:
+  All Hallows Eve:
     entries:
-    - southern witchcrafts - grey phetiver
-Stirling Soap Co.:
-  Glacial Iceberg Island:
+    - You done messed up Soapworks- All Hallows Eve
     patterns:
-    - glacial.*iceberg.*island
+    - all.*hallows.*eve
+spoapy:
+  spoap:
     entries:
-    - stirling glacial iceberg island
-  Weekend in Malibu:
+    - spoapy - spoap
     patterns:
-    - weekend.*in.*malibu
+    - spoapy.*spoap
+unknown:
+  unmatched:
     entries:
-    - stirling co. - weekend in malibu
-Storybook Soapworks:
-  Shaken:
-    patterns:
-    - story.*shaken
-    entries:
-    - storybook soapworks - shaken
-Talent Soap Factory:
-  Octopus Balls:
-    patterns:
-    - octopus.*balls
-    entries:
-    - talent factory - octopus balls
-  Surf Shop:
-    patterns:
-    - (talent|tsf).*surf.*shop
-    entries:
-    - talent factory - surf shop
-The Holy Black:
-  Tangerine Creeper:
-    patterns:
-    - tangerine.*creeper
-    entries:
-    - the holy black - tangerine creeper
-    - the holy black trading company - tangerine creeper
-Wet Shaving Products:
-  Rustic Sandalrose:
-    patterns:
-    - rustic.*sandalrose
-    entries:
-    - wsp rustic sandalrose
-Wholly Kaw:
-  Amber Bomba:
-    patterns:
-    - (wholly|who).*amber.*bomba
-    entries:
-    - wholly kaw - amber bomba
-  Hiatus:
-    patterns:
-    - (wholly|who).*hiatus
-    entries:
-    - wholly kaw - hiatus
-  King of Bourbon:
-    patterns:
-    - king.*of.*bourbon
+    - ARAMIS ENRICHED LATHER
+    - ASDA
+    - Bulldog Vetiver & Black Pepper shower
+    - Bunch of Old Smushes Smashed Together
+    - Dewey Shavem & Howe The Depraved Heart
+    - Diablo Dan's Hell for Leather Fire
+    - Fishing Forum Member's Homemade
+    - Games
+    - Graza Super Sizzle Extra Virgin Olive Oil
+    - Ingram Quality Lather Shave
+    - Luxury clear Shave Gel, Dove 3 n 1 for second Pass
+    - Miralax bowel prep/Gatorade
+    - Old Farm Soap
+    - Puck
+    - Right Guard Deoderent
+    - Schick Intuition Pure Nourishment Cocoa Butter
+    - Unknown Mystery
+    - mega sample mash up
+westCoastShaving:
+  DuckFatChypre:
     entries:
-    - wholly kaw - king of bourbon
-  Lav Sublime:
+    - westCoastShaving - DuckFatChypre
     patterns:
-    - lav.*sublime
-    entries:
-    - wholly kaw - lav sublime
+    - duckfatchypre

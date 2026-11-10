@@ -620,9 +620,12 @@ DE:
         - person.*red
         - person.*blue
         - platinum.*isr[ae]{2}l
+    Red Stainless:
+      patterns:
+        - person.*red.*stainless
     Super Stainless:
       patterns:
-        - ^(?!.*(diamond|GEM)).*person.*stainless(?# PAD FOR PRIORITY LENGTH xxxxxxxxxxxx)
+        - ^(?!.*(diamond|GEM|red)).*person.*stainless(?# PAD FOR PRIORITY LENGTH xxxxxxxxxxxx)
         - person.*\bss\b(?# PAD FOR PRIORITY LENGTH xxxxxxxxxxxx)
         - ^(?!.*(comfort|lab|plat|crystal)).*person.*super(?# PAD FOR PRIORITY LENGTH xxxxxxxxxxxx)
     Super+ Platinum:

@@ -40,6 +40,8 @@ data/report/*.json
 data/report/annual/*.md
 data/report/annual/*.json
 data/search_index.json
+data/soaps_proposed.yaml
+data/soaps_proposed.yaml.bak
 # Ignore learning data files
 data/learning/brush_user_actions/*.yaml
 data/proposed/*

@@ -134,6 +134,8 @@ AC:
     - kai proguard mg
     - kai protouch mg
     - kai protouch mg blade
+    Captain Sharpblade:
+    - kai captain sharpblade
     Captain Titan Mild:
     - artist club kai captain titan mild
     - kai - captain titan mild
@@ -272,6 +274,7 @@ DE:
     - 7 o'clock black - super platinum
     - 7 o'clock black platinum
     - 7 o'clock black super platinum
+    - 7 o'clock black, super platinum
     - 7 o'clock super platinum
     - 7 o'clock super platinum black
     - 7 sp
@@ -305,6 +308,7 @@ DE:
     - gillette 7 o'clock black platinum
     - gillette 7 o'clock black super platinum
     - gillette 7 o'clock black, platinum
+    - gillette 7 o'clock black, super platinum
     - gillette 7 o'clock platinum
     - gillette 7 o'clock platinum (black)
     - gillette 7 o'clock sp
@@ -458,6 +462,7 @@ DE:
     - astra superior platinum green
     - astra superior platinum green - 1st 2 pass shave
     - astra superior platinum green- 2nd 2 pass shave
+    - astra superior platinum green- 3rd and final 2 pass shave
     - astra superior platinum, de
     - astra superior platinum- 5th and final 2 pass shave
     - astras
@@ -603,6 +608,7 @@ DE:
     - derby - extra - stainless
     - derby - extra stainless
     - derby extra
+    - derby extra (m)
     - derby extra - green
     - derby extra - super stainless
     - derby extra 1/2 de
@@ -886,6 +892,7 @@ DE:
     - gillette platinum - 4th and final 2 pass shave with this blade
     - gillette platinum - 4th shave
     - gillette platinum - 5th shave
+    - gillette platinum - first 2 pass shave
     - gillette platinum - new
     - gillette platinum 1st shave
     - gillette platinum 2nd shave
@@ -1060,6 +1067,7 @@ DE:
     - king c gillette - 1st try
     - king c gillette - 2nd 2 pass shave
     - king c gillette - 2nd shav
+    - king c gillette - 3rd and final 2 pass shave
     - king c gillette - 4th and final 2 pass shave
     - king c gillette - 4th and final shave
     - king c gillette / first 2 pass shave
@@ -1321,6 +1329,8 @@ DE:
     - personna platinum/israeli red
     - personna red
     - super platinum (israel)
+    Red Stainless:
+    - personna red stainless steel
     Super Stainless:
     - person super stainless
     - persona super
@@ -1772,6 +1782,7 @@ DE:
     - wilkinson sword classic - 1st 2 pass shave
     - wilkinson sword classic - 2nd 2 pass shave
     - wilkinson sword classic - 3rd 2 pass shave
+    - wilkinson sword classic - 3rd and final 2 pass shave
     - wilkinson sword classic - 4th and final 2 pass shave
     - wilkinson sword germany
     - wilkinson sword stainless super sword edge

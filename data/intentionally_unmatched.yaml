@@ -606,6 +606,12 @@ brush:
     - file: 2025-06.json
       id: mx6lwpn
       source: user
+  unbranded - whisk:
+    added_date: '2026-11-08'
+    comment_ids:
+    - file: 2026-10.json
+      id: 19rfigrh0ub5v
+      source: user
   unlabeled - old wash cloth:
     added_date: '2026-10-19'
     comment_ids:
@@ -743,6 +749,24 @@ soap:
     - file: 2025-04.json
       id: mmt38m5
       source: user
+  baskin robbins - wild n' reckless sherbet:
+    added_date: '2026-11-08'
+    comment_ids:
+    - file: 2026-11.json
+      id: 19rgh7c6w7zlv
+      source: user
+  chosen foods - 100% avocado oil:
+    added_date: '2026-11-08'
+    comment_ids:
+    - file: 2026-11.json
+      id: 19rg16uuzyhhd
+      source: user
+  church & dwight co., inc. - pre-seed fertility lubricant:
+    added_date: '2026-11-08'
+    comment_ids:
+    - file: 2026-11.json
+      id: 19rgbga9wdjid
+      source: user
   cocoapuff's monster:
     added_date: '2025-12-18'
     comment_ids:
@@ -755,11 +779,53 @@ soap:
     - file: 2025-02.json
       id: mb3sm2d
       source: user
+  dionysus - shed snake skin:
+    added_date: '2026-11-08'
+    comment_ids:
+    - file: 2026-11.json
+      id: 19rfpwagib6kk
+      source: user
+  graza super sizzle extra virgin olive oil:
+    added_date: '2026-11-08'
+    comment_ids:
+    - file: 2026-10.json
+      id: 19rfr3l47whl0
+      source: user
   hot wheels body wash:
     added_date: '2025-12-18'
     comment_ids:
     - file: 2025-06.json
       id: mx9fi8c
+      source: user
+  hsn - soy isolate protein - strawberry:
+    added_date: '2026-11-08'
+    comment_ids:
+    - file: 2026-11.json
+      id: 19rfu3fak232b
+      source: user
+  idahoan - mashed potatoes & turkey gravy:
+    added_date: '2026-11-08'
+    comment_ids:
+    - file: 2026-10.json
+      id: 19rfigrh0ub5v
+      source: user
+  inaba churu - tuna recipe with clam flavor - creamy cat treat:
+    added_date: '2026-11-08'
+    comment_ids:
+    - file: 2026-10.json
+      id: 19rfna9ues6x1
+      source: user
+  kalastyle soap co. - eggwhite & chamomile facial soap:
+    added_date: '2026-11-08'
+    comment_ids:
+    - file: 2026-10.json
+      id: 19rg2cli10ykl
+      source: user
+  kirkland - grass fed butter:
+    added_date: '2026-11-08'
+    comment_ids:
+    - file: 2026-10.json
+      id: 19rfcv4i2pssi
       source: user
   megababe blade bar:
     added_date: '2025-12-18'
@@ -767,11 +833,35 @@ soap:
     - file: 2025-06.json
       id: mykchyc
       source: user
+  mimitime - konjac jelly beauty snack:
+    added_date: '2026-11-08'
+    comment_ids:
+    - file: 2026-10.json
+      id: 19rgv9idg0jr6
+      source: user
+  minor figures - barista oat (organic lite):
+    added_date: '2026-11-08'
+    comment_ids:
+    - file: 2026-10.json
+      id: 19rfogfpyazgg
+      source: user
+  miralax bowel prep/gatorade:
+    added_date: '2026-11-08'
+    comment_ids:
+    - file: 2026-10.json
+      id: 19rfseh8eark0
+      source: user
   misfits:
     added_date: '2025-12-18'
     comment_ids:
     - file: 2025-06.json
       id: n08mrew
+      source: user
+  muraglia magnum rainbow -intense fruity extra virgin olive oil:
+    added_date: '2026-11-08'
+    comment_ids:
+    - file: 2026-10.json
+      id: 19rg8s7hin6rn
       source: user
   none:
     added_date: '2026-07-25'
@@ -785,9 +875,45 @@ soap:
     - file: 2025-09.json
       id: ndmhcn6
       source: user
+  stirling - breakfast blend:
+    added_date: '2026-11-08'
+    comment_ids:
+    - file: 2026-10.json
+      id: 19rfs7aehbeo2
+      source: user
+  só - body butter:
+    added_date: '2026-11-08'
+    comment_ids:
+    - file: 2026-10.json
+      id: 19rfm41mhfvus
+      source: user
   this:
     added_date: '2025-12-18'
     comment_ids:
     - file: 2025-06.json
       id: mx0f6ht
+      source: user
+  thrive market - sardines:
+    added_date: '2026-11-08'
+    comment_ids:
+    - file: 2026-10.json
+      id: 19rgjvgm12d4y
+      source: user
+  trader joe's - organic blue agave syrup:
+    added_date: '2026-11-08'
+    comment_ids:
+    - file: 2026-10.json
+      id: 19rg1214bpfy9
+      source: user
+  trader joe's - tea tree tingle shampoo:
+    added_date: '2026-11-08'
+    comment_ids:
+    - file: 2026-10.json
+      id: 19rg7lm43js3m
+      source: user
+  yard raised fresh chicken eggs (yrfce) - egg white:
+    added_date: '2026-11-08'
+    comment_ids:
+    - file: 2026-10.json
+      id: 19re7apnjotsy
       source: user
