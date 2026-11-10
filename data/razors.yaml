@@ -467,6 +467,11 @@ Case:
     format: Straight
     patterns:
       - case.*ability
+      - case.*ability.*(straight|\d{1,2}/(8|16)|hollow|ground)
+  Temperite:
+    format: Straight
+    patterns:
+      - case.*temperite.*(straight|\d{1,2}/(8|16)|hollow|ground)
 Caveem:
   Safety Razor:
     patterns:
@@ -3240,6 +3245,8 @@ Wester Bros:
     format: Straight
     patterns:
     - wester bros
+    - wester.*bro.*(straight|\d{1,2}/(8|16)|hollow|ground)
+    - \d{1,2}/(8|16).*wester.*bro
 W.H. Morley & Sons:
   Straight:
     format: Straight

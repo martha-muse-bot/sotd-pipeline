@@ -893,6 +893,9 @@ Cartridge/Disposable:
 Case:
   Ability:
   - case ability razor
+  - case ability 6/8 hollow ground square point
+  Temperite:
+  - case temperite 5/8 hollow ground square point
 Caveem:
   Safety Razor:
   - caveem de safety razor
@@ -4170,8 +4173,6 @@ Other Straight Razor:
     - bowdin's wedge - minneapolis, mn
     - bowdins wedge razor
     - buck salient 6/8
-    - case ability 6/8 hollow ground square point
-    - case temperite 5/8 hollow ground square point
     - celebrated razor - sheffield
     - celebrated wedge - no maker indicated
     - chas r coates & sons trade mark - extra hollow - square point - 6/8
@@ -4306,8 +4307,6 @@ Other Straight Razor:
     - wakagusa 45 silver steel for barber - full hollow - square point - 6/8
     - wakagusa 45 silver steel for barber - square point - full hollow - 6/8
     - wapienica brzytwa chirurgiczna - quarter hollow - french point - 11/16
-    - wester bros "anchor brand" "manganese" steel 11/16 full hollow
-    - wester bros. 34 de-fi 5/8 fh
     - worcester razor co. - 6/8 half hollow
     - worcester razor co. straight - 6/8 half hollow
     - worcester razor co. straight - 6/8 hollow
@@ -6117,6 +6116,8 @@ Wester Bros:
   - wester bros de-fi no. 34 straight
   - wester bros no. 34 - "de-fi"
   - wester bros. little de-fi
+  - wester bros "anchor brand" "manganese" steel 11/16 full hollow
+  - wester bros. 34 de-fi 5/8 fh
 Whityle:
   Glide Pro:
   - whityle 20t glide pro 4d razor

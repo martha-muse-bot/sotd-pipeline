@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """File output functionality for the report phase."""
 
-import json
 from pathlib import Path
+
+from sotd.utils.file_io import save_json_data, save_text_data
 
 
 def get_report_file_path(base_dir: Path, year: int, month: int, report_type: str) -> Path:
@@ -41,18 +42,12 @@ def save_report(
     if debug:
         print(f"[DEBUG] Saving report to: {output_path}")
 
-    # Ensure output directory exists
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-
-    # Remove existing file if force is True
-    if force and output_path.exists():
-        if debug:
-            print(f"[DEBUG] Force flag set, removing existing file: {output_path}")
-        output_path.unlink()
-
+    # Atomic write (temp file + replace): a failed write leaves any
+    # pre-existing report intact instead of truncating it in place.
+    # The force flag needs no unlink here — replace overwrites atomically —
+    # and skip-if-exists is enforced by the caller (report_core).
     try:
-        with open(output_path, "w", encoding="utf-8") as f:
-            f.write(content)
+        save_text_data(content, output_path)
     except OSError as e:
         raise OSError(f"Failed to write report file {output_path}: {e}") from e
 
@@ -96,19 +91,11 @@ def save_json_report(
     if debug:
         print(f"[DEBUG] Saving JSON report to: {output_path}")
 
-    # Ensure output directory exists
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-
-    # Remove existing file if force is True
-    if force and output_path.exists():
-        if debug:
-            print(f"[DEBUG] Force flag set, removing existing file: {output_path}")
-        output_path.unlink()
-
+    # Atomic write (temp file + replace); see save_report. Output format
+    # is unchanged: indent=2, ensure_ascii=False, same as before.
     try:
-        with open(output_path, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
-    except OSError as e:
+        save_json_data(data, output_path)
+    except (OSError, TypeError) as e:
         raise OSError(f"Failed to write JSON report file {output_path}: {e}") from e
 
     if debug:

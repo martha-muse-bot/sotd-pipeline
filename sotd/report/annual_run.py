@@ -12,6 +12,7 @@ from typing import Sequence
 
 from sotd.report.report_core import run_report  # Import run_report from new module
 from sotd.utils.data_dir import get_data_dir
+from sotd.utils.file_io import save_json_data, save_text_data
 from sotd.utils.performance import PerformanceMonitor
 
 from . import cli
@@ -288,10 +289,11 @@ def save_annual_report(
         logger.error(f"Report file already exists: {output_path}")
         raise FileExistsError(f"Report file already exists: {output_path}")
 
-    # Write report content to file using unified file I/O
+    # Write report content to file using unified file I/O (atomic: temp
+    # file + replace, so a failed write leaves any pre-existing report
+    # intact instead of truncating it in place).
     try:
-        with open(output_path, "w", encoding="utf-8") as f:
-            f.write(report_content)
+        save_text_data(report_content, output_path)
     except OSError as e:
         logger.error(f"Failed to write report file {output_path}: {e}")
         raise OSError(f"Failed to write report file {output_path}: {e}") from e
@@ -327,8 +329,6 @@ def save_annual_json_report(
         FileExistsError: If file exists and force=False
         OSError: If there are file system errors
     """
-    import json
-
     if debug:
         logger.debug(f"Saving annual {report_type} JSON report for {year}")
         logger.debug(f"Output directory: {out_dir}")
@@ -349,11 +349,11 @@ def save_annual_json_report(
         logger.error(f"JSON report file already exists: {output_path}")
         raise FileExistsError(f"JSON report file already exists: {output_path}")
 
-    # Write JSON data to file
+    # Write JSON data to file using unified file I/O (atomic: temp file +
+    # replace). Output format is unchanged: indent=2, ensure_ascii=False.
     try:
-        with open(output_path, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
-    except OSError as e:
+        save_json_data(data, output_path)
+    except (OSError, TypeError) as e:
         logger.error(f"Failed to write JSON report file {output_path}: {e}")
         raise OSError(f"Failed to write JSON report file {output_path}: {e}") from e
 
