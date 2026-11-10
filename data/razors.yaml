@@ -463,6 +463,7 @@ Case:
     format: Straight
     patterns:
       - case.*ability
+      - case.*ability.*(straight|\d{1,2}/(8|16)|hollow|ground)
 Caveem:
   Safety Razor:
     patterns:
