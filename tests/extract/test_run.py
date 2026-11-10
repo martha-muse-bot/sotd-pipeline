@@ -452,3 +452,121 @@ def test_blade_normalization_comprehensive_shave_counts(monkeypatch):
         assert result["data"][20]["blade"]["normalized"] == "Astra"
         assert result["data"][21]["blade"]["normalized"] == "Pro 500"
         assert result["data"][22]["blade"]["normalized"] == "Seagull"
+
+
+# --- C10 #19: extract summary must report the true loss -------------------
+# _process_month used to re-split run_extraction_for_month's "data" (which
+# already holds only successfully parsed comments), so "missing" was always
+# empty, and the multi-month total_skipped summed missing_count (always 0)
+# instead of skipped_count. There is now one honest number: skipped_count.
+
+
+def _write_comments_file(base: Path, month: str, comments: list[dict]) -> None:
+    path = base / "comments" / f"{month}.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump({"data": comments}, f, ensure_ascii=False)
+
+
+def test_process_month_counts_unparsed_comments_as_skipped_not_missing(tmp_path):
+    """A field-less comment is skipped, never 'missing' (no missing bucket)."""
+    from sotd.extract.run import _process_month
+
+    _write_comments_file(
+        tmp_path,
+        "2025-01",
+        [
+            {"id": "1", "body": "* **Razor:** Blackbird"},
+            {"id": "2", "body": "No product listed here"},
+        ],
+    )
+
+    result = _process_month(2025, 1, tmp_path, debug=False, force=True)
+
+    assert result is not None
+    assert result["meta"]["shave_count"] == 1
+    assert result["meta"]["skipped_count"] == 1
+    # The dead "missing" bucket is gone: one honest number, not two.
+    assert "missing_count" not in result["meta"]
+    assert "missing" not in result
+    assert len(result["skipped"]) == 1
+    assert result["skipped"][0]["id"] == "2"
+
+
+def test_multi_month_summary_reports_true_total_skipped(tmp_path, caplog):
+    """2 months with known skipped counts -> summary matches per-file meta."""
+    import logging
+
+    from sotd.extract.cli import get_parser
+    from sotd.extract.run import run
+
+    _write_comments_file(
+        tmp_path,
+        "2025-01",
+        [
+            {"id": "j1", "body": "* **Razor:** Blackbird"},
+            {"id": "j2", "body": "No product listed here"},
+        ],
+    )
+    _write_comments_file(
+        tmp_path,
+        "2025-02",
+        [
+            {"id": "f1", "body": "* **Soap:** Tabac"},
+            {"id": "f2", "body": "just chatting"},
+            {"id": "f3", "body": "another non-shave comment"},
+        ],
+    )
+
+    args = get_parser().parse_args(
+        [
+            "--sequential",
+            "--delta-months",
+            "2025-01,2025-02",
+            "--data-dir",
+            str(tmp_path),
+        ]
+    )
+    with caplog.at_level(logging.INFO):
+        run(args)
+
+    # Ground truth from the per-file meta: 1 + 2 skipped.
+    total_skipped = 0
+    for month in ("2025-01", "2025-02"):
+        with open(tmp_path / "extracted" / f"{month}.json", encoding="utf-8") as f:
+            total_skipped += json.load(f)["meta"]["skipped_count"]
+    assert total_skipped == 3
+
+    summary = "\n".join(caplog.messages)
+    assert "SOTD extract complete for 2025-01…2025-02: 2 records processed, 3 skipped" in summary
+
+
+def test_dropped_month_warned_in_summary(tmp_path, caplog):
+    """A month with no comments file is named in a warning, not silently dropped."""
+    import logging
+
+    from sotd.extract.cli import get_parser
+    from sotd.extract.run import run
+
+    _write_comments_file(
+        tmp_path,
+        "2025-01",
+        [{"id": "j1", "body": "* **Razor:** Blackbird"}],
+    )
+    # No comments/2025-02.json on purpose.
+
+    args = get_parser().parse_args(
+        [
+            "--sequential",
+            "--delta-months",
+            "2025-01,2025-02",
+            "--data-dir",
+            str(tmp_path),
+        ]
+    )
+    with caplog.at_level(logging.WARNING):
+        run(args)
+
+    assert "Skipped 1 month(s) with missing input files: 2025-02" in caplog.text
+    # The present month still processed.
+    assert (tmp_path / "extracted" / "2025-01.json").exists()
