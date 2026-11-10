@@ -205,3 +205,32 @@ def test_extract_field_equals_delimiter_priority():
     # Test that equals delimiter extracts value correctly (not including the =)
     assert extract_field("* Lather = DR Harris Lavender", "soap") == "DR Harris Lavender"
     assert extract_field("Lather = DR Harris Lavender", "soap") == "DR Harris Lavender"
+
+
+def test_get_compiled_patterns_match_get_patterns():
+    """Compiled cache returns the same patterns as get_patterns(), cached."""
+    from sotd.extract.fields import get_compiled_patterns, get_patterns
+    from sotd.utils.aliases import FIELD_ALIASES
+
+    for aliases in FIELD_ALIASES.values():
+        for alias in aliases:
+            compiled = get_compiled_patterns(alias)
+            strings = get_patterns(alias)
+            assert len(compiled) == len(strings)
+            assert [p.pattern for p in compiled] == strings
+            # Same list object on repeat call: built once per alias.
+            assert get_compiled_patterns(alias) is compiled
+
+
+def test_extract_field_with_pattern_accepts_compiled_pattern():
+    """String and compiled forms of a pattern extract identically."""
+    import re
+
+    from sotd.extract.fields import extract_field_with_pattern, get_compiled_patterns
+
+    line = "* **Razor:** Blackbird"
+    pattern = get_compiled_patterns("razor")[0]
+    assert isinstance(pattern, re.Pattern)
+    assert extract_field_with_pattern(line, "razor", pattern) == "Blackbird"
+    assert extract_field_with_pattern(line, "razor", pattern.pattern) == "Blackbird"
+    assert extract_field_with_pattern("* **Soap:** Tabac", "razor", pattern) is None
