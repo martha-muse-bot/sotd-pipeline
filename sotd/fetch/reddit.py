@@ -159,95 +159,100 @@ def search_threads(
         for sub in raw_results:
             all_results[sub.id] = sub  # dedupe by Reddit submission ID
 
-    # If we hit the limit, use smart pattern detection to find missing threads
-    if hit_limit:
-        if debug:
-            logger.debug("Analyzing thread patterns to identify missing days")
+    # Completeness check: relevance ranking can crowd days out of the broad
+    # results without hitting the 100-result window, so always verify every
+    # calendar day is present and day-search the gaps — the day-specific
+    # fallback used to run only when a broad query hit the limit.
+    if debug:
+        logger.debug("Analyzing thread patterns to identify missing days")
 
-        # First filter the broad results to only current year/month
-        filtered_results = filter_valid_threads(
-            list(all_results.values()), year, month, debug=debug
+    # First filter the broad results to only current year/month
+    filtered_results = filter_valid_threads(
+        list(all_results.values()), year, month, debug=debug
+    )
+
+    # Analyze filtered results to determine expected threads per day
+    from collections import defaultdict
+
+    from sotd.utils import parse_thread_date
+
+    # Group filtered threads by day
+    threads_by_day = defaultdict(list)
+    for sub in filtered_results:
+        d = parse_thread_date(sub.title, year)
+        if d is not None and d.month == month:
+            threads_by_day[d.day].append(sub)
+
+    # Find the maximum number of threads per day
+    max_threads_per_day = (
+        max(len(threads) for threads in threads_by_day.values()) if threads_by_day else 0
+    )
+    # Floor at 2 only when the broad search was truncated: parallel daily
+    # threads (Austere August + regular SOTD, Theme Thursday, etc.) are often
+    # missing from the top-100 even when every calendar day already has one
+    # hit. Otherwise one thread per day means the day is covered — a floor
+    # of 2 here would day-search every day of a normal 1-thread/day month.
+    expected_threads_per_day = max(max_threads_per_day, 2) if hit_limit else 1
+
+    if debug:
+        logger.debug(
+            f"Found max {max_threads_per_day} threads per day "
+            f"(expecting {expected_threads_per_day}"
+            f"{' after hit-limit floor' if hit_limit else ''})"
         )
+        for day in sorted(threads_by_day.keys()):
+            count = len(threads_by_day[day])
+            logger.debug(f"Day {day}: {count} threads")
 
-        # Analyze filtered results to determine expected threads per day
-        from collections import defaultdict
+    # Find days that are missing threads
+    # For current month, only check up to current date
+    from datetime import date
 
-        from sotd.utils import parse_thread_date
+    today = date.today()
+    is_current_month = year == today.year and month == today.month
+    max_day_to_check = today.day if is_current_month else 31
 
-        # Group filtered threads by day
-        threads_by_day = defaultdict(list)
-        for sub in filtered_results:
-            d = parse_thread_date(sub.title, year)
-            if d is not None and d.month == month:
-                threads_by_day[d.day].append(sub)
-
-        # Find the maximum number of threads per day
-        max_threads_per_day = (
-            max(len(threads) for threads in threads_by_day.values()) if threads_by_day else 0
-        )
-        # Floor at 2 when the broad search was truncated: parallel daily threads
-        # (Austere August + regular SOTD, Theme Thursday, etc.) are often missing
-        # from the top-100 even when every calendar day already has one hit.
-        expected_threads_per_day = max(max_threads_per_day, 2)
-
-        if debug:
-            logger.debug(
-                f"Found max {max_threads_per_day} threads per day "
-                f"(expecting {expected_threads_per_day} after hit-limit floor)"
-            )
-            for day in sorted(threads_by_day.keys()):
-                count = len(threads_by_day[day])
-                logger.debug(f"Day {day}: {count} threads")
-
-        # Find days that are missing threads
-        # For current month, only check up to current date
-        from datetime import date
-
-        today = date.today()
-        is_current_month = year == today.year and month == today.month
-        max_day_to_check = today.day if is_current_month else 31
-
-        missing_days = []
-        for day in range(
-            1, max_day_to_check + 1
-        ):  # Only check up to current date for current month
-            current_count = len(threads_by_day[day])
-            if current_count < expected_threads_per_day:
-                missing_count = expected_threads_per_day - current_count
-                missing_days.append((day, missing_count))
-                if debug:
-                    logger.debug(
-                        f"Day {day}: missing {missing_count} threads "
-                        f"(has {current_count}, need {expected_threads_per_day})"
-                    )
-
-        # Search for missing threads on specific days
-        if missing_days:
+    missing_days = []
+    for day in range(
+        1, max_day_to_check + 1
+    ):  # Only check up to current date for current month
+        current_count = len(threads_by_day[day])
+        if current_count < expected_threads_per_day:
+            missing_count = expected_threads_per_day - current_count
+            missing_days.append((day, missing_count))
             if debug:
-                logger.debug(f"Searching for missing threads on {len(missing_days)} days")
+                logger.debug(
+                    f"Day {day}: missing {missing_count} threads "
+                    f"(has {current_count}, need {expected_threads_per_day})"
+                )
 
-            for day, missing_count in missing_days:
-                day_queries = [
-                    f"flair:SOTD {month_abbr} {day:02d} {year}",
-                    f"flair:SOTD {month_abbr} {day} {year}",
-                    f"flair:SOTD {month_name} {day:02d} {year}",
-                    f"flair:SOTD {month_name} {day} {year}",
-                ]
+    # Search for missing threads on specific days
+    if missing_days:
+        if debug:
+            logger.debug(f"Searching for missing threads on {len(missing_days)} days")
 
-                for query in day_queries:
-                    if debug:
-                        logger.debug(f"Missing thread query: {query!r}")
-                    raw_results = safe_call(
-                        subreddit.search, query, sort="relevance", syntax="lucene"
-                    )
-                    if raw_results is None:
-                        raw_results = []
-                    raw_results = list(raw_results)
-                    if debug:
-                        logger.debug(f"PRAW raw results for {query!r}: {len(raw_results)}")
+        for day, missing_count in missing_days:
+            day_queries = [
+                f"flair:SOTD {month_abbr} {day:02d} {year}",
+                f"flair:SOTD {month_abbr} {day} {year}",
+                f"flair:SOTD {month_name} {day:02d} {year}",
+                f"flair:SOTD {month_name} {day} {year}",
+            ]
 
-                    for sub in raw_results:
-                        all_results[sub.id] = sub  # dedupe by Reddit submission ID
+            for query in day_queries:
+                if debug:
+                    logger.debug(f"Missing thread query: {query!r}")
+                raw_results = safe_call(
+                    subreddit.search, query, sort="relevance", syntax="lucene"
+                )
+                if raw_results is None:
+                    raw_results = []
+                raw_results = list(raw_results)
+                if debug:
+                    logger.debug(f"PRAW raw results for {query!r}: {len(raw_results)}")
+
+                for sub in raw_results:
+                    all_results[sub.id] = sub  # dedupe by Reddit submission ID
 
     combined = list(all_results.values())
     if debug:

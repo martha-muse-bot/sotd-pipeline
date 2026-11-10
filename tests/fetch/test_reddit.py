@@ -991,11 +991,17 @@ def test_search_threads_debug_output(caplog):
 def test_search_threads_broad_query_omits_full_month_name():
     """Broad search must not include the full month name (aug not august)."""
     queries: list[str] = []
+    # Complete month so the completeness check finds no missing days and
+    # runs no day-specific queries (which would pollute the query capture).
+    complete_month = [
+        MockSubmission(f"s{day:02d}", f"SOTD Thread Aug {day:02d}, 2025")
+        for day in range(1, 32)
+    ]
 
     class QueryCaptureSubreddit(MockSubreddit):
         def search(self, query, sort="relevance", syntax="lucene"):
             queries.append(query)
-            return iter([])
+            return iter(complete_month)
 
     mock_reddit = MockReddit(QueryCaptureSubreddit())
     with patch("sotd.fetch.reddit.get_reddit", return_value=mock_reddit):
@@ -1052,6 +1058,68 @@ def test_search_threads_hit_limit_still_finds_parallel_daily_threads():
     assert any("Austere August" in s.title for s in result)
     regular = [s for s in result if "Austere" not in s.title]
     assert len(regular) == 31, f"Expected 31 regular SOTDs; got {len(regular)} of {len(result)}"
+
+
+def test_search_threads_below_limit_still_day_searches_missing_day():
+    """Broad search under 100 results with a missing day must still run day queries.
+
+    Relevance ranking can crowd a day out of the broad results without
+    hitting the 100-result window, so the day-specific fallback must not
+    depend on the hit-limit trigger alone.
+    """
+    broad_threads = [
+        MockSubmission(f"s{day:02d}", f"SOTD Thread May {day:02d}, 2025")
+        for day in range(1, 31)  # days 1..30; day 31 crowded out
+    ]
+    day31 = MockSubmission("s31", "SOTD Thread May 31, 2025")
+
+    class CrowdedSubreddit:
+        def search(self, query, sort="relevance", syntax="lucene"):
+            q = query.lower()
+            day_match = re.search(r"\bmay\s+(\d{1,2})\b", q)
+            if day_match:
+                day = int(day_match.group(1))
+                if day == 31:
+                    return iter([day31])
+                return iter([])
+            if "may" in q and "2025" in q:
+                return iter(broad_threads)
+            return iter([])
+
+    mock_reddit = MockReddit(CrowdedSubreddit())
+    with patch("sotd.fetch.reddit.get_reddit", return_value=mock_reddit):
+        result = search_threads("wetshaving", 2025, 5)
+
+    assert len(result) == 31, f"Expected 31 threads; got {len(result)}"
+    assert any(s.id == "s31" for s in result)
+
+
+def test_search_threads_complete_month_runs_no_day_queries():
+    """A complete broad search (every day present) must not run day queries.
+
+    The completeness fallback is per missing day only; a normal 1-thread/day
+    month must not pay up to 124 day queries.
+    """
+    queries: list[str] = []
+    all_threads = [
+        MockSubmission(f"s{day:02d}", f"SOTD Thread May {day:02d}, 2025")
+        for day in range(1, 32)
+    ]
+
+    class QueryCaptureSubreddit:
+        def search(self, query, sort="relevance", syntax="lucene"):
+            queries.append(query)
+            return iter(all_threads)
+
+    mock_reddit = MockReddit(QueryCaptureSubreddit())
+    with patch("sotd.fetch.reddit.get_reddit", return_value=mock_reddit):
+        result = search_threads("wetshaving", 2025, 5)
+
+    assert len(result) == 31
+    assert queries == [
+        "flair:SOTD may 2025",
+        "flair:SOTD may 2025SOTD",
+    ]
 
 
 def test_search_threads_reddit_api_error():
