@@ -1,8 +1,6 @@
 from datetime import datetime, timezone
 from typing import Any, Dict, List
 
-import pandas as pd
-
 from .soap_scent_filter import counts_as_distinct_soap_scent, is_mashup_soap
 
 
@@ -76,12 +74,10 @@ def calculate_unique_soaps(records: List[Dict[str, Any]]) -> int:
     if not records:
         return 0
 
-    df = pd.DataFrame(records)
-
     # Extract soap data and filter for valid entries
     soap_data = []
-    for _, row in df.iterrows():
-        soap = row.get("soap")
+    for record in records:
+        soap = record.get("soap")
         if soap is not None and isinstance(soap, dict):
             if not counts_as_distinct_soap_scent(soap):
                 continue
@@ -97,12 +93,7 @@ def calculate_unique_soaps(records: List[Dict[str, Any]]) -> int:
                     if brand and scent:
                         soap_data.append(f"{brand} - {scent}".lower())
 
-    if not soap_data:
-        return 0
-
-    # Use pandas for deduplication
-    soap_series = pd.Series(soap_data)
-    return len(soap_series.unique())
+    return len(set(soap_data))
 
 
 def calculate_unique_brands(records: List[Dict[str, Any]]) -> int:
@@ -110,12 +101,10 @@ def calculate_unique_brands(records: List[Dict[str, Any]]) -> int:
     if not records:
         return 0
 
-    df = pd.DataFrame(records)
-
     # Extract soap brands and filter for valid entries
     brands = []
-    for _, row in df.iterrows():
-        soap = row.get("soap")
+    for record in records:
+        soap = record.get("soap")
         if soap is not None and isinstance(soap, dict):
             matched = soap.get("matched", {})
             if matched and isinstance(matched, dict):
@@ -125,12 +114,7 @@ def calculate_unique_brands(records: List[Dict[str, Any]]) -> int:
                     if brand:
                         brands.append(brand)
 
-    if not brands:
-        return 0
-
-    # Use pandas for deduplication
-    brand_series = pd.Series(brands)
-    return len(brand_series.unique())
+    return len(set(brands))
 
 
 def calculate_total_samples(records: List[Dict[str, Any]]) -> int:
@@ -138,12 +122,10 @@ def calculate_total_samples(records: List[Dict[str, Any]]) -> int:
     if not records:
         return 0
 
-    df = pd.DataFrame(records)
-
     # Count records with sample_type
     sample_count = 0
-    for _, row in df.iterrows():
-        soap = row.get("soap")
+    for record in records:
+        soap = record.get("soap")
         if soap is not None and isinstance(soap, dict):
             enriched = soap.get("enriched", {})
             if enriched and enriched.get("sample_type"):
@@ -159,27 +141,20 @@ def calculate_sample_users(records: List[Dict[str, Any]]) -> int:
     if not records:
         return 0
 
-    df = pd.DataFrame(records)
-
     # Extract users who used samples
     sample_users = []
-    for _, row in df.iterrows():
-        soap = row.get("soap")
+    for record in records:
+        soap = record.get("soap")
         if soap is not None and isinstance(soap, dict):
             enriched = soap.get("enriched", {})
             if enriched and enriched.get("sample_type"):
                 if is_mashup_soap(soap):
                     continue
-                author = row.get("author")
+                author = record.get("author")
                 if author and isinstance(author, str) and author.strip():
                     sample_users.append(author.strip())
 
-    if not sample_users:
-        return 0
-
-    # Use pandas for deduplication
-    user_series = pd.Series(sample_users)
-    return len(user_series.unique())
+    return len(set(sample_users))
 
 
 def calculate_total_mashup_shaves(records: List[Dict[str, Any]]) -> int:
@@ -212,11 +187,7 @@ def calculate_mashup_users(records: List[Dict[str, Any]]) -> int:
                 if author and isinstance(author, str) and author.strip():
                     mashup_users.append(author.strip())
 
-    if not mashup_users:
-        return 0
-
-    user_series = pd.Series(mashup_users)
-    return len(user_series.unique())
+    return len(set(mashup_users))
 
 
 def calculate_sample_brands(records: List[Dict[str, Any]]) -> int:
@@ -224,12 +195,10 @@ def calculate_sample_brands(records: List[Dict[str, Any]]) -> int:
     if not records:
         return 0
 
-    df = pd.DataFrame(records)
-
     # Extract brands from samples
     sample_brands = []
-    for _, row in df.iterrows():
-        soap = row.get("soap")
+    for record in records:
+        soap = record.get("soap")
         if soap is not None and isinstance(soap, dict):
             enriched = soap.get("enriched", {})
             matched = soap.get("matched", {})
@@ -253,12 +222,7 @@ def calculate_sample_brands(records: List[Dict[str, Any]]) -> int:
                     if brand:
                         sample_brands.append(brand)
 
-    if not sample_brands:
-        return 0
-
-    # Use pandas for deduplication
-    brand_series = pd.Series(sample_brands)
-    return len(brand_series.unique())
+    return len(set(sample_brands))
 
 
 def calculate_unique_sample_soaps(records: List[Dict[str, Any]]) -> int:
@@ -266,12 +230,10 @@ def calculate_unique_sample_soaps(records: List[Dict[str, Any]]) -> int:
     if not records:
         return 0
 
-    df = pd.DataFrame(records)
-
     # Extract sample soaps and filter for valid entries
     sample_soaps = []
-    for _, row in df.iterrows():
-        soap = row.get("soap")
+    for record in records:
+        soap = record.get("soap")
         if soap is not None and isinstance(soap, dict):
             enriched = soap.get("enriched", {})
             matched = soap.get("matched", {})
@@ -302,12 +264,7 @@ def calculate_unique_sample_soaps(records: List[Dict[str, Any]]) -> int:
                     soap_name = f"{brand} - {scent}"
                     sample_soaps.append(soap_name)
 
-    if not sample_soaps:
-        return 0
-
-    # Use pandas for deduplication
-    soap_series = pd.Series(sample_soaps)
-    return len(soap_series.unique())
+    return len(set(sample_soaps))
 
 
 def calculate_unique_razors(records: List[Dict[str, Any]]) -> int:
@@ -315,12 +272,10 @@ def calculate_unique_razors(records: List[Dict[str, Any]]) -> int:
     if not records:
         return 0
 
-    df = pd.DataFrame(records)
-
     # Extract razor data and filter for valid entries
     razors = []
-    for _, row in df.iterrows():
-        razor = row.get("razor")
+    for record in records:
+        razor = record.get("razor")
         if razor is not None and isinstance(razor, dict):
             matched = razor.get("matched", {})
             if matched and isinstance(matched, dict):
@@ -332,12 +287,7 @@ def calculate_unique_razors(records: List[Dict[str, Any]]) -> int:
                     if brand and model:
                         razors.append(f"{brand} {model}")
 
-    if not razors:
-        return 0
-
-    # Use pandas for deduplication
-    razor_series = pd.Series(razors)
-    return len(razor_series.unique())
+    return len(set(razors))
 
 
 def calculate_unique_blades(records: List[Dict[str, Any]]) -> int:
@@ -345,12 +295,10 @@ def calculate_unique_blades(records: List[Dict[str, Any]]) -> int:
     if not records:
         return 0
 
-    df = pd.DataFrame(records)
-
     # Extract blade data and filter for valid entries
     blades = []
-    for _, row in df.iterrows():
-        blade = row.get("blade")
+    for record in records:
+        blade = record.get("blade")
         if blade is not None and isinstance(blade, dict):
             matched = blade.get("matched", {})
             if matched and isinstance(matched, dict):
@@ -362,12 +310,7 @@ def calculate_unique_blades(records: List[Dict[str, Any]]) -> int:
                     if brand and model:
                         blades.append(f"{brand} {model}")
 
-    if not blades:
-        return 0
-
-    # Use pandas for deduplication
-    blade_series = pd.Series(blades)
-    return len(blade_series.unique())
+    return len(set(blades))
 
 
 def calculate_unique_brushes(records: List[Dict[str, Any]]) -> int:
@@ -375,12 +318,10 @@ def calculate_unique_brushes(records: List[Dict[str, Any]]) -> int:
     if not records:
         return 0
 
-    df = pd.DataFrame(records)
-
     # Extract brush data and filter for valid entries
     brushes = []
-    for _, row in df.iterrows():
-        brush = row.get("brush")
+    for record in records:
+        brush = record.get("brush")
         if brush is not None and isinstance(brush, dict):
             matched = brush.get("matched", {})
             if matched and isinstance(matched, dict):
@@ -392,12 +333,7 @@ def calculate_unique_brushes(records: List[Dict[str, Any]]) -> int:
                     if brand and model:
                         brushes.append(f"{brand} {model}")
 
-    if not brushes:
-        return 0
-
-    # Use pandas for deduplication
-    brush_series = pd.Series(brushes)
-    return len(brush_series.unique())
+    return len(set(brushes))
 
 
 def add_rank_field(items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:

@@ -598,3 +598,57 @@ class TestUserMetrics:
         ]
         result = calculate_median_shaves_per_user(records)
         assert result == 2.0  # Median of [1, 2, 3] is 2.0
+
+
+class TestMetadataNoDataFrame:
+    """Metadata calculation must not build pandas DataFrames.
+
+    The helpers used to construct a full pd.DataFrame(records) per metric
+    and iterrows() it (9 builds per calculate_metadata call); on a 25k-record
+    month that cost ~7.2s, dominated by iterrows. They now iterate the
+    records directly and dedupe with sets (~0.2s on the same month).
+    """
+
+    def test_calculate_metadata_builds_no_dataframes(self, monkeypatch):
+        import pandas as pd
+
+        def _no_dataframe(*args, **kwargs):
+            raise AssertionError("calculate_metadata must not construct a DataFrame")
+
+        monkeypatch.setattr(pd, "DataFrame", _no_dataframe)
+        records = [
+            {
+                "author": "user1",
+                "soap": {
+                    "matched": {"brand": "Brand1", "scent": "Scent1"},
+                    "enriched": {"sample_type": "sample"},
+                },
+                "razor": {"matched": {"brand": "Razor1", "model": "Model1"}},
+                "blade": {"matched": {"brand": "Blade1", "model": "Model1"}},
+                "brush": {"matched": {"brand": "Brush1", "model": "Model1"}},
+            },
+            {
+                "author": "user2",
+                "soap": {
+                    "matched": {"brand": "Brand1", "scent": "Scent1"},
+                    "enriched": {"is_mashup": True},
+                },
+                "razor": {"matched": {"brand": "Razor1", "model": "Model1"}},
+                "blade": {"matched": {"brand": "Blade1", "model": "Model1"}},
+                "brush": {"matched": {"brand": "Brush1", "model": "Model1"}},
+            },
+        ]
+        result = calculate_metadata(records, "2025-01")
+        assert result["total_shaves"] == 2
+        assert result["unique_shavers"] == 2
+        assert result["unique_soaps"] == 1
+        assert result["unique_brands"] == 1
+        assert result["total_samples"] == 1
+        assert result["sample_users"] == 1
+        assert result["sample_brands"] == 1
+        assert result["unique_sample_soaps"] == 1
+        assert result["total_mashup_shaves"] == 1
+        assert result["mashup_users"] == 1
+        assert result["unique_razors"] == 1
+        assert result["unique_blades"] == 1
+        assert result["unique_brushes"] == 1
