@@ -451,8 +451,21 @@ class BrushMatcher:
             AutomatedSplitStrategy,
         )
 
+        # The brush-split strategies read brush_splits.yaml themselves; pass
+        # the run's data-dir path (same directory as brushes.yaml) instead of
+        # letting them default to CWD-relative data/brush_splits.yaml, which
+        # silently drops every curated should_not_split entry from any
+        # working directory but the repo root.
+        brush_splits_path = self.brushes_path.parent / "brush_splits.yaml"
+
         strategies.append(
-            AutomatedSplitStrategy(catalogs, self.config, self.handle_matcher, self.knot_matcher)
+            AutomatedSplitStrategy(
+                catalogs,
+                self.config,
+                self.handle_matcher,
+                self.knot_matcher,
+                brush_splits_path=brush_splits_path,
+            )
         )
 
         # Add strategies that expect the correct catalog structure
@@ -485,7 +498,12 @@ class BrushMatcher:
         )
 
         strategies.append(
-            FullInputComponentMatchingStrategy(self.handle_matcher, self.knot_matcher, catalogs)
+            FullInputComponentMatchingStrategy(
+                self.handle_matcher,
+                self.knot_matcher,
+                catalogs,
+                brush_splits_path=self.brushes_path.parent / "brush_splits.yaml",
+            )
         )
 
         # Skip problematic component strategies for now - they expect
@@ -773,7 +791,10 @@ class BrushMatcher:
             catalogs = self._catalogs
 
             unified_strategy = FullInputComponentMatchingStrategy(
-                self.handle_matcher, self.knot_matcher, catalogs
+                self.handle_matcher,
+                self.knot_matcher,
+                catalogs,
+                brush_splits_path=self.brushes_path.parent / "brush_splits.yaml",
             )
             unified_result = unified_strategy.match(value)
             if unified_result:
