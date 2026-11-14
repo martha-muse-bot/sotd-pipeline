@@ -25,7 +25,13 @@ class FullInputComponentMatchingStrategy(BaseMultiResultBrushMatchingStrategy):
     - If neither matches: Returns None
     """
 
-    def __init__(self, handle_matcher, knot_matcher, catalogs: dict):
+    def __init__(
+        self,
+        handle_matcher,
+        knot_matcher,
+        catalogs: dict,
+        brush_splits_path: Optional[Path] = None,
+    ):
         """
         Initialize the unified component matching strategy.
 
@@ -33,6 +39,10 @@ class FullInputComponentMatchingStrategy(BaseMultiResultBrushMatchingStrategy):
             handle_matcher: HandleMatcher instance for handle matching
             knot_matcher: KnotMatcher instance for knot matching
             catalogs: Dictionary containing all catalog data
+            brush_splits_path: Path to brush_splits.yaml. Defaults to the
+                CWD-relative data/brush_splits.yaml for direct use; BrushMatcher
+                passes the run's data-dir path so the curated splits are
+                honored from any working directory.
         """
         super().__init__()
         self.handle_matcher = handle_matcher
@@ -40,7 +50,9 @@ class FullInputComponentMatchingStrategy(BaseMultiResultBrushMatchingStrategy):
         self.catalogs = catalogs
 
         # Initialize BrushSplitsLoader to check should_not_split flag
-        self.splits_loader = BrushSplitsLoader(Path("data/brush_splits.yaml"))
+        self.splits_loader = BrushSplitsLoader(
+            brush_splits_path or Path("data/brush_splits.yaml")
+        )
 
     def match(self, value: str | dict, full_string: Optional[str] = None) -> Optional[MatchResult]:
         """
