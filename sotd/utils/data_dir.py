@@ -55,3 +55,25 @@ def get_data_dir(cli_arg: Optional[Path | str] = None) -> Path:
 
     # CLI argument takes highest precedence (non-default value)
     return cli_path
+
+
+def _repo_root() -> Path:
+    """Repo root, anchored at this file (``sotd/utils/data_dir.py``)."""
+    return Path(__file__).resolve().parent.parent.parent
+
+
+def get_default_correct_matches_path() -> Path:
+    """Default correct_matches directory: ``<data dir>/correct_matches``.
+
+    The data dir is the run's data dir (``get_data_dir()``: ``--data-dir`` >
+    ``SOTD_DATA_DIR`` env var > ``"data"``). A relative data dir is anchored
+    at the repo root so the path does not depend on the process working
+    directory — previously the matchers defaulted to a bare CWD-relative
+    ``Path("data/correct_matches")``, so constructing a matcher from any
+    directory but the repo root silently loaded no correct matches and the
+    matcher fell back to regex-only matching.
+    """
+    data_dir = get_data_dir()
+    if not data_dir.is_absolute():
+        data_dir = _repo_root() / data_dir
+    return data_dir / "correct_matches"
