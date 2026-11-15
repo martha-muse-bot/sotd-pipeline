@@ -12,6 +12,7 @@ import yaml
 
 from sotd.match.exceptions import CatalogLoadError
 from sotd.utils.catalog_validator import validate_patterns_format
+from sotd.utils.data_dir import get_default_correct_matches_path
 from sotd.utils.yaml_loader import UniqueKeyLoader, load_yaml_with_nfc
 
 # Global cache for YAML catalog files to avoid repeated loads
@@ -106,7 +107,7 @@ class CatalogLoader:
             return self._load_legacy_correct_matches(correct_matches_path, field_type)
 
         # New directory structure mode
-        base_path = correct_matches_path or Path("data/correct_matches")
+        base_path = correct_matches_path or get_default_correct_matches_path()
         base_path = base_path.resolve()
 
         if not base_path.exists():
