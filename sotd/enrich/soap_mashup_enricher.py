@@ -3,10 +3,28 @@
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+from sotd.utils.data_dir import get_data_dir
 from sotd.utils.soap_extraction import detect_soap_mashup
 from sotd.utils.yaml_loader import load_yaml_with_nfc
 
 from .enricher import BaseEnricher
+
+
+def get_default_soaps_path() -> Path:
+    """Default soaps.yaml: ``<data dir>/soaps.yaml``.
+
+    The data dir is the run's data dir (``get_data_dir()``: ``--data-dir`` >
+    ``SOTD_DATA_DIR`` env var > ``"data"``). A relative data dir is anchored
+    at the repo root so the path does not depend on the process working
+    directory — previously the enricher defaulted to a bare CWD-relative
+    ``Path("data/soaps.yaml")``, so constructing it from any directory but
+    the repo root silently loaded no catalog and the countable lookup never
+    fired (the loop runs from ``/app`` with ``SOTD_DATA_DIR=/data``).
+    """
+    data_dir = get_data_dir()
+    if not data_dir.is_absolute():
+        data_dir = Path(__file__).resolve().parent.parent.parent / data_dir
+    return data_dir / "soaps.yaml"
 
 
 class SoapMashupEnricher(BaseEnricher):
@@ -23,7 +41,7 @@ class SoapMashupEnricher(BaseEnricher):
     """
 
     def __init__(self, soaps_path: Optional[Path] = None):
-        self.soaps_path = soaps_path or Path("data/soaps.yaml")
+        self.soaps_path = soaps_path or get_default_soaps_path()
         self._soaps_catalog: Optional[Dict[str, Any]] = None
 
     def _get_soaps_catalog(self) -> Dict[str, Any]:
