@@ -5,7 +5,93 @@ from pathlib import Path
 
 import pytest
 
-from sotd.enrich.soap_mashup_enricher import SoapMashupEnricher
+from sotd.enrich.soap_mashup_enricher import SoapMashupEnricher, get_default_soaps_path
+
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
+FIXTURE_SOAPS = """
+Repro Brand:
+  scents:
+    Sample Mashup:
+      countable: false
+      patterns: []
+    Normal Scent:
+      countable: true
+      patterns: []
+"""
+
+CATALOG_ONLY_FIELD_DATA = {
+    "original": "Repro Brand Tri-Mix",
+    "normalized": "repro brand tri-mix",
+    # matched has brand+scent but NO countable (e.g. exact match from
+    # correct_matches): the catalog lookup is the only mashup signal,
+    # and the text deliberately contains no "mashup" word.
+    "matched": {"brand": "Repro Brand", "scent": "Sample Mashup"},
+}
+
+
+class TestSoapMashupEnricherDefaultPath:
+    """Default soaps.yaml resolves from the run's data dir, not the CWD."""
+
+    def test_default_uses_run_data_dir_from_foreign_cwd(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ):
+        """SOTD_DATA_DIR is honoured when constructed from another directory."""
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        (data_dir / "soaps.yaml").write_text(FIXTURE_SOAPS)
+        monkeypatch.setenv("SOTD_DATA_DIR", str(data_dir))
+        monkeypatch.chdir(tmp_path)  # no data/ here
+
+        enricher = SoapMashupEnricher()
+        assert enricher.soaps_path == data_dir / "soaps.yaml"
+        assert enricher.enrich(CATALOG_ONLY_FIELD_DATA, "") == {"is_mashup": True}
+
+    def test_default_anchored_at_repo_root(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ):
+        """No env var + foreign CWD still finds the repo's data/soaps.yaml."""
+        monkeypatch.delenv("SOTD_DATA_DIR", raising=False)
+        monkeypatch.chdir(tmp_path)  # no data/ here
+
+        enricher = SoapMashupEnricher()
+        assert enricher.soaps_path == REPO_ROOT / "data" / "soaps.yaml"
+        # Real catalog lookup: Mama Bear's Soaps / Sample Mashup is
+        # countable: false in data/soaps.yaml.
+        result = enricher.enrich(
+            {
+                "original": "Mama Bear Tri-Mix",
+                "normalized": "mama bear tri-mix",
+                "matched": {"brand": "Mama Bear's Soaps", "scent": "Sample Mashup"},
+            },
+            "",
+        )
+        assert result == {"is_mashup": True}
+
+    def test_default_honours_relative_data_dir(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ):
+        """A relative SOTD_DATA_DIR is anchored at the repo root, not the CWD."""
+        monkeypatch.setenv("SOTD_DATA_DIR", "data")
+        monkeypatch.chdir(tmp_path)
+
+        assert get_default_soaps_path() == REPO_ROOT / "data" / "soaps.yaml"
+
+    def test_explicit_path_wins_over_data_dir(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ):
+        """An explicit soaps_path still wins over SOTD_DATA_DIR."""
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        (data_dir / "soaps.yaml").write_text(FIXTURE_SOAPS)
+        monkeypatch.setenv("SOTD_DATA_DIR", str(data_dir))
+        explicit = tmp_path / "explicit.yaml"
+        explicit.write_text(FIXTURE_SOAPS)
+
+        enricher = SoapMashupEnricher(soaps_path=explicit)
+        assert enricher.soaps_path == explicit
+        assert enricher.enrich(CATALOG_ONLY_FIELD_DATA, "") == {"is_mashup": True}
 
 
 class TestSoapMashupEnricher:
