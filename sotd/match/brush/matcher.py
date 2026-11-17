@@ -342,6 +342,16 @@ class BrushMatcher:
                 print(f"   {name}: {path.absolute()}")
             print(f"   correct_matches: {self.correct_matches_path.absolute()}")
 
+    @property
+    def _brush_splits_path(self) -> Path:
+        """Single source for the run's brush_splits.yaml location.
+
+        brush_splits.yaml lives beside brushes.yaml in the run's data dir.
+        The catalogs load, both split strategies, and the precompute all
+        derive it from here so the path can never drift between sites.
+        """
+        return self.brushes_path.parent / "brush_splits.yaml"
+
     def _load_catalogs_directly(self) -> dict:
         """Load catalogs directly without legacy config dependencies.
 
@@ -373,9 +383,8 @@ class BrushMatcher:
         catalogs["handles"] = self._load_yaml_file(self.handles_path)
         catalogs["knots"] = self._load_yaml_file(self.knots_path)
         catalogs["correct_matches"] = self._load_correct_matches_catalog()
-        # Use brushes_path parent directory for brush_splits.yaml (same data directory)
-        brush_splits_path = self.brushes_path.parent / "brush_splits.yaml"
-        catalogs["brush_splits"] = self._load_yaml_file(brush_splits_path)
+        # brush_splits.yaml lives beside brushes.yaml in the run's data dir.
+        catalogs["brush_splits"] = self._load_yaml_file(self._brush_splits_path)
 
         # Validate patterns format for all catalog files
         from sotd.utils.catalog_validator import validate_patterns_format
@@ -447,16 +456,21 @@ class BrushMatcher:
         # Add the automated split strategy for high/medium priority splitting
         # This should run BEFORE OtherBrushMatchingStrategy to allow splitting
         # of strings like "Elite Razor Trustone W/Long Shaving 26mm Reserve VI Badger"
+        # Both brush-split strategies share one BrushSplitsLoader, built
+        # from the run's data-dir path (same directory as brushes.yaml).
+        # Sharing the loader parses brush_splits.yaml once per matcher
+        # instead of once per strategy -- and, before this change, once per
+        # match() call in _precompute_handle_knot_results. Passing the
+        # loader, never a bare path, keeps the strategies off the
+        # CWD-relative data/brush_splits.yaml default, which silently drops
+        # every curated should_not_split entry from any working directory
+        # but the repo root.
+        from .comparison.splits_loader import BrushSplitsLoader
         from .strategies.automated.automated_split_strategy import (
             AutomatedSplitStrategy,
         )
 
-        # The brush-split strategies read brush_splits.yaml themselves; pass
-        # the run's data-dir path (same directory as brushes.yaml) instead of
-        # letting them default to CWD-relative data/brush_splits.yaml, which
-        # silently drops every curated should_not_split entry from any
-        # working directory but the repo root.
-        brush_splits_path = self.brushes_path.parent / "brush_splits.yaml"
+        splits_loader = BrushSplitsLoader(self._brush_splits_path)
 
         strategies.append(
             AutomatedSplitStrategy(
@@ -464,7 +478,7 @@ class BrushMatcher:
                 self.config,
                 self.handle_matcher,
                 self.knot_matcher,
-                brush_splits_path=brush_splits_path,
+                splits_loader=splits_loader,
             )
         )
 
@@ -502,7 +516,7 @@ class BrushMatcher:
                 self.handle_matcher,
                 self.knot_matcher,
                 catalogs,
-                brush_splits_path=self.brushes_path.parent / "brush_splits.yaml",
+                splits_loader=splits_loader,
             )
         )
 
@@ -782,20 +796,34 @@ class BrushMatcher:
 
         # Pre-compute FullInputComponentMatchingStrategy result for unified strategy caching
         try:
-            # Create a temporary instance of the unified strategy to avoid circular dependency
+            # Reuse the wired FullInputComponentMatchingStrategy from the
+            # orchestrator instead of constructing a new one (with a fresh
+            # BrushSplitsLoader that re-parses brush_splits.yaml) on every
+            # match() call. The orchestrator's instance shares the matcher's
+            # single BrushSplitsLoader.
             from .strategies.full_input_component_matching_strategy import (
                 FullInputComponentMatchingStrategy,
             )
 
-            # Use instance-level cached catalogs to avoid repeated loading
-            catalogs = self._catalogs
-
-            unified_strategy = FullInputComponentMatchingStrategy(
-                self.handle_matcher,
-                self.knot_matcher,
-                catalogs,
-                brush_splits_path=self.brushes_path.parent / "brush_splits.yaml",
+            unified_strategy = next(
+                (
+                    strategy
+                    for strategy in self.strategy_orchestrator.strategies
+                    if isinstance(strategy, FullInputComponentMatchingStrategy)
+                ),
+                None,
             )
+            if unified_strategy is None:
+                # Should not happen: _create_strategies always registers
+                # one. Fall back to a temporary instance on the run's
+                # data-dir path so the precompute still runs rather than
+                # failing the match.
+                unified_strategy = FullInputComponentMatchingStrategy(
+                    self.handle_matcher,
+                    self.knot_matcher,
+                    self._catalogs,
+                    brush_splits_path=self._brush_splits_path,
+                )
             unified_result = unified_strategy.match(value)
             if unified_result:
                 cached_results["full_input_component_matching_result"] = unified_result

@@ -31,6 +31,7 @@ class FullInputComponentMatchingStrategy(BaseMultiResultBrushMatchingStrategy):
         knot_matcher,
         catalogs: dict,
         brush_splits_path: Optional[Path] = None,
+        splits_loader: Optional[BrushSplitsLoader] = None,
     ):
         """
         Initialize the unified component matching strategy.
@@ -39,20 +40,31 @@ class FullInputComponentMatchingStrategy(BaseMultiResultBrushMatchingStrategy):
             handle_matcher: HandleMatcher instance for handle matching
             knot_matcher: KnotMatcher instance for knot matching
             catalogs: Dictionary containing all catalog data
-            brush_splits_path: Path to brush_splits.yaml. Defaults to the
-                CWD-relative data/brush_splits.yaml for direct use; BrushMatcher
-                passes the run's data-dir path so the curated splits are
-                honored from any working directory.
+            brush_splits_path: Path to brush_splits.yaml. BrushMatcher passes
+                a shared splits_loader instead; a path is for direct use.
+            splits_loader: Shared BrushSplitsLoader (preferred). BrushMatcher
+                builds one per matcher so brush_splits.yaml is parsed once.
+                One of splits_loader or brush_splits_path is required: there
+                is no CWD-relative default, which silently dropped every
+                curated should_not_split entry from any working directory
+                but the repo root.
         """
         super().__init__()
         self.handle_matcher = handle_matcher
         self.knot_matcher = knot_matcher
         self.catalogs = catalogs
 
-        # Initialize BrushSplitsLoader to check should_not_split flag
-        self.splits_loader = BrushSplitsLoader(
-            brush_splits_path or Path("data/brush_splits.yaml")
-        )
+        # The brush-split source must be explicit: a shared loader, or a path.
+        if splits_loader is not None:
+            self.splits_loader = splits_loader
+        elif brush_splits_path is not None:
+            self.splits_loader = BrushSplitsLoader(brush_splits_path)
+        else:
+            raise ValueError(
+                "FullInputComponentMatchingStrategy requires splits_loader or "
+                "brush_splits_path; pass the run's data-dir "
+                "brush_splits.yaml explicitly"
+            )
 
     def match(self, value: str | dict, full_string: Optional[str] = None) -> Optional[MatchResult]:
         """

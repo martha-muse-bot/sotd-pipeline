@@ -5,11 +5,14 @@ AutomatedSplitStrategy and FullInputComponentMatchingStrategy each built
 their own BrushSplitsLoader(Path("data/brush_splits.yaml")) -- CWD-relative
 -- so from any working directory but the repo root the loader found no
 file and every curated should_not_split: true entry was silently ignored.
-BrushMatcher now passes the run's data-dir path (brushes.yaml's parent
-directory) into both strategies. These tests fail on the old code: the
-strategy-level tests pass a brush_splits_path the old constructors do not
-accept (TypeError), and the matcher-level test sees the CWD-relative
-default path instead of the data-dir path.
+BrushMatcher now passes a shared BrushSplitsLoader built from the run's
+data-dir path (brushes.yaml's parent directory) into both strategies, and
+_precompute_handle_knot_results reuses the orchestrator's wired
+FullInputComponentMatchingStrategy instead of constructing a new one per
+match. These tests fail on the old code: the strategy-level tests pass a
+brush_splits_path the old constructors do not accept (TypeError), and the
+matcher-level test sees the CWD-relative default path instead of the
+data-dir path.
 """
 
 import shutil
@@ -232,8 +235,12 @@ class TestBrushMatcherWiresDataDirBrushSplitsPath:
         expected = data_dir / "brush_splits.yaml"
         assert automated.splits_loader.brush_splits_path == expected
         assert full_input.splits_loader.brush_splits_path == expected
+        # Both wired strategies share the matcher's single loader: the file
+        # is parsed once, and the precompute reuses this same instance.
+        assert automated.splits_loader is full_input.splits_loader
         # The loaders actually read our file, not the repo-root default.
         assert automated.splits_loader.get_splits_count() == 2
         assert full_input.splits_loader.get_splits_count() == 2
         # And the curated entries are honored through the wired strategies.
         assert automated.match("Synthetic Test Handle w/ Synthetic Test Knot 24mm") is None
+        assert full_input.match("Synthetic Boar Test Brush SOC knot 24mm") is None
