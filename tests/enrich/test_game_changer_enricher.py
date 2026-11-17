@@ -203,6 +203,26 @@ class TestGameChangerEnricher:
             assert result is not None
             assert result["gap"] == ".68"
 
+    def test_extract_gap_after_year_number(self):
+        """Test that a year/model number before the gap does not kill extraction."""
+        field_data = {"model": "RazoRock Game Changer 2023 .84"}
+        result = self.enricher.enrich(field_data, field_data["model"])
+        assert result is not None
+        assert result["gap"] == ".84"
+
+    def test_extract_gap_after_year_number_three_digit(self):
+        """Test gap extraction with a year before a three-digit gap."""
+        field_data = {"model": "RazoRock Game Changer 2024 1.05"}
+        result = self.enricher.enrich(field_data, field_data["model"])
+        assert result is not None
+        assert result["gap"] == "1.05"
+
+    def test_no_gap_when_only_year_number(self):
+        """Test that a year alone is not promoted to a gap."""
+        field_data = {"model": "RazoRock Game Changer 2023"}
+        result = self.enricher.enrich(field_data, field_data["model"])
+        assert result is None
+
     def test_extract_gap_with_hyphen_format(self):
         """Test gap extraction with hyphen format like 0.76-P or .76-P."""
         test_cases = [
