@@ -94,6 +94,43 @@ def test_setup_enrichers_data_path_repoints_brush_catalog_loader(tmp_path):
         _brush_enricher().catalog_loader.set_data_path(Path("data"))
 
 
+def _mashup_enricher():
+    """Return the registered SoapMashupEnricher (setup_enrichers must have run)."""
+    from sotd.enrich.registry import enricher_registry
+    from sotd.enrich.soap_mashup_enricher import SoapMashupEnricher
+
+    for enricher in enricher_registry.get_all_enrichers():
+        if isinstance(enricher, SoapMashupEnricher):
+            return enricher
+    raise AssertionError("SoapMashupEnricher not registered")
+
+
+def test_setup_enrichers_data_path_repoints_soap_mashup_catalog(tmp_path):
+    """setup_enrichers(data_path=...) must point the SoapMashupEnricher at
+    that dir's soaps.yaml, not CWD-relative Path("data/soaps.yaml").
+
+    Same failure mode as the BrushEnricher's CatalogLoader: registered by
+    the same setup_enrichers(), the mashup enricher silently degraded to an
+    empty catalog (and text-only detection) from any CWD but the repo root.
+    """
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    (data_dir / "soaps.yaml").write_text(
+        "ReproBrand:\n  scents:\n    ReproScent:\n      countable: false\n"
+    )
+
+    setup_enrichers(data_path=data_dir)
+    try:
+        mashup = _mashup_enricher()
+        assert mashup.soaps_path == data_dir / "soaps.yaml"
+        assert mashup._catalog_countable_for_scent("ReproBrand", "ReproScent") is False
+        assert mashup._catalog_countable_for_scent("ReproBrand", "OtherScent") is None
+    finally:
+        # Restore the shared enricher to the repo default so later tests in
+        # this process see the real catalog again.
+        _mashup_enricher().set_data_path(Path("data"))
+
+
 def test_process_month_uses_data_dir_for_brush_catalogs(tmp_path, monkeypatch):
     """_process_month must enrich from the run's data dir even when the
     process CWD has no data/ directory.
@@ -118,6 +155,9 @@ def test_process_month_uses_data_dir_for_brush_catalogs(tmp_path, monkeypatch):
     monkeypatch.chdir(work_dir)
     assert not (work_dir / "data").exists()
 
+    import sotd.enrich.enrich as enrich_mod
+
+    prev_manager = enrich_mod._current_override_manager
     try:
         result = _process_month(2025, 1, base_path, debug=False, force=True)
         assert result["status"] == "completed"
@@ -128,6 +168,13 @@ def test_process_month_uses_data_dir_for_brush_catalogs(tmp_path, monkeypatch):
         assert enriched["_handle_maker_inference"] == "ReproBrand"
     finally:
         _brush_enricher().catalog_loader.set_data_path(Path("data"))
+        _mashup_enricher().set_data_path(Path("data"))
+        # _process_month also re-pointed the module-global override manager
+        # and every registered enricher's override manager at the tmp-path
+        # manager; restore them so later tests see the pre-test managers
+        # (the tmp manager happens to have zero overrides, which only hides
+        # the leak — it is still global state left mutated).
+        setup_enrichers(override_manager=prev_manager)
 
 
 def test_enrich_comments_basic():

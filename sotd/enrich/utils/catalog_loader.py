@@ -32,15 +32,15 @@ class CatalogLoader:
         """Point the loader at a different data directory.
 
         Cached patterns and handle defaults are dropped so the next load
-        reads from the new directory. A no-op when the path is unchanged.
+        reads from the new directory. A no-op when the path is unchanged
+        (compared resolved, so ``"./data"`` vs ``"data"`` does not clear
+        the cache, and the same relative value from a different CWD does).
         """
         data_path = Path(data_path)
-        if data_path == self.data_path:
+        if data_path.resolve() == self.data_path.resolve():
             return
         self.data_path = data_path
-        self._pattern_cache.clear()
-        self._compiled_pattern_cache.clear()
-        self._handle_defaults_cache.clear()
+        self.clear_pattern_cache()
 
     def load_handle_patterns(self, brand: str, model: str) -> List[str]:
         """
@@ -329,7 +329,9 @@ class CatalogLoader:
         for pattern in patterns:
             # Create context for enhanced error reporting
             context = create_context_dict(
-                file_path=f"data/{catalog_type}.yaml", brand=brand, model=model
+                file_path=str(self.data_path / f"{catalog_type}.yaml"),
+                brand=brand,
+                model=model,
             )
             compiled_pattern = compile_regex_with_context(pattern, context)
             compiled_patterns.append(compiled_pattern)

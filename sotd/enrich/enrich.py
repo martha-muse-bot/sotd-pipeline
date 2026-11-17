@@ -32,11 +32,14 @@ def setup_enrichers(
     Args:
         override_manager: Optional enrichment override manager for forcing catalog values
         data_path: Path to the data directory holding the catalogs
-            (handles.yaml, knots.yaml). Passed to the BrushEnricher's
-            CatalogLoader; when None, enrichers fall back to their
-            CWD-relative defaults. On repeat calls a given data_path
-            re-points already-registered enrichers (their cached patterns
-            are dropped so the next load reads from the new directory).
+            (handles.yaml, knots.yaml, soaps.yaml). Passed to the
+            BrushEnricher's CatalogLoader and the SoapMashupEnricher; when
+            None, enrichers fall back to their CWD-relative defaults on
+            first registration, and a repeat call with None leaves
+            already-registered enrichers pointed where they are. On repeat
+            calls a given data_path re-points already-registered enrichers
+            (their cached patterns are dropped so the next load reads from
+            the new directory).
     """
     global _enrichers_setup, _current_override_manager
 
@@ -59,10 +62,15 @@ def setup_enrichers(
             # previously never passed it here, so the BrushEnricher's
             # CatalogLoader defaulted to CWD-relative Path("data") and
             # silently loaded no handle/knot patterns from any other CWD.
+            # The SoapMashupEnricher has the same shape (its soaps.yaml
+            # default is CWD-relative); re-point it the same way.
             for enricher in enricher_registry.get_all_enrichers():
                 loader = getattr(enricher, "catalog_loader", None)
                 if loader is not None:
                     loader.set_data_path(data_path)
+                set_data_path = getattr(enricher, "set_data_path", None)
+                if callable(set_data_path):
+                    set_data_path(data_path)
         return
 
     # Register all enrichers with override manager
@@ -75,7 +83,11 @@ def setup_enrichers(
     enricher_registry.register(ChristopherBradleyEnricher())
     enricher_registry.register(BlackbirdPlateEnricher())
     enricher_registry.register(SoapSampleEnricher())
-    enricher_registry.register(SoapMashupEnricher())
+    enricher_registry.register(
+        SoapMashupEnricher(
+            soaps_path=data_path / "soaps.yaml" if data_path is not None else None
+        )
+    )
     enricher_registry.register(SuperSpeedVariantEnricher())
     enricher_registry.register(RazorFormatEnricher())
 
