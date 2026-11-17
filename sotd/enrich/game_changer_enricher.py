@@ -94,8 +94,10 @@ class GameChangerEnricher(BaseEnricher):
             r"(?=\s|$|[A-Za-z]|\(|\)|\[|\]|\{|\}|-)"
         )
 
-        match = re.search(pattern, text, re.IGNORECASE)
-        if match:
+        # Scan every candidate left to right and return the first VALID gap:
+        # a year or model number before the gap (e.g. "Game Changer 2023 .84"
+        # yields the invalid candidate "023") must not end the search.
+        for match in re.finditer(pattern, text, re.IGNORECASE):
             gap_value = match.group(1).lstrip()
             # Special case: handle '1.05' directly
             if gap_value == "1.05":
@@ -113,7 +115,7 @@ class GameChangerEnricher(BaseEnricher):
                 if len(digits) == 2:
                     gap_num = int(digits)
                     if gap_num < 50 or gap_num > 99:  # Reasonable gap range
-                        return None
+                        continue
                     gap = f".{digits}"
                 elif len(digits) == 3:
                     first_digit = int(digits[0])
@@ -121,9 +123,9 @@ class GameChangerEnricher(BaseEnricher):
                     if first_digit == 1 and 0 <= last_two_digits <= 99:
                         gap = f"{first_digit}.{digits[1:3]}"
                     else:
-                        return None
+                        continue
                 else:
-                    return None
+                    continue
 
                 # Normalize the gap value
                 try:
@@ -132,12 +134,12 @@ class GameChangerEnricher(BaseEnricher):
                     if gap_str in [".85", ".94"]:
                         gap_str = ".84"
                 except ValueError:
-                    return None
+                    continue
 
             # Only accept the specific valid gaps
             valid_gaps = [".68", ".76", ".84", "1.05"]
             if gap_str not in valid_gaps:
-                return None
+                continue
             return gap_str
 
         return None
