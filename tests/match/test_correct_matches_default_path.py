@@ -6,8 +6,15 @@ Previously every matcher defaulted to a bare CWD-relative
 directory but the repo root silently loaded no correct matches and the
 matcher fell back to regex-only matching. The default is now
 ``get_default_correct_matches_path()`` (run's data dir via ``get_data_dir()``,
-relative data dirs anchored at the repo root), applied in ``BaseMatcher``,
-``CatalogLoader.load_correct_matches`` and ``SoapMatcher``.
+relative data dirs anchored at the repo root inside ``get_data_dir()``),
+applied in ``BaseMatcher``, ``CatalogLoader.load_correct_matches``,
+``SoapMatcher`` (via BaseMatcher), ``BrushMatcher``, the brush config
+manager, ``CorrectMatchesUpdater`` and ``CorrectMatchesManager``.
+
+The tests asserting against live production catalog entries live in
+``tests/integration/test_correct_matches_default_path.py`` (production
+marker); this file keeps only path-resolution and synthetic-data tests,
+plus the loud-failure tests for corrupt correct_matches files.
 """
 
 from pathlib import Path
@@ -16,7 +23,6 @@ import pytest
 import yaml
 
 from sotd.match.base_matcher import clear_catalog_cache
-from sotd.match.blade_matcher import BladeMatcher
 from sotd.match.loaders import CatalogLoader, clear_yaml_cache
 from sotd.match.razor_matcher import RazorMatcher
 from sotd.utils.data_dir import get_default_correct_matches_path
@@ -58,53 +64,6 @@ def test_default_cm_path_anchors_relative_data_dir_at_repo_root(monkeypatch):
     assert get_default_correct_matches_path() == DATA_DIR / "correct_matches"
 
 
-def test_razor_matcher_default_cm_loads_from_foreign_cwd(foreign_cwd):
-    matcher = RazorMatcher(catalog_path=DATA_DIR / "razors.yaml")
-    assert matcher.correct_matches_path == DATA_DIR / "correct_matches"
-    assert len(matcher.correct_matches) > 0
-    assert "Above the Tie" in matcher.correct_matches
-    result = matcher.match("above the tie - atlas s1")
-    assert result.matched is not None
-    assert result.matched["brand"] == "Above the Tie"
-    assert result.matched["model"] == "S1"
-    assert result.match_type == "exact"
-
-
-def test_blade_matcher_default_cm_loads_from_foreign_cwd(foreign_cwd):
-    matcher = BladeMatcher(catalog_path=DATA_DIR / "blades.yaml")
-    assert matcher.correct_matches_path == DATA_DIR / "correct_matches"
-    assert len(matcher.correct_matches) > 0
-    result = matcher.match("feather ac professional")
-    assert result.matched is not None
-    assert result.matched["brand"] == "Feather"
-    assert result.matched["model"] == "Pro"
-    assert result.match_type == "exact"
-
-
-def test_soap_matcher_default_cm_loads_from_foreign_cwd(foreign_cwd):
-    pytest.importorskip("rich")
-    from sotd.match.soap_matcher import SoapMatcher
-
-    matcher = SoapMatcher(catalog_path=DATA_DIR / "soaps.yaml")
-    assert matcher.correct_matches_path == DATA_DIR / "correct_matches"
-    assert len(matcher.correct_matches) > 0
-    assert "345 Soap Co." in matcher.correct_matches
-    result = matcher.match("345 soap co. - cairn")
-    assert result.matched is not None
-    assert result.matched["brand"] == "345 Soap Co."
-    assert result.matched["scent"] == "Cairn"
-    assert result.match_type == "exact"
-
-
-def test_loader_default_cm_loads_from_foreign_cwd(foreign_cwd):
-    loader = CatalogLoader()
-    razor_cm = loader.load_correct_matches(field_type="razor")
-    assert len(razor_cm) > 0
-    assert "Above the Tie" in razor_cm
-    blade_cm = loader.load_correct_matches(field_type="blade")
-    assert len(blade_cm) > 0
-
-
 def test_sotd_data_dir_cm_is_used(monkeypatch, tmp_path):
     data_dir = tmp_path / "custom_data"
     cm_dir = data_dir / "correct_matches"
@@ -143,3 +102,40 @@ def test_explicit_cm_path_wins_over_default(monkeypatch, tmp_path):
     )
     assert matcher.correct_matches_path == empty_cm
     assert matcher.correct_matches == {}
+
+
+def test_loader_corrupt_yaml_raises(tmp_path):
+    """A corrupt field file raises instead of silently returning {}.
+
+    Mirrors BaseMatcher._load_correct_matches: a syntax error in
+    data/correct_matches/razor.yaml must fail the run loudly, not degrade
+    it to regex-only matching.
+    """
+    cm_dir = tmp_path / "correct_matches"
+    cm_dir.mkdir()
+    # Tab-indented YAML triggers yaml.scanner.ScannerError
+    (cm_dir / "razor.yaml").write_text("Brand:\n\tModel: []\n", encoding="utf-8")
+
+    loader = CatalogLoader()
+    with pytest.raises(ValueError, match="Failed to load correct matches"):
+        loader.load_correct_matches(cm_dir, field_type="razor")
+
+
+def test_loader_corrupt_legacy_file_raises(tmp_path):
+    """A corrupt legacy single file raises instead of silently returning {}."""
+    legacy = tmp_path / "correct_matches.yaml"
+    legacy.write_text("Brand:\n\tModel: []\n", encoding="utf-8")
+
+    loader = CatalogLoader()
+    with pytest.raises(ValueError, match="Failed to load correct matches"):
+        loader.load_correct_matches(legacy, field_type="razor")
+
+
+def test_loader_missing_field_file_returns_empty(tmp_path):
+    """Missing field file is fine -- returns {} (control for the raises above)."""
+    cm_dir = tmp_path / "correct_matches"
+    cm_dir.mkdir()
+
+    loader = CatalogLoader()
+    assert loader.load_correct_matches(cm_dir, field_type="razor") == {}
+    assert loader.load_correct_matches(tmp_path / "no_such_dir", field_type="razor") == {}
