@@ -92,6 +92,67 @@ class TestRealCatalogIntegration:
                 result.matched[field] == expected_value
             ), f"Expected {expected_value}, got {result.matched[field]}"
 
+    def test_joseph_abbreviation_patterns(self, razor_matcher):
+        """Pin the Jos./Jo. abbreviation patterns for Joseph Elliot/Rodgers.
+
+        Regression test: commit c7dfbab silently reverted the Joseph Elliot
+        abbreviation pattern with zero tests failing. These cases use the
+        regex layer directly (bypass_correct_matches) so the test pins the
+        pattern, not a correct_matches entry.
+        """
+        # Abbreviated forms resolve to the makers (PR #31)
+        abbreviation_cases = [
+            ("Jos. Elliot 6/8 wedge", "Joseph Elliot", "Straight", "Straight"),
+            ("Jos Elliot 6/8 wedge", "Joseph Elliot", "Straight", "Straight"),
+            ("Jos. Elliot - 6/8 wedge", "Joseph Elliot", "Straight", "Straight"),
+            ("Jos.Elliot 6/8 wedge", "Joseph Elliot", "Straight", "Straight"),
+            ("Jo. Elliot 6/8 wedge", "Joseph Elliot", "Straight", "Straight"),
+            ("Jos. Elliot 6/8 NW", "Joseph Elliot", "Straight", "Straight"),
+            ("Joseph Elliot 6/8 wedge", "Joseph Elliot", "Straight", "Straight"),
+            ("Jos. Rodgers & Sons 11/16 FH", "Joseph Rodgers & Sons", "Straight", "Straight"),
+            ("Jos. Rodgers 6/8 wedge", "Joseph Rodgers & Sons", "Straight", "Straight"),
+            ("Joseph Rodgers 6/8 wedge", "Joseph Rodgers & Sons", "Straight", "Straight"),
+        ]
+        for text, brand, model, fmt in abbreviation_cases:
+            result = razor_matcher.match(text, bypass_correct_matches=True)
+            assert result.matched is not None, f"No match for: {text}"
+            assert result.matched["brand"] == brand, (
+                f"{text}: expected brand {brand}, got {result.matched['brand']}"
+            )
+            assert result.matched["model"] == model, (
+                f"{text}: expected model {model}, got {result.matched['model']}"
+            )
+            assert result.matched["format"] == fmt, (
+                f"{text}: expected format {fmt}, got {result.matched['format']}"
+            )
+
+        # The word boundary must keep real first names out: a poster named
+        # Josh/Josiah Elliot is not the 19th-century maker.
+        for text in ("Josh Elliot 6/8 wedge", "Josiah Elliot 5/8"):
+            result = razor_matcher.match(text, bypass_correct_matches=True)
+            assert result.matched is None or result.matched["brand"] != "Joseph Elliot", (
+                f"{text} must not resolve to Joseph Elliot, got {result.matched}"
+            )
+
+        # Real compound strings keep their resolutions: the widened pattern
+        # sorts below the Frederick Reynolds / Wostenholm patterns.
+        compound_cases = [
+            (
+                "Frederick Reynolds 6/8 | Joseph Elliot 6/8 wedge",
+                "Frederick Reynolds",
+            ),
+            (
+                "Wostenholm & Sons Pipe Razor 6/8 and Joseph Elliot 13/16",
+                "Geo. Wostenholm & Son",
+            ),
+        ]
+        for text, brand in compound_cases:
+            result = razor_matcher.match(text, bypass_correct_matches=True)
+            assert result.matched is not None, f"No match for: {text}"
+            assert result.matched["brand"] == brand, (
+                f"{text}: expected brand {brand}, got {result.matched['brand']}"
+            )
+
     @pytest.mark.production
     def test_handle_knot_splitting_integration(self, brush_matcher):
         """Test handle/knot splitting with real catalog data.
