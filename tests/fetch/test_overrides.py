@@ -212,11 +212,51 @@ def test_default_override_path_anchored_at_repo_root(tmp_path: Path, monkeypatch
     monkeypatch.chdir(other_cwd)
     importlib.reload(overrides_mod)
     try:
-        repo_root = Path(overrides_mod.__file__).resolve().parent.parent.parent
-        assert overrides_mod.OVERRIDE_PATH == repo_root / "data" / "thread_overrides.yaml"
+        # Expected root derived from THIS test file's location, not from the
+        # production module's __file__: re-deriving it from overrides_mod
+        # would pass even with an off-by-one in _repo_root()'s anchor depth.
+        test_file_root = Path(__file__).resolve().parent.parent.parent
+        assert overrides_mod.OVERRIDE_PATH == test_file_root / "data" / "thread_overrides.yaml"
         assert overrides_mod.OVERRIDE_PATH.is_absolute()
     finally:
         _restore_overrides_module(monkeypatch, original_env, original_path)
+
+
+def test_default_override_path_honors_cli_arg(tmp_path: Path) -> None:
+    """--data-dir is the highest-precedence leg: it reaches the overrides path."""
+    from sotd.fetch.overrides import get_default_override_path
+
+    custom = tmp_path / "srv" / "sotd"
+    assert get_default_override_path(custom) == custom / "thread_overrides.yaml"
+    assert get_default_override_path(str(custom)) == custom / "thread_overrides.yaml"
+
+
+def test_default_override_path_expands_user(tmp_path: Path, monkeypatch) -> None:
+    """A ~-prefixed data dir (as compose env files deliver it) is expanded."""
+
+    from sotd.fetch.overrides import get_default_override_path
+
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.delenv("SOTD_DATA_DIR", raising=False)
+    assert get_default_override_path("~/sotd-data") == (
+        tmp_path / "sotd-data" / "thread_overrides.yaml"
+    )
+    # Env-var leg expands too.
+    monkeypatch.setenv("SOTD_DATA_DIR", "~/sotd-data")
+    assert get_default_override_path() == tmp_path / "sotd-data" / "thread_overrides.yaml"
+
+
+def test_missing_file_warning_fires_once(tmp_path: Path, caplog) -> None:
+    """The missing-file warning is deduplicated per path per process."""
+    from sotd.fetch.overrides import load_thread_overrides_data
+
+    missing = tmp_path / "missing.yaml"
+    with caplog.at_level("WARNING", logger="sotd.fetch.overrides"):
+        assert load_thread_overrides_data(missing) == {}
+        assert load_thread_overrides_data(missing) == {}
+        assert load_thread_overrides_data(missing) == {}
+    assert caplog.text.count("not found") == 1
+    assert str(missing) in caplog.text
 
 
 def test_load_thread_overrides_data_missing_file_warns(tmp_path: Path, caplog) -> None:

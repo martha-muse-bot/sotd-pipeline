@@ -32,23 +32,38 @@ def _repo_root() -> Path:
     return Path(__file__).resolve().parent.parent.parent
 
 
-def get_default_override_path() -> Path:
+def get_default_override_path(cli_arg: Optional[Path | str] = None) -> Path:
     """Default thread-overrides path: ``<data dir>/thread_overrides.yaml``.
 
-    The data dir is the run's data dir (``get_data_dir()``: ``--data-dir`` >
-    ``SOTD_DATA_DIR`` env var > ``"data"``). A relative data dir is anchored
-    at the repo root so the path does not depend on the process working
-    directory — previously this was a bare CWD-relative
+    The data dir is the run's data dir (``get_data_dir(cli_arg)``:
+    ``--data-dir`` > ``SOTD_DATA_DIR`` env var > ``"data"``). A relative data
+    dir is anchored at the repo root so the path does not depend on the
+    process working directory — previously this was a bare CWD-relative
     ``Path("data/thread_overrides.yaml")``, so running fetch from any
     directory but the repo root silently dropped every include and exclude.
+    A ``~``-prefixed data dir is expanded (compose env files deliver
+    ``SOTD_DATA_DIR='~/sotd-data'`` verbatim).
+
+    NOTE on relative data dirs: fetch output paths (``threads/``,
+    ``comments/``) resolve the same data dir CWD-relative via
+    ``get_data_dir()``, so with a relative ``SOTD_DATA_DIR`` and a foreign
+    CWD the overrides file and the fetched output live in different trees.
+    Anchoring output paths the same way is follow-up work (see the series
+    note on converging data-dir resolution in ``sotd/utils/data_dir.py``);
+    absolute data dirs — the container layout — are unaffected.
     """
-    data_dir = get_data_dir()
+    data_dir = get_data_dir(cli_arg).expanduser()
     if not data_dir.is_absolute():
         data_dir = _repo_root() / data_dir
     return data_dir / "thread_overrides.yaml"
 
 
 OVERRIDE_PATH = get_default_override_path()
+
+# Paths already warned about as missing (per process): fetch loads overrides
+# up to 3x per month, so without dedup a 12-month backfill without the file
+# emits 36+ identical warnings.
+_warned_missing_paths: set[Path] = set()
 
 _DATE_KEY_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
@@ -121,11 +136,13 @@ def load_thread_overrides_data(path: Path = OVERRIDE_PATH) -> dict[Any, Any]:
     without dropping the excluded junk threads.
     """
     if not path.is_file():
-        logger.warning(
-            "Thread overrides file not found: %s — proceeding without "
-            "include/exclude overrides",
-            path,
-        )
+        if path not in _warned_missing_paths:
+            _warned_missing_paths.add(path)
+            logger.warning(
+                "Thread overrides file not found: %s — proceeding without "
+                "include/exclude overrides",
+                path,
+            )
         return {}
     try:
         data = load_yaml_with_nfc(path)
