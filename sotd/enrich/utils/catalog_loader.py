@@ -28,6 +28,20 @@ class CatalogLoader:
         self._cache_hits = 0
         self._cache_misses = 0
 
+    def set_data_path(self, data_path: Path) -> None:
+        """Point the loader at a different data directory.
+
+        Cached patterns and handle defaults are dropped so the next load
+        reads from the new directory. A no-op when the path is unchanged
+        (compared resolved, so ``"./data"`` vs ``"data"`` does not clear
+        the cache, and the same relative value from a different CWD does).
+        """
+        data_path = Path(data_path)
+        if data_path.resolve() == self.data_path.resolve():
+            return
+        self.data_path = data_path
+        self.clear_pattern_cache()
+
     def load_handle_patterns(self, brand: str, model: str) -> List[str]:
         """
         Load handle patterns for a specific brand and model.

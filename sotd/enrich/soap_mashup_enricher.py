@@ -13,18 +13,16 @@ from .enricher import BaseEnricher
 def get_default_soaps_path() -> Path:
     """Default soaps.yaml: ``<data dir>/soaps.yaml``.
 
-    The data dir is the run's data dir (``get_data_dir()``: ``--data-dir`` >
-    ``SOTD_DATA_DIR`` env var > ``"data"``). A relative data dir is anchored
-    at the repo root so the path does not depend on the process working
-    directory — previously the enricher defaulted to a bare CWD-relative
-    ``Path("data/soaps.yaml")``, so constructing it from any directory but
-    the repo root silently loaded no catalog and the countable lookup never
-    fired (the loop runs from ``/app`` with ``SOTD_DATA_DIR=/data``).
+    The data dir is ``get_data_dir()`` (``SOTD_DATA_DIR`` env var >
+    ``"data"``), with relative values anchored at the repo root inside
+    ``get_data_dir()`` so the path does not depend on the process working
+    directory. The ``--data-dir`` CLI value is honored one level up:
+    ``run.py`` resolves it and passes the data dir into
+    ``setup_enrichers()``, which constructs this enricher with the
+    explicit path (and re-points it on repeat calls via ``set_data_path``)
+    — the default here is only for direct construction.
     """
-    data_dir = get_data_dir()
-    if not data_dir.is_absolute():
-        data_dir = Path(__file__).resolve().parent.parent.parent / data_dir
-    return data_dir / "soaps.yaml"
+    return get_data_dir() / "soaps.yaml"
 
 
 class SoapMashupEnricher(BaseEnricher):
@@ -103,3 +101,17 @@ class SoapMashupEnricher(BaseEnricher):
                 is_mashup = True
 
         return {"is_mashup": is_mashup}
+
+    def set_data_path(self, data_path: Path) -> None:
+        """Point the mashup catalog at a different data directory.
+
+        Drops the cached soaps catalog so the next lookup reads from the
+        new directory. A no-op when the path is unchanged. (The registry
+        caches enricher instances across a multi-month run, so without this
+        a data dir set at first setup would stick for the whole process.)
+        """
+        soaps_path = Path(data_path) / "soaps.yaml"
+        if soaps_path.resolve() == self.soaps_path.resolve():
+            return
+        self.soaps_path = soaps_path
+        self._soaps_catalog = None

@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Tests for soap mashup enricher."""
+"""Tests for soap mashup enricher.
+
+The live-catalog default-path test (Mama Bear's / Sample Mashup) lives in
+``tests/integration/test_soap_mashup_enricher.py`` under the production
+marker; this file keeps only synthetic-fixture tests.
+"""
 
 from pathlib import Path
 
@@ -47,27 +52,6 @@ class TestSoapMashupEnricherDefaultPath:
         enricher = SoapMashupEnricher()
         assert enricher.soaps_path == data_dir / "soaps.yaml"
         assert enricher.enrich(CATALOG_ONLY_FIELD_DATA, "") == {"is_mashup": True}
-
-    def test_default_anchored_at_repo_root(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ):
-        """No env var + foreign CWD still finds the repo's data/soaps.yaml."""
-        monkeypatch.delenv("SOTD_DATA_DIR", raising=False)
-        monkeypatch.chdir(tmp_path)  # no data/ here
-
-        enricher = SoapMashupEnricher()
-        assert enricher.soaps_path == REPO_ROOT / "data" / "soaps.yaml"
-        # Real catalog lookup: Mama Bear's Soaps / Sample Mashup is
-        # countable: false in data/soaps.yaml.
-        result = enricher.enrich(
-            {
-                "original": "Mama Bear Tri-Mix",
-                "normalized": "mama bear tri-mix",
-                "matched": {"brand": "Mama Bear's Soaps", "scent": "Sample Mashup"},
-            },
-            "",
-        )
-        assert result == {"is_mashup": True}
 
     def test_default_honours_relative_data_dir(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
