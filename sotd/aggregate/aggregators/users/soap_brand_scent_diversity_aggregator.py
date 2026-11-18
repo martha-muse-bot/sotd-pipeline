@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Soap brand+scent diversity aggregator for the SOTD pipeline."""
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, cast
 
 import pandas as pd
 
@@ -162,7 +162,9 @@ class SoapBrandScentDiversityAggregator(BaseAggregator, UserDiversityMixin):
         soap_counts["squared_share"] = soap_counts["share"] ** 2
 
         # Calculate HHI per user: HHI = Σ p_i²
-        hhi_by_user = soap_counts.groupby("author")["squared_share"].sum().reset_index()
+        hhi_by_user = cast(
+            pd.DataFrame, soap_counts.groupby("author", as_index=False)["squared_share"].sum()
+        )
         hhi_by_user.columns = ["author", "hhi"]
         hhi_by_user["hhi"] = hhi_by_user["hhi"].round(4)
 

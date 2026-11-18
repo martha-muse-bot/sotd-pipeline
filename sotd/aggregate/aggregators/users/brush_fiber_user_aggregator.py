@@ -100,7 +100,7 @@ class BrushFiberUserAggregator(BaseAggregator):
         current_fiber = None
         current_position = 1
 
-        for _, row in grouped.iterrows():
+        for row in grouped.to_dict(orient="records"):  # type: ignore[reportCallIssue]  # pandas-stubs lack the "records" overload; runtime yields plain dicts
             fiber_type = str(row["fiber"])
 
             # Reset position counter for new fiber

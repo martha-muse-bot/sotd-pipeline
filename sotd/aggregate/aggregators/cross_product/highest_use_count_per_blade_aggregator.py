@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, cast
 
 import pandas as pd
 
@@ -77,8 +77,9 @@ def aggregate_highest_use_count_per_blade(records: List[Dict[str, Any]]) -> List
 
     # Group by blade_name, blade_format, and author to get per-user usage
     # Each physical blade is tracked separately by user
-    user_max_usage = (
-        df.groupby(["blade_name", "blade_format", "author"])["uses"].max().reset_index()
+    user_max_usage = cast(
+        pd.DataFrame,
+        df.groupby(["blade_name", "blade_format", "author"], as_index=False)["uses"].max(),
     )
 
     # Convert to list of dictionaries - each physical blade is a separate entry

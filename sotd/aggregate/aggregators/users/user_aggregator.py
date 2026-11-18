@@ -149,7 +149,7 @@ def aggregate_users(records: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
 
     # Calculate missed days for each user
     results = []
-    for _, row in user_stats.iterrows():
+    for row in user_stats.to_dict(orient="records"):  # type: ignore[reportCallIssue]  # pandas-stubs lack the "records" overload; runtime yields plain dicts
         author = row["author"]
         posted_dates = row["posted_dates"]
         shaves = row["shaves"]

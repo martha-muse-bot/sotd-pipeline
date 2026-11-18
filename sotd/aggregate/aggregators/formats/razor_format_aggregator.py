@@ -157,7 +157,7 @@ def aggregate_razor_formats(records: List[Dict[str, Any]]) -> List[Dict[str, Any
 
     # Convert to list of dictionaries
     result = []
-    for _, row in grouped.iterrows():
+    for row in grouped.to_dict(orient="records"):  # type: ignore[reportCallIssue]  # pandas-stubs lack the "records" overload; runtime yields plain dicts
         result.append(
             {
                 "rank": int(row["rank"]),

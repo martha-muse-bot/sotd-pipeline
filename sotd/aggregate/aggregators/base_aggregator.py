@@ -133,7 +133,7 @@ class BaseAggregator(ABC):
         group_columns = self._get_group_columns(df)
 
         # Build aggregation dictionary: metrics + preserve brand/model/scent if present
-        agg_dict = {"author": ["count", "nunique"]}
+        agg_dict: Dict[str, Any] = {"author": ["count", "nunique"]}
 
         # Preserve brand/model/scent if they exist and are NOT already grouping columns
         # (if they're grouping columns, they're already preserved)
