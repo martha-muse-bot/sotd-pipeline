@@ -77,9 +77,7 @@ def test_env_var_overrides():
         assert get_data_dir() == Path("/mnt/public-data")
         assert get_enriched_dir() == Path("/mnt/public-data/enriched")
         assert get_aggregated_dir() == Path("/mnt/public-data/aggregated")
-        assert get_user_analysis_dir() == Path(
-            "/mnt/public-data/aggregated/user_analysis"
-        )
+        assert get_user_analysis_dir() == Path("/mnt/public-data/aggregated/user_analysis")
 
 
 def test_subdirs_consistent_between_modes():
@@ -202,9 +200,7 @@ def test_months_from_user_analysis(tmp_path, monkeypatch):
     ua = tmp_path / "aggregated" / "user_analysis"
     ua.mkdir(parents=True)
     for month, n in (("2026-08", 3), ("2026-09", 5)):
-        (ua / f"{month}.json").write_text(
-            json.dumps({"users": {f"u{i}": {} for i in range(n)}})
-        )
+        (ua / f"{month}.json").write_text(json.dumps({"users": {f"u{i}": {} for i in range(n)}}))
     monkeypatch.setenv("SOTD_DATA_DIR", str(tmp_path))
 
     resp = client.get("/api/monthly-user-posts/months")
@@ -217,9 +213,7 @@ def test_months_from_user_analysis(tmp_path, monkeypatch):
 def test_months_falls_back_to_enriched_when_no_user_analysis(tmp_path, monkeypatch):
     enriched = tmp_path / "enriched"
     enriched.mkdir(parents=True)
-    (enriched / "2026-01.json").write_text(
-        json.dumps({"data": [{"author": "a"}, {"author": "b"}]})
-    )
+    (enriched / "2026-01.json").write_text(json.dumps({"data": [{"author": "a"}, {"author": "b"}]}))
     monkeypatch.setenv("SOTD_DATA_DIR", str(tmp_path))
 
     resp = client.get("/api/monthly-user-posts/months")
@@ -302,9 +296,16 @@ def test_expected_router_prefixes_present():
 def test_no_admin_router_prefixes():
     schema = client.get("/openapi.json").json()
     banned = (
-        "/api/analysis", "/api/catalogs", "/api/files", "/api/extract-overrides",
-        "/api/filtered", "/api/brushes", "/api/soaps", "/api/validation",
-        "/api/wsdb-alignment", "/api/format-compatibility",
+        "/api/analysis",
+        "/api/catalogs",
+        "/api/files",
+        "/api/extract-overrides",
+        "/api/filtered",
+        "/api/brushes",
+        "/api/soaps",
+        "/api/validation",
+        "/api/wsdb-alignment",
+        "/api/format-compatibility",
     )
     for path in schema["paths"]:
         assert not path.startswith(banned), f"admin route leaked: {path}"
@@ -783,12 +784,8 @@ def test_admin_serves_index_html_when_dist_exists(tmp_path, monkeypatch):
     # Re-run the mount logic the way main.py does at import, against tmp dist
     test_app = main_mod.app
     # remove any previously mounted "/" apps to isolate the test
-    test_app.router.routes = [
-        r for r in test_app.router.routes if getattr(r, "path", "") != "/"
-    ]
-    test_app.mount(
-        "/", StaticFiles(directory=str(dist), html=True), name="frontend-test"
-    )
+    test_app.router.routes = [r for r in test_app.router.routes if getattr(r, "path", "") != "/"]
+    test_app.mount("/", StaticFiles(directory=str(dist), html=True), name="frontend-test")
     resp = TestClient(test_app).get("/")
     assert resp.status_code == 200
     assert "frontend" in resp.text
@@ -796,9 +793,7 @@ def test_admin_serves_index_html_when_dist_exists(tmp_path, monkeypatch):
 
 def test_admin_mount_guarded_by_dist_presence(tmp_path, monkeypatch):
     """The mount condition checks _frontend_dist.is_dir()."""
-    monkeypatch.setattr(
-        main_mod, "_frontend_dist", tmp_path / "no-such-dist"
-    )
+    monkeypatch.setattr(main_mod, "_frontend_dist", tmp_path / "no-such-dist")
     assert not main_mod._frontend_dist.is_dir()
 ```
 

@@ -776,11 +776,17 @@ class RunResult:
     published: bool = False
 
 
-def run_nightly(*, repo_dir: Path, data_dir: Path, bundle_dir: Path, runner=subprocess.run,
-                months: tuple[str, ...], all_months: tuple[str, str]) -> RunResult:
+def run_nightly(
+    *,
+    repo_dir: Path,
+    data_dir: Path,
+    bundle_dir: Path,
+    runner=subprocess.run,
+    months: tuple[str, ...],
+    all_months: tuple[str, str],
+) -> RunResult:
     result = RunResult()
-    pull = runner(["git", "-C", str(repo_dir), "pull", "--ff-only"],
-                  capture_output=True, text=True)
+    pull = runner(["git", "-C", str(repo_dir), "pull", "--ff-only"], capture_output=True, text=True)
     if pull.returncode != 0:
         logger.error("git pull failed: %s", pull.stderr)
         last_run_status.labels(phase="pull").set(0)
@@ -804,9 +810,18 @@ def run_nightly(*, repo_dir: Path, data_dir: Path, bundle_dir: Path, runner=subp
         result.catchup_ran = True
         first, last = all_months
         catchup = runner(
-            ["python", "run.py", "pipeline", "--range", f"{first}:{last}",
-             "--force", "match:aggregate"],
-            capture_output=True, text=True, cwd=str(repo_dir),
+            [
+                "python",
+                "run.py",
+                "pipeline",
+                "--range",
+                f"{first}:{last}",
+                "--force",
+                "match:aggregate",
+            ],
+            capture_output=True,
+            text=True,
+            cwd=str(repo_dir),
         )
         result.catchup_ok = catchup.returncode == 0
         last_run_status.labels(phase="catchup").set(1 if result.catchup_ok else 0)
@@ -825,7 +840,9 @@ def _run_phase(runner, repo_dir, month, phase_range, result) -> bool:
     try:
         proc = runner(
             ["python", "run.py", "pipeline", "--month", month, "--force", phase_range],
-            capture_output=True, text=True, cwd=str(repo_dir),
+            capture_output=True,
+            text=True,
+            cwd=str(repo_dir),
         )
         ok = proc.returncode == 0
         if not ok:
@@ -856,8 +873,11 @@ def main() -> None:
         set_last_run_timestamp(time.time())
         try:
             res = run_nightly(
-                repo_dir=repo_dir, data_dir=data_dir, bundle_dir=bundle_dir,
-                months=_current_and_prior(target), all_months=_all_months(data_dir),
+                repo_dir=repo_dir,
+                data_dir=data_dir,
+                bundle_dir=bundle_dir,
+                months=_current_and_prior(target),
+                all_months=_all_months(data_dir),
             )
             logger.info("nightly run: %s", res)
         except Exception:

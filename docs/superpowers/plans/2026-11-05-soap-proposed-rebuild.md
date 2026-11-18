@@ -69,35 +69,60 @@ def test_ignores_exact_regex_filtered():
     assert route_soap_record({"normalized": "x", "match_type": "regex", "matched": {}}) is None
     assert route_soap_record({"normalized": "x", "match_type": "filtered", "matched": None}) is None
 
+
 def test_brand_and_dash_split_use_matched_scent():
-    assert route_soap_record({
-        "normalized": "summer break soaps - roty 2025",
-        "match_type": "brand",
-        "matched": {"brand": "Summer Break Soaps", "scent": "ROTY 2025"},
-    }) == ("Summer Break Soaps", "ROTY 2025")
+    assert route_soap_record(
+        {
+            "normalized": "summer break soaps - roty 2025",
+            "match_type": "brand",
+            "matched": {"brand": "Summer Break Soaps", "scent": "ROTY 2025"},
+        }
+    ) == ("Summer Break Soaps", "ROTY 2025")
+
 
 def test_brand_missing_scent_goes_unknown():
-    assert route_soap_record({
-        "normalized": "orphan",
-        "match_type": "brand",
-        "matched": {"brand": "Acme", "scent": ""},
-    }) == ("unknown", "unmatched")
+    assert route_soap_record(
+        {
+            "normalized": "orphan",
+            "match_type": "brand",
+            "matched": {"brand": "Acme", "scent": ""},
+        }
+    ) == ("unknown", "unmatched")
+
 
 def test_unresolved_goes_unknown():
-    assert route_soap_record({
-        "normalized": "mystery mash",
-        "match_type": None,
-        "matched": None,
-    }) == ("unknown", "unmatched")
+    assert route_soap_record(
+        {
+            "normalized": "mystery mash",
+            "match_type": None,
+            "matched": None,
+        }
+    ) == ("unknown", "unmatched")
+
 
 def test_aggregate_dedupes_and_sorts():
     records = [
-        {"soap": {"normalized": "b", "match_type": "brand",
-                  "matched": {"brand": "A", "scent": "S"}}},
-        {"soap": {"normalized": "a", "match_type": "brand",
-                  "matched": {"brand": "A", "scent": "S"}}},
-        {"soap": {"normalized": "b", "match_type": "brand",
-                  "matched": {"brand": "A", "scent": "S"}}},
+        {
+            "soap": {
+                "normalized": "b",
+                "match_type": "brand",
+                "matched": {"brand": "A", "scent": "S"},
+            }
+        },
+        {
+            "soap": {
+                "normalized": "a",
+                "match_type": "brand",
+                "matched": {"brand": "A", "scent": "S"},
+            }
+        },
+        {
+            "soap": {
+                "normalized": "b",
+                "match_type": "brand",
+                "matched": {"brand": "A", "scent": "S"},
+            }
+        },
     ]
     out = aggregate_soap_entries(records)
     assert out == {"A": {"S": {"entries": ["a", "b"]}}}
