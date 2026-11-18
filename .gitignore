@@ -141,3 +141,6 @@ data/validation/*.json
 
 # Git worktrees
 .worktrees/
+
+# Local catalog backups
+data/*.backup
