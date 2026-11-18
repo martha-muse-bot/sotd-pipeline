@@ -1,9 +1,10 @@
 """Tests for CatalogUpdater — writes accepted proposals to catalog YAML files."""
 
+from unittest.mock import patch
+
 import pytest
 import yaml
-from pathlib import Path
-from unittest.mock import patch
+
 from webui.api.catalog_updater import CatalogUpdater
 
 

@@ -4,7 +4,7 @@ target-version = ["py311"]
 
 [tool.ruff]
 line-length = 100
-exclude = ["data", "tests", ".venv", "venv"]
+exclude = ["data", ".venv", "venv"]
 
 # ↓— move lint-specific settings here
 [tool.ruff.lint]
