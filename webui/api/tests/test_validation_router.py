@@ -1,11 +1,9 @@
 """Tests for the validation router — agent output review endpoints."""
 
 import json
-import pytest
-from datetime import datetime
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import pytest
 from fastapi.testclient import TestClient
 
 # ---------------------------------------------------------------------------
@@ -40,24 +38,30 @@ def tmp_data_dir(tmp_path):
     # proposed/
     proposed_dir = tmp_path / "proposed"
     proposed_dir.mkdir()
-    proposed_data = [
-        {
-            "type": "new_scent",
-            "field": "soap",
-            "brand": "House of Mammoth",
-            "model": "Cerulean",
-            "suggested_pattern": "mammoth.*cerulean",
-            "confidence": 0.9,
-        },
-        {
-            "type": "new_pattern",
-            "field": "razor",
-            "brand": "Karve",
-            "model": "Christopher Bradley",
-            "suggested_pattern": "karve.*cb.*sb",
-            "confidence": 0.85,
-        },
-    ]
+    # Real proposed files are {"metadata": ..., "proposals": [...]} — see
+    # data/proposed/*.json. The legacy bare-list format broke the router,
+    # which reads proposed_data.get("proposals", []).
+    proposed_data = {
+        "metadata": {"month": "2026-02", "generated_by": "test"},
+        "proposals": [
+            {
+                "type": "new_scent",
+                "field": "soap",
+                "brand": "House of Mammoth",
+                "model": "Cerulean",
+                "suggested_pattern": "mammoth.*cerulean",
+                "confidence": 0.9,
+            },
+            {
+                "type": "new_pattern",
+                "field": "razor",
+                "brand": "Karve",
+                "model": "Christopher Bradley",
+                "suggested_pattern": "karve.*cb.*sb",
+                "confidence": 0.85,
+            },
+        ],
+    }
     (proposed_dir / "2026-02.json").write_text(json.dumps(proposed_data, indent=2))
 
     # validation/ for rejections
@@ -112,9 +116,9 @@ def client(tmp_data_dir):
 
     validation_mod.configure(tmp_data_dir)
 
-    from webui.api.validation import router
-
     from fastapi import FastAPI
+
+    from webui.api.validation import router
 
     app = FastAPI()
     app.include_router(router)
@@ -148,10 +152,11 @@ class TestGetProposed:
         resp = client.get("/api/validation/proposed/2026-02")
         assert resp.status_code == 200
         data = resp.json()
-        assert isinstance(data, list)
-        assert len(data) == 2
-        assert data[0]["type"] == "new_scent"
-        assert data[0]["brand"] == "House of Mammoth"
+        # Proposed files are {"metadata": ..., "proposals": [...]}
+        assert isinstance(data, dict)
+        assert len(data["proposals"]) == 2
+        assert data["proposals"][0]["type"] == "new_scent"
+        assert data["proposals"][0]["brand"] == "House of Mammoth"
 
     def test_returns_404_for_missing_month(self, client):
         resp = client.get("/api/validation/proposed/2099-01")
@@ -219,8 +224,8 @@ class TestAcceptProposal:
         assert resp.status_code == 200
 
         proposed = json.loads((tmp_data_dir / "proposed" / "2026-02.json").read_text())
-        assert proposed[0]["_status"] == "accepted"
-        assert "_accepted_at" in proposed[0]
+        assert proposed["proposals"][0]["_status"] == "accepted"
+        assert "_accepted_at" in proposed["proposals"][0]
 
     def test_returns_404_for_missing_month(self, client):
         resp = client.post(
@@ -300,8 +305,8 @@ class TestRejectProposal:
             json={"month": "2026-02", "proposal_index": 1},
         )
         proposed = json.loads((tmp_data_dir / "proposed" / "2026-02.json").read_text())
-        assert proposed[1]["_status"] == "rejected"
-        assert "_rejected_at" in proposed[1]
+        assert proposed["proposals"][1]["_status"] == "rejected"
+        assert "_rejected_at" in proposed["proposals"][1]
 
     def test_returns_404_for_missing_month(self, client):
         resp = client.post(
