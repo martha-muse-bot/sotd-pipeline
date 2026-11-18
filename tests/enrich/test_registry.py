@@ -16,7 +16,7 @@ class MockBladeEnricher(BaseEnricher):
     def applies_to(self, record):
         return "blade" in record and record["blade"] is not None
 
-    def enrich(self, field_data, original_comment):
+    def enrich(self, field_data, original_comment, record=None):
         return {
             "use_count": 3,
             "_enriched_by": self.get_enricher_name(),
@@ -34,7 +34,7 @@ class MockRazorEnricher(BaseEnricher):
     def applies_to(self, record):
         return "razor" in record and record["razor"] is not None
 
-    def enrich(self, field_data, original_comment):
+    def enrich(self, field_data, original_comment, record=None):
         return {
             "grind": "full_hollow",
             "_enriched_by": self.get_enricher_name(),
@@ -228,7 +228,7 @@ class TestEnricherRegistry:
             def applies_to(self, record):
                 return True
 
-            def enrich(self, field_data, original_comment):
+            def enrich(self, field_data, original_comment, record=None):
                 raise Exception("Test error")
 
         failing_enricher = FailingEnricher()

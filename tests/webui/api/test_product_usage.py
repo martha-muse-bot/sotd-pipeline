@@ -3,6 +3,7 @@
 
 import sys
 from pathlib import Path
+from typing import Any, cast
 from unittest.mock import Mock, patch
 
 # Add the project root to the path
@@ -62,7 +63,7 @@ class TestProductUsageAPI:
                 return True
             return original_exists(self)
 
-        Path.exists = exists_side_effect
+        cast(Any, Path).exists = exists_side_effect
 
         mock_file = Mock()
         mock_file.__enter__ = Mock(return_value=mock_file)
@@ -109,7 +110,7 @@ class TestProductUsageAPI:
                 assert data[0]["unique_users"] == 2
         finally:
             # Restore original exists method
-            Path.exists = original_exists
+            cast(Any, Path).exists = original_exists
 
     @patch("webui.api.product_usage.Path.open")
     def test_get_products_for_month_with_search(self, mock_open):
@@ -124,7 +125,7 @@ class TestProductUsageAPI:
                 return True
             return original_exists(self)
 
-        Path.exists = exists_side_effect
+        cast(Any, Path).exists = exists_side_effect
 
         mock_file = Mock()
         mock_file.__enter__ = Mock(return_value=mock_file)
@@ -159,7 +160,7 @@ class TestProductUsageAPI:
                 assert len(data) == 1
                 assert data[0]["brand"] == "Gillette"
         finally:
-            Path.exists = original_exists
+            cast(Any, Path).exists = original_exists
 
     @patch("webui.api.product_usage.Path.open")
     def test_get_products_for_month_soap(self, mock_open):
@@ -174,7 +175,7 @@ class TestProductUsageAPI:
                 return True
             return original_exists(self)
 
-        Path.exists = exists_side_effect
+        cast(Any, Path).exists = exists_side_effect
 
         mock_file = Mock()
         mock_file.__enter__ = Mock(return_value=mock_file)
@@ -203,7 +204,7 @@ class TestProductUsageAPI:
                 assert data[0]["brand"] == "Grooming Dept"
                 assert data[0]["model"] == "Laundry II"
         finally:
-            Path.exists = original_exists
+            cast(Any, Path).exists = original_exists
 
     @patch("webui.api.product_usage.Path.open")
     def test_get_product_usage_analysis_success(self, mock_open):
@@ -218,7 +219,7 @@ class TestProductUsageAPI:
                 return True
             return original_exists(self)
 
-        Path.exists = exists_side_effect
+        cast(Any, Path).exists = exists_side_effect
 
         mock_file = Mock()
         mock_file.__enter__ = Mock(return_value=mock_file)
@@ -285,7 +286,7 @@ class TestProductUsageAPI:
                     assert data["users"][0]["username"] == "user1"
                     assert data["users"][0]["usage_count"] == 2
         finally:
-            Path.exists = original_exists
+            cast(Any, Path).exists = original_exists
 
     @patch("webui.api.product_usage.Path.exists")
     def test_get_product_usage_analysis_no_data(self, mock_exists):
@@ -336,7 +337,7 @@ class TestProductUsageAPI:
                 return True
             return original_exists(self)
 
-        Path.exists = exists_side_effect
+        cast(Any, Path).exists = exists_side_effect
 
         mock_file = Mock()
         mock_file.__enter__ = Mock(return_value=mock_file)
@@ -370,7 +371,7 @@ class TestProductUsageAPI:
                 assert data[0]["brand"] == "Semogue"
                 assert data[0]["model"] == "610"
         finally:
-            Path.exists = original_exists
+            cast(Any, Path).exists = original_exists
 
     @patch("webui.api.product_usage.Path.exists")
     @patch("webui.api.product_usage.Path.open")

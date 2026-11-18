@@ -315,6 +315,8 @@ class TestSearchIndexGenerationIntegration:
         """Test that search index generation errors don't fail pipeline."""
         # Simulate search index generation failure
         search_index_success = False
+        error_handled = False
+        pipeline_continues = False
 
         if not search_index_success:
             # Log warning but don't fail pipeline

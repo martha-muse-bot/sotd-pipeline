@@ -233,7 +233,7 @@ class TestStrategyOrchestrator:
 
         # Create a custom strategy class that only accepts 'value' parameter
         class NoCachedStrategy(BaseBrushMatchingStrategy):
-            def match(self, value: str):
+            def match(self, value: str, full_string=None):
                 return MatchResult(
                     original=value,
                     normalized=value,

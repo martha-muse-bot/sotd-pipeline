@@ -160,6 +160,7 @@ def test_process_month_uses_data_dir_for_brush_catalogs(tmp_path, monkeypatch):
     prev_manager = enrich_mod._current_override_manager
     try:
         result = _process_month(2025, 1, base_path, debug=False, force=True)
+        assert result is not None
         assert result["status"] == "completed"
         out = json.loads((base_path / "enriched" / "2025-01.json").read_text())
         enriched = out["data"][0]["brush"]["enriched"]

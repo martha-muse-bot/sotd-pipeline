@@ -34,6 +34,8 @@ class TestSetupPipelineLogging:
 
             # Check format includes level indicator
             formatter = handlers[0].formatter
+            assert formatter is not None
+            assert formatter._fmt is not None
             assert "[%(levelname)s]" in formatter._fmt
 
     def test_setup_logging_docker_mode(self, tmp_path):
@@ -55,6 +57,8 @@ class TestSetupPipelineLogging:
 
             # Check format includes level indicator
             formatter = handlers[0].formatter
+            assert formatter is not None
+            assert formatter._fmt is not None
             assert "[%(levelname)s]" in formatter._fmt
 
             # Check rotation settings
@@ -113,8 +117,10 @@ class TestSetupPipelineLogging:
         # Get handler and check format
         handler = logger.handlers[0]
         formatter = handler.formatter
+        assert formatter is not None
 
         # Format should include level indicator
+        assert formatter._fmt is not None
         assert "[%(levelname)s]" in formatter._fmt
         assert "[%(asctime)s]" in formatter._fmt
 

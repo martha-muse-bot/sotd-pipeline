@@ -11,6 +11,7 @@ ENV = {
 def test_materializes_default_section_without_username_password(tmp_path: Path):
     out = materialize_praw_ini(ENV, tmp_path)
     assert out == tmp_path / "praw.ini"
+    assert out is not None
     text = out.read_text()
     assert "[DEFAULT]" in text
     assert "[app]" not in text
@@ -26,12 +27,14 @@ def test_materializes_default_section_without_username_password(tmp_path: Path):
 def test_user_agent_env_overrides_constant(tmp_path: Path):
     env = dict(ENV, REDDIT_USER_AGENT="my-agent/1.0")
     out = materialize_praw_ini(env, tmp_path)
+    assert out is not None
     assert "user_agent=my-agent/1.0" in out.read_text()
 
 
 def test_username_password_written_when_env_set(tmp_path: Path):
     env = dict(ENV, REDDIT_USERNAME="u", REDDIT_PASSWORD="p")
     out = materialize_praw_ini(env, tmp_path)
+    assert out is not None
     text = out.read_text()
     assert "username=u" in text
     assert "password=p" in text
@@ -47,6 +50,7 @@ def test_returns_none_when_env_incomplete(tmp_path: Path):
 def test_braces_in_secrets_survive(tmp_path: Path):
     env = dict(ENV, REDDIT_CLIENT_SECRET="p{a}ss")
     out = materialize_praw_ini(env, tmp_path)
+    assert out is not None
     assert "client_secret=p{a}ss" in out.read_text()
 
 

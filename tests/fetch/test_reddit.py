@@ -1604,9 +1604,11 @@ class TestParallelCommentFetching:
 
         from sotd.fetch.reddit import fetch_top_level_comments_parallel
 
-        results, metrics = fetch_top_level_comments_parallel(
+        result = fetch_top_level_comments_parallel(
             mock_submissions, max_workers=2, timeout=0.25, return_metrics=True
         )
+        assert isinstance(result, tuple)
+        results, metrics = result
 
         # Completed work is retained: no sequential fallback, no re-fetch.
         assert metrics["processing_mode"] == "parallel"

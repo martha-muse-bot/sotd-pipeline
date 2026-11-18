@@ -575,10 +575,12 @@ class TestScoringEngine:
             result_different_brands_full_input,
             "full_input_component_matching",
         )
+        matched = result_different_brands_full_input.matched
+        assert matched is not None
         assert result_value == 0.0, (
             f"Expected 0.0 for different brands (Chisel & Hound vs Cornfed Viking), "
-            f"but got {result_value}. Handle brand: {result_different_brands_full_input.matched.get('handle', {}).get('brand')}, "
-            f"Knot brand: {result_different_brands_full_input.matched.get('knot', {}).get('brand')}"
+            f"but got {result_value}. Handle brand: {matched.get('handle', {}).get('brand')}, "
+            f"Knot brand: {matched.get('knot', {}).get('brand')}"
         )
 
         # Test case where handle brand might be None or missing - check for fallback bug

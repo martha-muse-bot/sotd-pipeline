@@ -2,6 +2,7 @@
 """Tests for base brush matching strategy classes."""
 
 from abc import ABC
+from typing import Optional
 
 import pytest
 
@@ -33,7 +34,7 @@ class TestBaseBrushMatchingStrategy:
         """Test that a concrete implementation of BaseBrushMatchingStrategy works."""
 
         class ConcreteStrategy(BaseBrushMatchingStrategy):
-            def match(self, value: str):
+            def match(self, value: str, full_string: Optional[str] = None):
                 return MatchResult(
                     original=value,
                     normalized=value.lower(),
@@ -75,7 +76,7 @@ class TestBaseMultiResultBrushMatchingStrategy:
         """Test that a concrete implementation of BaseMultiResultBrushMatchingStrategy works."""
 
         class ConcreteMultiStrategy(BaseMultiResultBrushMatchingStrategy):
-            def match(self, value: str):
+            def match(self, value: str, full_string: Optional[str] = None):
                 # Return the first result for backward compatibility
                 results = self.match_all(value)
                 return results[0] if results else None
@@ -121,7 +122,7 @@ class TestBaseMultiResultBrushMatchingStrategy:
         """Test concrete implementation when no results are found."""
 
         class ConcreteMultiStrategy(BaseMultiResultBrushMatchingStrategy):
-            def match(self, value: str):
+            def match(self, value: str, full_string: Optional[str] = None):
                 results = self.match_all(value)
                 return results[0] if results else None
 

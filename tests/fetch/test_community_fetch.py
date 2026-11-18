@@ -3,6 +3,7 @@
 import json
 import logging
 from datetime import datetime, timezone
+from typing import Any
 
 from sotd.fetch import community
 from sotd.fetch.save import write_month_file
@@ -16,6 +17,9 @@ def ts(*parts: int) -> int:
 class FakeSub:
     """Duck-typed praw Submission with every field build_post_record reads."""
 
+    # assigned ad hoc per test (praw Submission always has .comments)
+    comments: Any = None
+
     def __init__(
         self,
         _id,
@@ -23,7 +27,7 @@ class FakeSub:
         created_utc,
         *,
         selftext="",
-        author="tester",
+        author: "str | None" = "tester",
         score=5,
         num_comments=0,
         flair=None,
@@ -46,7 +50,15 @@ class FakeSub:
 
 class FakeComment:
     def __init__(
-        self, _id, body, created_utc, *, parent_id="t3_t1", author="u1", score=1, is_submitter=False
+        self,
+        _id,
+        body,
+        created_utc,
+        *,
+        parent_id="t3_t1",
+        author: "str | None" = "u1",
+        score=1,
+        is_submitter=False,
     ):
         self.id = _id
         self.body = body
@@ -329,7 +341,9 @@ class TestProcessMonth:
         monkeypatch.setattr(community, "fetch_all_comments", fake_comments)
         result = community._process_month(2026, 8, FakeArgs(tmp_path), reddit=FakeReddit())
         assert result == {"year": 2026, "month": 8, "posts": 2, "comments": 4, "complete": True}
-        meta, data = community.load_community_file(tmp_path / "community" / "2026-08.json")
+        loaded = community.load_community_file(tmp_path / "community" / "2026-08.json")
+        assert loaded is not None
+        meta, data = loaded
         assert meta["month"] == "2026-08"
         assert meta["post_count"] == 2
         assert meta["comment_count"] == 4
@@ -349,7 +363,9 @@ class TestProcessMonth:
         with caplog.at_level(logging.WARNING):
             community._process_month(2026, 8, FakeArgs(tmp_path), reddit=FakeReddit())
         assert "threads file" in caplog.text
-        _, data = community.load_community_file(tmp_path / "community" / "2026-08.json")
+        loaded = community.load_community_file(tmp_path / "community" / "2026-08.json")
+        assert loaded is not None
+        _, data = loaded
         assert "in_pipeline" not in data["posts"][0]
 
     def test_incomplete_boundary_recorded(self, tmp_path, monkeypatch):
@@ -363,7 +379,9 @@ class TestProcessMonth:
         monkeypatch.setattr(community, "_pullpush_get", lambda url: [])
         monkeypatch.setattr(community, "fetch_all_comments", lambda s: [])
         community._process_month(2026, 8, FakeArgs(tmp_path), reddit=FakeReddit())
-        meta, _ = community.load_community_file(tmp_path / "community" / "2026-08.json")
+        loaded = community.load_community_file(tmp_path / "community" / "2026-08.json")
+        assert loaded is not None
+        meta, _ = loaded
         assert meta["discovery"]["complete"] is False
 
     def test_empty_month_writes_no_file(self, tmp_path, monkeypatch):
@@ -387,7 +405,9 @@ class TestProcessMonth:
         posts = [FakeSub("a", "A edited", ts(2026, 8, 1, 12)), FakeSub("b", "B", ts(2026, 8, 2))]
         monkeypatch.setattr(community, "discover_month_posts", lambda s, y, m: (posts, True))
         community._process_month(2026, 8, FakeArgs(tmp_path, force=False), reddit=FakeReddit())
-        _, data = community.load_community_file(tmp_path / "community" / "2026-08.json")
+        loaded = community.load_community_file(tmp_path / "community" / "2026-08.json")
+        assert loaded is not None
+        _, data = loaded
         by_id = {p["id"]: p for p in data["posts"]}
         assert set(by_id) == {"a", "b"}
         assert by_id["a"]["title"] == "A edited"
@@ -439,6 +459,7 @@ class SearchSubreddit(FakeSubreddit):
         import re
 
         m = re.search(r"timestamp:(\d+)\.\.(\d+)", query)
+        assert m is not None
         lo, hi = int(m.group(1)), int(m.group(2))
         for s in self._subs:
             if lo <= s.created_utc <= hi:
@@ -666,7 +687,9 @@ class TestProcessMonthBackfill:
         result = community._process_month(2025, 7, FakeArgs(tmp_path), reddit=FakeReddit())
         # 2025-07 is below the timestamp-search floor: only the seed contributes
         assert result["posts"] == 1 and result["complete"] is False
-        meta, data = community.load_community_file(tmp_path / "community" / "2025-07.json")
+        loaded = community.load_community_file(tmp_path / "community" / "2025-07.json")
+        assert loaded is not None
+        meta, data = loaded
         assert set(meta["discovery"]["strategies"]) == {"thread_seed"}
         assert data["posts"][0]["in_pipeline"] is True
 
@@ -701,7 +724,9 @@ class TestDepthCappedListing:
         result = community._process_month(2026, 8, FakeArgs(tmp_path), reddit=SeedReddit())
         assert result["complete"] is False
         assert result["posts"] == 2
-        meta, data = community.load_community_file(tmp_path / "community" / "2026-08.json")
+        loaded = community.load_community_file(tmp_path / "community" / "2026-08.json")
+        assert loaded is not None
+        meta, data = loaded
         assert meta["discovery"]["complete"] is False
         assert set(meta["discovery"]["strategies"]) == {"new_listing", "thread_seed"}
         assert {p["id"] for p in data["posts"]} == {"sotd1", "sotd2"}
@@ -725,7 +750,9 @@ class TestDepthCappedListing:
         monkeypatch.setattr(community, "fetch_all_comments", lambda s: [])
         result = community._process_month(2026, 1, FakeArgs(tmp_path), reddit=FakeReddit())
         assert result["complete"] is True
-        meta, data = community.load_community_file(tmp_path / "community" / "2026-01.json")
+        loaded = community.load_community_file(tmp_path / "community" / "2026-01.json")
+        assert loaded is not None
+        meta, data = loaded
         assert meta["discovery"]["complete"] is True
         assert meta["discovery"]["strategies"] == ["new_listing"]
         assert {p["id"] for p in data["posts"]} == {"sotd1", "sotd2"}
@@ -785,7 +812,7 @@ class TestPullpushGet:
         def fake_urlopen(req, timeout=None):
             calls.append(req)
             if len(calls) == 1:
-                raise HTTPError("u", 429, "Too Many Requests", None, None)
+                raise HTTPError("u", 429, "Too Many Requests", None, None)  # type: ignore[reportArgumentType]  # hdrs=None is runtime-legal; typeshed types it non-optional
             return FakeResp({"data": [{"id": "x", "created_utc": ts(2025, 1, 1)}]})
 
         monkeypatch.setattr(community.urllib.request, "urlopen", fake_urlopen)
@@ -798,7 +825,7 @@ class TestPullpushGet:
         from urllib.error import HTTPError
 
         def fake_urlopen(req, timeout=None):
-            raise HTTPError("u", 429, "Too Many Requests", None, None)
+            raise HTTPError("u", 429, "Too Many Requests", None, None)  # type: ignore[reportArgumentType]  # hdrs=None is runtime-legal; typeshed types it non-optional
 
         monkeypatch.setattr(community.urllib.request, "urlopen", fake_urlopen)
         monkeypatch.setattr(community.time, "sleep", lambda *_: None)
@@ -1076,7 +1103,9 @@ class TestRedditHorizonSkip:
         with caplog.at_level(logging.INFO):
             result = community._process_month(2025, 12, FakeArgs(tmp_path), reddit=SeedReddit())
         assert result["complete"] is False
-        meta, _data = community.load_community_file(tmp_path / "community" / "2025-12.json")
+        loaded = community.load_community_file(tmp_path / "community" / "2025-12.json")
+        assert loaded is not None
+        meta, _data = loaded
         assert set(meta["discovery"]["strategies"]) == {"thread_seed"}
         assert "new_listing" not in meta["discovery"]["per_strategy"]
         assert "listing skipped" in caplog.text
@@ -1174,7 +1203,9 @@ class Test429CommentFetch:
         monkeypatch.setattr(community.time, "sleep", lambda s: None)
         result = community._process_month(2026, 8, FakeArgs(tmp_path), reddit=FakeReddit())
         assert result["complete"] is False
-        meta, _ = community.load_community_file(tmp_path / "community" / "2026-08.json")
+        loaded = community.load_community_file(tmp_path / "community" / "2026-08.json")
+        assert loaded is not None
+        meta, _ = loaded
         assert meta["comment_fetch"] == {"complete": False, "failed_thread_ids": ["p1"]}
 
     def test_month_complete_when_all_trees_fetched(self, tmp_path, monkeypatch):
@@ -1187,5 +1218,7 @@ class Test429CommentFetch:
             lambda s: [FakeComment(f"{s.id}-c", "b", ts(2026, 8, 2))],
         )
         community._process_month(2026, 8, FakeArgs(tmp_path), reddit=FakeReddit())
-        meta, _ = community.load_community_file(tmp_path / "community" / "2026-08.json")
+        loaded = community.load_community_file(tmp_path / "community" / "2026-08.json")
+        assert loaded is not None
+        meta, _ = loaded
         assert meta["comment_fetch"] == {"complete": True, "failed_thread_ids": []}

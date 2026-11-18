@@ -64,7 +64,7 @@ def test_public_main_imports_from_image_like_tree(tmp_path, monkeypatch):
     monkeypatch.syspath_prepend(str(tmp_path / "webui"))
     _purge_imported_modules()
     try:
-        import api.public_main  # noqa: F401
+        import api.public_main  # type: ignore[reportMissingImports]  # resolved via runtime sys.path prepends above  # noqa: F401
 
         # openapi() resolves through the wrapped routers; if a module were
         # missing this import would already have raised ModuleNotFoundError.

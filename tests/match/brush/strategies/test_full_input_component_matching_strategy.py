@@ -2,6 +2,7 @@
 """Tests for FullInputComponentMatchingStrategy."""
 
 from pathlib import Path
+from typing import Any, cast
 from unittest.mock import Mock
 
 from sotd.match.brush.strategies.full_input_component_matching_strategy import (
@@ -776,7 +777,7 @@ class TestFullInputComponentMatchingStrategy:
     def test_should_not_split_returns_empty_list_in_match_all(self):
         """Test that match_all() returns empty list when should_not_split is True."""
         # Mock splits_loader to return True for should_not_split
-        self.strategy.splits_loader.should_not_split = lambda text: True
+        cast(Any, self.strategy.splits_loader).should_not_split = lambda text: True
 
         # Mock handle and knot matches (should be ignored)
         handle_result = MatchResult(
@@ -803,7 +804,7 @@ class TestFullInputComponentMatchingStrategy:
     def test_should_not_split_returns_none_in_match(self):
         """Test that match() returns None when should_not_split is True."""
         # Mock splits_loader to return True for should_not_split
-        self.strategy.splits_loader.should_not_split = lambda text: True
+        cast(Any, self.strategy.splits_loader).should_not_split = lambda text: True
 
         # Mock handle and knot matches (should be ignored)
         handle_result = MatchResult(
@@ -830,7 +831,7 @@ class TestFullInputComponentMatchingStrategy:
     def test_should_not_split_prevents_dual_component_matching(self):
         """Test that should_not_split prevents dual component matching."""
         # Mock splits_loader to return True for should_not_split
-        self.strategy.splits_loader.should_not_split = lambda text: (
+        cast(Any, self.strategy.splits_loader).should_not_split = lambda text: (
             text == "Boar Rudy Vey SOC knot 24mm"
         )
 
@@ -863,7 +864,9 @@ class TestFullInputComponentMatchingStrategy:
     def test_should_not_split_prevents_single_component_matching(self):
         """Test that should_not_split prevents single component matching."""
         # Mock splits_loader to return True for should_not_split
-        self.strategy.splits_loader.should_not_split = lambda text: (text == "Test Brush String")
+        cast(Any, self.strategy.splits_loader).should_not_split = lambda text: (
+            text == "Test Brush String"
+        )
 
         # Mock handle match only
         handle_result = MatchResult(
@@ -882,7 +885,7 @@ class TestFullInputComponentMatchingStrategy:
     def test_normal_behavior_when_should_not_split_false(self):
         """Test that normal behavior works when should_not_split is False."""
         # Mock splits_loader to return False for should_not_split
-        self.strategy.splits_loader.should_not_split = lambda text: False
+        cast(Any, self.strategy.splits_loader).should_not_split = lambda text: False
 
         # Mock handle and knot matches
         handle_result = MatchResult(

@@ -14,7 +14,7 @@ def create_test_record(
     soap: dict | None = None,
 ) -> dict:
     """Create a test record with specified fields."""
-    record = {
+    record: dict = {
         "author": author,
         "id": comment_id,
         "thread_title": thread_title,

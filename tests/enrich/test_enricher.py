@@ -11,7 +11,7 @@ class TestEnricher(BaseEnricher):
     def applies_to(self, record):
         return "test_field" in record and record["test_field"] is not None
 
-    def enrich(self, field_data, original_comment):
+    def enrich(self, field_data, original_comment, record=None):
         return {
             "test_value": "enriched",
             "_enriched_by": self.get_enricher_name(),

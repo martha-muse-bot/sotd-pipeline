@@ -3,6 +3,7 @@
 
 import sys
 from pathlib import Path
+from typing import Any, cast
 from unittest.mock import MagicMock, patch
 
 # Add the webui directory to the Python path
@@ -58,7 +59,7 @@ class TestCorrectMatchesCompositeBrush:
                 return mock_file_context
 
             # Apply the patches
-            Path.exists = mock_exists
+            cast(Any, Path).exists = mock_exists
             Path.open = mock_open
 
             # Mock yaml.safe_load to return section-specific data based on call order
@@ -115,7 +116,7 @@ class TestCorrectMatchesCompositeBrush:
         finally:
             # Restore original project_root and Path methods
             webui.api.analysis.project_root = original_project_root
-            Path.exists = original_exists
+            cast(Any, Path).exists = original_exists
             Path.open = original_open
 
     @patch("yaml.safe_load")
@@ -146,7 +147,7 @@ class TestCorrectMatchesCompositeBrush:
                 mock_file_context.__exit__ = MagicMock(return_value=None)
                 return mock_file_context
 
-            Path.exists = mock_exists
+            cast(Any, Path).exists = mock_exists
             Path.open = mock_open
 
             # Mock YAML data - brush.yaml contains data directly (not wrapped in "brush" key)
@@ -182,7 +183,7 @@ class TestCorrectMatchesCompositeBrush:
         finally:
             # Restore original project_root and Path methods
             webui.api.analysis.project_root = original_project_root
-            Path.exists = original_exists
+            cast(Any, Path).exists = original_exists
             Path.open = original_open
 
     @patch("webui.api.analysis.project_root")
@@ -247,7 +248,7 @@ class TestCorrectMatchesCompositeBrush:
                 mock_file_context.__exit__ = MagicMock(return_value=None)
                 return mock_file_context
 
-            Path.exists = mock_exists
+            cast(Any, Path).exists = mock_exists
             Path.open = mock_open
 
             # Mock YAML data - brush.yaml contains data directly (not wrapped in "brush" key)
@@ -281,7 +282,7 @@ class TestCorrectMatchesCompositeBrush:
         finally:
             # Restore original project_root and Path methods
             webui.api.analysis.project_root = original_project_root
-            Path.exists = original_exists
+            cast(Any, Path).exists = original_exists
             Path.open = original_open
 
     @patch("yaml.safe_load")
@@ -312,7 +313,7 @@ class TestCorrectMatchesCompositeBrush:
                 mock_file_context.__exit__ = MagicMock(return_value=None)
                 return mock_file_context
 
-            Path.exists = mock_exists
+            cast(Any, Path).exists = mock_exists
             Path.open = mock_open
 
             # Mock YAML data - razor.yaml contains data directly (not wrapped in "razor" key)
@@ -340,7 +341,7 @@ class TestCorrectMatchesCompositeBrush:
         finally:
             # Restore original project_root and Path methods
             webui.api.analysis.project_root = original_project_root
-            Path.exists = original_exists
+            cast(Any, Path).exists = original_exists
             Path.open = original_open
 
     @patch("yaml.safe_load")
@@ -377,7 +378,7 @@ class TestCorrectMatchesCompositeBrush:
                 mock_file_context.__exit__ = MagicMock(return_value=None)
                 return mock_file_context
 
-            Path.exists = mock_exists
+            cast(Any, Path).exists = mock_exists
             Path.open = mock_open
 
             # Mock yaml.safe_load to return different data based on call order
@@ -435,5 +436,5 @@ class TestCorrectMatchesCompositeBrush:
         finally:
             # Restore original project_root and Path methods
             webui.api.analysis.project_root = original_project_root
-            Path.exists = original_exists
+            cast(Any, Path).exists = original_exists
             Path.open = original_open

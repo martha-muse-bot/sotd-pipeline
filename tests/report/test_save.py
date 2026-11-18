@@ -14,6 +14,7 @@ import io
 import json
 import os
 from pathlib import Path
+from typing import Any, Callable
 
 import pytest
 
@@ -138,7 +139,7 @@ def test_annual_save_atomic_on_write_failure(tmp_path, sabotaged_open, save_fn, 
     _write_file(target, SENTINEL if suffix == "md" else json.dumps({"old": True}))
     before = target.read_bytes()
 
-    fn = save_annual_report if suffix == "md" else save_annual_json_report
+    fn: Callable[..., Any] = save_annual_report if suffix == "md" else save_annual_json_report
     # force=True: without it the pre-existing file raises FileExistsError
     # before any write, and the test would pass vacuously.
     with pytest.raises(OSError):

@@ -3,11 +3,13 @@
 
 import sys
 from pathlib import Path
+from typing import Any, cast
 from unittest.mock import MagicMock, Mock, patch
 
 # Add the project root to the path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
+
 
 from fastapi import FastAPI  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
@@ -66,7 +68,7 @@ class TestMonthlyUserPostsAPI:
             else:
                 mock_path.exists.return_value = False
             mock_path.__truediv__ = lambda self, other: path_side_effect(str(self), str(other))
-            mock_path.__str__ = lambda self: path_str
+            cast(Any, mock_path).__str__ = lambda self: path_str
             return mock_path
 
         mock_path_class.side_effect = path_side_effect
@@ -113,7 +115,7 @@ class TestMonthlyUserPostsAPI:
             else:
                 mock_path.exists.return_value = False
             mock_path.__truediv__ = lambda self, other: path_side_effect(str(self), str(other))
-            mock_path.__str__ = lambda self: path_str
+            cast(Any, mock_path).__str__ = lambda self: path_str
             return mock_path
 
         mock_path_class.side_effect = path_side_effect

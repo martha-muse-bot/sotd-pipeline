@@ -113,8 +113,10 @@ class TestAnnualEngineDedupe:
             # annual_engine imports tqdm and psutil at module level; stub them so
             # the test can run where those optional dependencies are not installed.
             tqdm_stub = types.ModuleType("tqdm")
-            tqdm_stub.tqdm = lambda iterable=None, *a, **k: (
-                iterable if iterable is not None else iter(())
+            setattr(
+                tqdm_stub,
+                "tqdm",
+                lambda iterable=None, *a, **k: (iterable if iterable is not None else iter(())),
             )
             sys.modules["tqdm"] = tqdm_stub
         if "psutil" not in sys.modules:
@@ -127,7 +129,7 @@ class TestAnnualEngineDedupe:
                 def memory_info(self):
                     return _Mem()
 
-            psutil_stub.Process = lambda: _Proc()
+            setattr(psutil_stub, "Process", lambda: _Proc())
             sys.modules["psutil"] = psutil_stub
 
         from sotd.aggregate.annual_engine import AnnualAggregationEngine

@@ -354,7 +354,7 @@ def fetch_top_level_comments_parallel(
     submissions: Sequence[Submission],
     max_workers: int = 3,
     chunk_size: int = 1,
-    timeout: int = 30,
+    timeout: float = 30,
     adaptive_workers: bool = False,
     fallback_to_sequential: bool = True,
     return_metrics: bool = False,
