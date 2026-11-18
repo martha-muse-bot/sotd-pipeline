@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Dict, List
 
 
-def _audit_months(months: list[tuple[int, int]], out_dir: str) -> dict:
+def _audit_months(months: list[tuple[int, int]], out_dir: Path) -> dict:
     """
     For each (year, month), check for expected threads/comments files,
     and also parse threads files for missing days in metadata.
@@ -54,7 +54,7 @@ def _audit_months(months: list[tuple[int, int]], out_dir: str) -> dict:
     }
 
 
-def list_available_months(out_dir: str) -> list[str]:
+def list_available_months(out_dir: Path) -> list[str]:
     """
     Scans both threads/ and comments/ subdirectories in out_dir.
     Returns a sorted list of all unique months (YYYY-MM) for which at least one file exists.

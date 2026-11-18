@@ -101,21 +101,17 @@ class BrushMatcher:
         # Store debug flag
         self.debug = debug
 
-        # Store catalog paths FIRST (before validation)
+        # Resolve catalog paths (defaults applied before storing, so the
+        # attributes are non-Optional for every consumer)
+        brushes_path = Path("data/brushes.yaml") if brushes_path is None else brushes_path
+        handles_path = Path("data/handles.yaml") if handles_path is None else handles_path
+        knots_path = Path("data/knots.yaml") if knots_path is None else knots_path
+        if correct_matches_path is None:
+            correct_matches_path = get_default_correct_matches_path()
         self.brushes_path = brushes_path
         self.handles_path = handles_path
         self.knots_path = knots_path
         self.correct_matches_path = correct_matches_path
-
-        # Set default paths if not provided (AFTER storing)
-        if self.brushes_path is None:
-            self.brushes_path = Path("data/brushes.yaml")
-        if self.handles_path is None:
-            self.handles_path = Path("data/handles.yaml")
-        if self.knots_path is None:
-            self.knots_path = Path("data/knots.yaml")
-        if self.correct_matches_path is None:
-            self.correct_matches_path = get_default_correct_matches_path()
 
         # FAIL FAST: Validate that all catalog files exist and are readable
         # Only validate in debug mode to avoid expensive validation overhead in parallel workers

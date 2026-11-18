@@ -303,6 +303,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     # Setup logging
     setup_pipeline_logging(level=logging.INFO)
 
+    args = None  # set below; the except handler reads it for the debug flag
     try:
         parser = get_parser()
         args = parser.parse_args(argv)
@@ -364,7 +365,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         logger.error(f"Fetch phase failed: {e}")
         import traceback
 
-        if args.debug if "args" in locals() else False:
+        if args is not None and args.debug:
             logger.debug("Full traceback:\n%s", traceback.format_exc())
         return 1
 

@@ -90,12 +90,12 @@ class UserSingleUseSoapsAggregator(BaseAggregator, UserDiversityMixin):
         points = (
             exclusive_soaps.groupby("sole_user")
             .size()
-            .rename("single_use_soaps")
+            .to_frame("single_use_soaps")
             .reset_index()
             .rename(columns={"sole_user": "name"})
         )
 
-        shave_counts = df.groupby("author").size().rename("shaves").reset_index()
+        shave_counts = df.groupby("author").size().to_frame("shaves").reset_index()
         shave_counts = shave_counts.rename(columns={"author": "name"})
 
         grouped = points.merge(shave_counts, on="name", how="left")

@@ -305,6 +305,7 @@ def fetch_thread_comments_json(
     try:
         # Fetch JSON
         json_data = get_reddit_json(json_url, cookies=cookies, session=session)
+        assert isinstance(json_data, list)  # comment-thread endpoints return a two-list JSON shape
 
         # Extract top-level comments (including "more" comments)
         comments = extract_top_level_comments(

@@ -145,7 +145,7 @@ class TestHandleMatcherBaseline:
         """Test Chisel & Hound pattern matching."""
         test_cases = [
             ("Chisel & Hound handle", "chisel.*hound"),
-            ("C&H handle", "\\bc(?:\&|and|\+\\s)?h\\b"),
+            ("C&H handle", r"\bc(?:\&|and|\+\s)?h\b"),
         ]
 
         for text, expected_pattern in test_cases:

@@ -59,6 +59,7 @@ class OverrideManager:
         in_target_month = False
         in_target_comment = False
         indent_level = 0
+        comment_indent = None  # set when the target comment is entered
 
         for line_num, line in enumerate(self._file_lines, start=1):
             stripped = line.strip()
@@ -129,8 +130,9 @@ class OverrideManager:
         except yaml.YAMLError as e:
             # Try to extract line number from YAML error if available
             error_msg = f"Invalid YAML syntax in {self.override_file_path}"
-            if hasattr(e, "problem_mark") and e.problem_mark:
-                line_num = e.problem_mark.line + 1  # YAML line numbers are 0-indexed
+            problem_mark = getattr(e, "problem_mark", None)
+            if problem_mark is not None:
+                line_num = problem_mark.line + 1  # YAML line numbers are 0-indexed
                 error_msg += f" at line {line_num}"
             error_msg += f": {e}"
             raise ValueError(error_msg)
@@ -357,7 +359,8 @@ class OverrideManager:
                 value = entry.get("value")
                 entries.append({"field": field, "value": value, "comment_ids": comment_ids})
                 for cid in comment_ids:
-                    covered.setdefault(cid, set()).add(field)
+                    if isinstance(field, str):
+                        covered.setdefault(cid, set()).add(field)
         self._bulk_entries[month] = entries
         self._bulk_covered[month] = covered
 

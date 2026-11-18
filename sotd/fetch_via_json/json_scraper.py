@@ -14,7 +14,7 @@ import os
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -33,15 +33,6 @@ def _find_project_root() -> Path:
     Project root is 3 levels up.
     """
     return Path(__file__).parent.parent.parent
-
-
-def _get_test_cookie_file() -> Path:
-    """Get path to test cookie file (for rate limit testing).
-
-    Returns:
-        Path to .reddit_cookies_test.json in project root
-    """
-    return _find_project_root() / ".reddit_cookies_test.json"
 
 
 def _get_cookie_file_paths() -> list[Path]:
@@ -398,8 +389,11 @@ def get_reddit_json(
     cookies: Optional[dict] = None,
     session: Optional[requests.Session] = None,
     verbose: bool = False,
-) -> Dict[str, Any]:
+) -> "Dict[str, Any] | List[Dict[str, Any]]":
     """Fetch JSON from Reddit URL with proper headers, cookies, and error handling.
+
+    Returns a dict for submission/about endpoints and a list for comment-thread
+    endpoints (Reddit's two-list comment JSON shape).
 
     This function proactively manages rate limits by checking x-ratelimit-remaining
     and x-ratelimit-reset headers on every response, adjusting delays dynamically

@@ -9,7 +9,7 @@ import calendar
 from collections import defaultdict
 from datetime import date
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 from sotd.fetch.overrides import (
     OVERRIDE_PATH,
@@ -62,7 +62,7 @@ def search_reddit_json(
 
     # Parse response structure
     # Reddit JSON structure: {"kind": "Listing", "data": {"children": [...]}}
-    if "data" in json_data and "children" in json_data["data"]:
+    if isinstance(json_data, dict) and "data" in json_data and "children" in json_data["data"]:
         children = json_data["data"]["children"]
     else:
         children = []
@@ -314,8 +314,10 @@ def fetch_thread_by_url(
                     parsed = parse_thread_from_json(thread_data)
                     return parsed
 
-        # Fallback: try direct parsing
-        parsed = parse_thread_from_json(json_data)
+        # Fallback: try direct parsing. A list-shaped response fails inside
+        # parse_thread_from_json and is handled by the except below — kept
+        # as-is behaviorally, hence the cast.
+        parsed = parse_thread_from_json(cast(Dict[str, Any], json_data))
         return parsed
     except Exception as e:
         print(f"[WARN] Failed to fetch thread from {url}: {e}")

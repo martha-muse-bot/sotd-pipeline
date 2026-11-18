@@ -4,7 +4,7 @@ This module provides common validation functions used across the pipeline
 to ensure data quality and consistency.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 
 def validate_list_of_dicts(data: Any, data_name: str = "data") -> List[Dict[str, Any]]:
@@ -38,7 +38,7 @@ def validate_list_of_dicts(data: Any, data_name: str = "data") -> List[Dict[str,
         if not all_dicts:
             # Find first non-dict item for error reporting
             # Find the first index where the value is False (not a dict)
-            false_indices = is_dict_mask[~is_dict_mask].index
+            false_indices = cast(pd.Index, is_dict_mask.index[~is_dict_mask.to_numpy(dtype=bool)])
             if len(false_indices) > 0:
                 first_invalid_idx = false_indices[0]
             else:

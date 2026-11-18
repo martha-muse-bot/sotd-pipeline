@@ -49,7 +49,7 @@ def test_audit_months_missing(tmp_path: Path):
     # 2024-06 neither file created
 
     months = [(2024, 4), (2024, 5), (2024, 6)]
-    result = _audit_months(months, str(tmp_path))
+    result = _audit_months(months, tmp_path)
     # Check missing files
     assert sorted(result["missing_files"]) == [
         "comments/2024-05.json",
@@ -72,7 +72,7 @@ def test_audit_months_json_error(tmp_path: Path):
     file = threads_dir / "2025-01.json"
     file.write_text("{invalid json")
     months = [(2025, 1)]
-    result = _audit_months(months, str(tmp_path))
+    result = _audit_months(months, tmp_path)
     # Should show all days missing for missing_days (Jan has 31 days)
     expected_days = [f"2025-01-{day:02d}" for day in range(1, 32)]
     assert result["missing_days"]["2025-01"] == expected_days

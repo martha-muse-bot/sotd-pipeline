@@ -1,7 +1,7 @@
 """Main enrich module that coordinates all enrichers."""
 
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional, cast
 
 from .blackbird_plate_enricher import BlackbirdPlateEnricher
 from .blade_enricher import BladeCountEnricher
@@ -56,7 +56,8 @@ def setup_enrichers(
         # its grind/width/point/steel overrides never applied.
         for enricher in enricher_registry.get_all_enrichers():
             if hasattr(enricher, "override_manager"):
-                enricher.override_manager = override_manager
+                # BaseEnricher doesn't declare it; subclasses that opt in do
+                cast(Any, enricher).override_manager = override_manager
         if data_path is not None:
             # Re-point catalog loaders at the run's data dir. The production
             # path resolves the data dir in run.py (get_data_dir) but

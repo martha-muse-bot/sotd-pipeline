@@ -1,7 +1,7 @@
 import re
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 from sotd.enrich.enricher import BaseEnricher
 from sotd.enrich.override_manager import EnrichmentOverrideManager
@@ -621,18 +621,25 @@ class BrushEnricher(BaseEnricher):
             enriched_data["_fiber_extraction_source"] = fiber_enriched["_extraction_source"]
 
         # Add user override detection logic (data conflicts between user input and catalog)
+        # Narrowed views: the runtime contract is a str fiber and a numeric knot
+        # size (catalog_knot_size already fail-fasts on a string above), but the
+        # override/catalog lookups are typed loosely, so pin the comparison types.
+        user_fiber_str = cast("str | None", user_fiber)
+        catalog_fiber_str = cast("str | None", catalog_fiber)
+        user_knot_num = cast("float | None", user_knot_size)
+        catalog_knot_num = cast("float | None", catalog_knot_size)
         has_user_override = False
         override_reasons = []
 
-        if user_fiber is not None and catalog_fiber is not None:
-            if user_fiber.lower() != catalog_fiber.lower():
+        if user_fiber_str is not None and catalog_fiber_str is not None:
+            if user_fiber_str.lower() != catalog_fiber_str.lower():
                 has_user_override = True
-                override_reasons.append(f"fiber_mismatch:{catalog_fiber}->{user_fiber}")
+                override_reasons.append(f"fiber_mismatch:{catalog_fiber_str}->{user_fiber_str}")
 
-        if user_knot_size is not None and catalog_knot_size is not None:
-            if abs(user_knot_size - catalog_knot_size) >= 0.1:  # Allow small tolerance
+        if user_knot_num is not None and catalog_knot_num is not None:
+            if abs(user_knot_num - catalog_knot_num) >= 0.1:  # Allow small tolerance
                 has_user_override = True
-                override_reasons.append(f"size_mismatch:{catalog_knot_size}->{user_knot_size}")
+                override_reasons.append(f"size_mismatch:{catalog_knot_num}->{user_knot_num}")
 
         # Add user override metadata if detected
         if has_user_override:
@@ -640,13 +647,13 @@ class BrushEnricher(BaseEnricher):
             enriched_data["_user_override_reason"] = override_reasons
 
         # Add catalog conflict tracking for backward compatibility
-        if user_knot_size is not None and catalog_knot_size is not None:
-            if abs(user_knot_size - catalog_knot_size) >= 0.1:
-                enriched_data["_catalog_knot_size_mm"] = catalog_knot_size
+        if user_knot_num is not None and catalog_knot_num is not None:
+            if abs(user_knot_num - catalog_knot_num) >= 0.1:
+                enriched_data["_catalog_knot_size_mm"] = catalog_knot_num
 
-        if user_fiber is not None and catalog_fiber is not None:
-            if user_fiber.lower() != catalog_fiber.lower():
-                enriched_data["_catalog_fiber"] = catalog_fiber
+        if user_fiber_str is not None and catalog_fiber_str is not None:
+            if user_fiber_str.lower() != catalog_fiber_str.lower():
+                enriched_data["_catalog_fiber"] = catalog_fiber_str
 
         # Add user intent detection for composite brushes
         if self._should_detect_user_intent(matched_data):
