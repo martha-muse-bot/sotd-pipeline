@@ -1,10 +1,10 @@
 """Tests for user and cross-product aggregators."""
 
-from sotd.aggregate.aggregators.users import aggregate_users
 from sotd.aggregate.aggregators.cross_product import (
-    aggregate_razor_blade_combos,
     aggregate_highest_use_count_per_blade,
+    aggregate_razor_blade_combos,
 )
+from sotd.aggregate.aggregators.users import aggregate_users
 
 
 def test_aggregate_users():

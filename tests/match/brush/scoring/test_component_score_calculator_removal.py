@@ -5,8 +5,7 @@ This test file validates that strategies no longer use ComponentScoreCalculator
 and that all scoring is handled externally by the scoring engine.
 """
 
-import pytest
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 from sotd.match.brush.scoring.calculator import ComponentScoreCalculator
 from sotd.match.types import MatchResult
@@ -20,12 +19,12 @@ class TestComponentScoreCalculatorRemoval:
         # This test ensures that strategies don't have ComponentScoreCalculator imports
 
         # Check automated_split strategy
+        # The strategy should not have ComponentScoreCalculator in its imports
+        import inspect
+
         from sotd.match.brush.strategies.automated.automated_split_strategy import (
             AutomatedSplitStrategy,
         )
-
-        # The strategy should not have ComponentScoreCalculator in its imports
-        import inspect
 
         source = inspect.getsource(AutomatedSplitStrategy)
 
@@ -39,11 +38,11 @@ class TestComponentScoreCalculatorRemoval:
         # This test ensures that strategies don't call the ComponentScoreCalculator method
 
         # Check automated_split strategy
+        import inspect
+
         from sotd.match.brush.strategies.automated.automated_split_strategy import (
             AutomatedSplitStrategy,
         )
-
-        import inspect
 
         source = inspect.getsource(AutomatedSplitStrategy)
 
@@ -134,8 +133,8 @@ class TestComponentScoreCalculatorRemoval:
         # This test ensures that the scoring engine can calculate component scores
         # that were previously calculated by ComponentScoreCalculator
 
-        from sotd.match.brush.scoring.engine import ScoringEngine
         from sotd.match.brush.config import BrushScoringConfig
+        from sotd.match.brush.scoring.engine import ScoringEngine
 
         config = BrushScoringConfig()
         engine = ScoringEngine(config)
@@ -176,8 +175,8 @@ class TestComponentScoreCalculatorRemoval:
         # This test ensures that the scoring engine's modifier functions
         # can calculate the same scores that ComponentScoreCalculator used to calculate
 
-        from sotd.match.brush.scoring.engine import ScoringEngine
         from sotd.match.brush.config import BrushScoringConfig
+        from sotd.match.brush.scoring.engine import ScoringEngine
 
         config = BrushScoringConfig()
         engine = ScoringEngine(config)
@@ -229,8 +228,8 @@ class TestComponentScoreCalculatorRemoval:
         # This test ensures that component scores are only calculated once
         # (by the scoring engine) and not twice (by both ComponentScoreCalculator and scoring engine)
 
-        from sotd.match.brush.scoring.engine import ScoringEngine
         from sotd.match.brush.config import BrushScoringConfig
+        from sotd.match.brush.scoring.engine import ScoringEngine
 
         config = BrushScoringConfig()
         engine = ScoringEngine(config)

@@ -1,11 +1,12 @@
 """Tests for filtered entries API endpoints."""
 
-import pytest
-from fastapi.testclient import TestClient
-from pathlib import Path
-import yaml
-import tempfile
 import shutil
+import tempfile
+from pathlib import Path
+
+import pytest
+import yaml
+from fastapi.testclient import TestClient
 
 from webui.api.filtered import router
 
@@ -56,7 +57,6 @@ class TestGetFilteredEntries:
     def test_get_filtered_entries_success(self, client, temp_data_dir, monkeypatch):
         """Test successful retrieval of filtered entries."""
         # Mock the file path
-        from webui.api.filtered import FILTERED_ENTRIES_PATH
 
         monkeypatch.setattr(
             "webui.api.filtered.FILTERED_ENTRIES_PATH",
@@ -97,7 +97,6 @@ class TestUpdateFilteredEntries:
     def test_add_filtered_entry_success(self, client, temp_data_dir, monkeypatch):
         """Test successful addition of filtered entry."""
         # Mock the file path
-        from webui.api.filtered import FILTERED_ENTRIES_PATH
 
         monkeypatch.setattr(
             "webui.api.filtered.FILTERED_ENTRIES_PATH",
@@ -129,7 +128,6 @@ class TestUpdateFilteredEntries:
     def test_remove_filtered_entry_success(self, client, temp_data_dir, monkeypatch):
         """Test successful removal of filtered entry."""
         # Mock the file path
-        from webui.api.filtered import FILTERED_ENTRIES_PATH
 
         monkeypatch.setattr(
             "webui.api.filtered.FILTERED_ENTRIES_PATH",
@@ -160,7 +158,6 @@ class TestUpdateFilteredEntries:
     def test_bulk_operations(self, client, temp_data_dir, monkeypatch):
         """Test bulk add and remove operations."""
         # Mock the file path
-        from webui.api.filtered import FILTERED_ENTRIES_PATH
 
         monkeypatch.setattr(
             "webui.api.filtered.FILTERED_ENTRIES_PATH",
@@ -233,7 +230,6 @@ class TestUpdateFilteredEntries:
     def test_invalid_action(self, client, temp_data_dir, monkeypatch):
         """Test error handling for invalid action."""
         # Mock the file path
-        from webui.api.filtered import FILTERED_ENTRIES_PATH
 
         monkeypatch.setattr(
             "webui.api.filtered.FILTERED_ENTRIES_PATH",
@@ -262,7 +258,6 @@ class TestUpdateFilteredEntries:
     def test_missing_required_fields(self, client, temp_data_dir, monkeypatch):
         """Test error handling for missing required fields."""
         # Mock the file path
-        from webui.api.filtered import FILTERED_ENTRIES_PATH
 
         monkeypatch.setattr(
             "webui.api.filtered.FILTERED_ENTRIES_PATH",
@@ -294,7 +289,6 @@ class TestGetFilteredEntriesByCategory:
     def test_get_filtered_entries_by_category_success(self, client, temp_data_dir, monkeypatch):
         """Test successful retrieval of filtered entries by category."""
         # Mock the file path
-        from webui.api.filtered import FILTERED_ENTRIES_PATH
 
         monkeypatch.setattr(
             "webui.api.filtered.FILTERED_ENTRIES_PATH",
@@ -313,7 +307,6 @@ class TestGetFilteredEntriesByCategory:
     def test_get_filtered_entries_by_category_empty(self, client, temp_data_dir, monkeypatch):
         """Test retrieval of empty category."""
         # Mock the file path
-        from webui.api.filtered import FILTERED_ENTRIES_PATH
 
         monkeypatch.setattr(
             "webui.api.filtered.FILTERED_ENTRIES_PATH",
@@ -336,7 +329,6 @@ class TestCheckFilteredStatus:
     def test_check_filtered_status_success(self, client, temp_data_dir, monkeypatch):
         """Test successful checking of filtered status."""
         # Mock the file path
-        from webui.api.filtered import FILTERED_ENTRIES_PATH
 
         monkeypatch.setattr(
             "webui.api.filtered.FILTERED_ENTRIES_PATH",
@@ -384,7 +376,6 @@ class TestCheckFilteredStatus:
     def test_check_filtered_status_invalid_entries(self, client, temp_data_dir, monkeypatch):
         """Test handling of invalid entries."""
         # Mock the file path
-        from webui.api.filtered import FILTERED_ENTRIES_PATH
 
         monkeypatch.setattr(
             "webui.api.filtered.FILTERED_ENTRIES_PATH",

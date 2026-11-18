@@ -587,8 +587,8 @@ class TestBrushUserActionsManager:
     def test_real_dual_update_validation(self):
         """Test that validation actions actually write to both learning files and correct_matches.yaml."""
         # Create a temporary correct_matches.yaml for testing
-        import tempfile
         import shutil
+        import tempfile
         from pathlib import Path
 
         # Create temporary directory

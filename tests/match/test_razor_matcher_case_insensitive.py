@@ -5,10 +5,10 @@ This test ensures that the RazorMatcher properly handles case-insensitive
 lookups for correct matches, which was a critical bug fix.
 """
 
-import pytest
 import tempfile
-import yaml
 from pathlib import Path
+
+import yaml
 
 from sotd.match.razor_matcher import RazorMatcher
 

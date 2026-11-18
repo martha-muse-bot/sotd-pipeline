@@ -1,5 +1,5 @@
-from sotd.utils.text import preprocess_body
 from sotd.extract.fields import extract_field
+from sotd.utils.text import preprocess_body
 
 
 def test_extract_field_lines():

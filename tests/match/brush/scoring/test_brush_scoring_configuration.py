@@ -4,8 +4,9 @@ Tests for Brush Scoring Configuration.
 This test file tests the scoring configuration structure for individual brush strategies.
 """
 
-import yaml
 from pathlib import Path
+
+import yaml
 
 
 class TestBrushScoringConfiguration:

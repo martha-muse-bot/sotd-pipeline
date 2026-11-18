@@ -1,7 +1,9 @@
 """Test that BrushMatcher.match() should accept bypass_correct_matches parameter."""
 
-import pytest
 from pathlib import Path
+
+import pytest
+
 from sotd.match.brush_matcher import BrushMatcher
 
 
@@ -68,7 +70,7 @@ class TestBrushMatcherMatchBypass:
 
         test_pattern = "a.p. shave co amber smoke g5c fan"
 
-        print(f"🔍 DEBUG: Testing with bypass_matcher (bypass_correct_matches=True)")
+        print("🔍 DEBUG: Testing with bypass_matcher (bypass_correct_matches=True)")
         print(
             f"🔍 DEBUG: Matcher bypass_correct_matches attribute: {getattr(bypass_matcher, 'bypass_correct_matches', 'NOT_FOUND')}"
         )
@@ -85,8 +87,8 @@ class TestBrushMatcherMatchBypass:
         # 3. Harder to test and debug
         # 4. Violates single responsibility principle
 
-        print(f"🔍 DEBUG: Current approach requires separate matcher instances")
-        print(f"🔍 DEBUG: This is unnecessarily complex and error-prone")
+        print("🔍 DEBUG: Current approach requires separate matcher instances")
+        print("🔍 DEBUG: This is unnecessarily complex and error-prone")
 
     def test_better_approach_with_method_parameter(self):
         """Test how it SHOULD work with a bypass parameter on the match method."""
@@ -101,8 +103,8 @@ class TestBrushMatcherMatchBypass:
 
         test_pattern = "a.p. shave co amber smoke g5c fan"
 
-        print(f"🔍 DEBUG: Testing how it SHOULD work:")
-        print(f"🔍 DEBUG: Single matcher instance, different behavior per call")
+        print("🔍 DEBUG: Testing how it SHOULD work:")
+        print("🔍 DEBUG: Single matcher instance, different behavior per call")
 
         # This is the ideal API:
         # result1 = matcher.match(test_pattern)  # Uses correct_matches.yaml
@@ -115,9 +117,9 @@ class TestBrushMatcherMatchBypass:
         # 4. More flexible
         # 5. Follows principle of least surprise
 
-        print(f"🔍 DEBUG: Ideal API would be:")
-        print(f"🔍 DEBUG:   matcher.match(text)  # Default behavior")
-        print(f"🔍 DEBUG:   matcher.match(text, bypass_correct_matches=True)  # Bypass behavior")
+        print("🔍 DEBUG: Ideal API would be:")
+        print("🔍 DEBUG:   matcher.match(text)  # Default behavior")
+        print("🔍 DEBUG:   matcher.match(text, bypass_correct_matches=True)  # Bypass behavior")
 
         # For now, just test that the current approach works
         result = matcher.match(test_pattern)

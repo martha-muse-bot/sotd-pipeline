@@ -1,7 +1,8 @@
 """Test suite for BrushValidationCountingService."""
 
-import pytest
 from unittest.mock import patch
+
+import pytest
 
 from sotd.match.brush.validation.counting import BrushValidationCountingService
 

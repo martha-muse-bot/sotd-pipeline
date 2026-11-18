@@ -1,4 +1,3 @@
-import pytest
 
 from sotd.enrich.enricher import BaseEnricher
 

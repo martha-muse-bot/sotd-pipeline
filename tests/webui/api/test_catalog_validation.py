@@ -3,7 +3,7 @@
 
 import tempfile
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
 
 import pytest
 import yaml
@@ -567,9 +567,8 @@ class TestMoveCatalogEntries:
         sys.path.insert(0, str(project_root))
 
         from webui.api.analysis import (
-            move_catalog_validation_entries,
             MoveCatalogEntriesRequest,
-            get_data_directory,
+            move_catalog_validation_entries,
         )
 
         # Create request to move entry
@@ -612,10 +611,10 @@ class TestMoveCatalogEntries:
 
             # Verify the entry was added to new location
             # The manager normalizes strings before saving, so we need to check the normalized version
-            from sotd.utils.extract_normalization import normalize_for_matching
-
             # Debug: Check what's actually in the file
             import json
+
+            from sotd.utils.extract_normalization import normalize_for_matching
 
             if "New Brand" not in razor_data:
                 # The manager's save_correct_matches() should have added it
@@ -682,9 +681,8 @@ class TestMoveCatalogEntries:
         sys.path.insert(0, str(project_root))
 
         from webui.api.analysis import (
-            move_catalog_validation_entries,
             MoveCatalogEntriesRequest,
-            get_data_directory,
+            move_catalog_validation_entries,
         )
 
         # Create request to move entry from handle_knot to brush
@@ -758,9 +756,8 @@ class TestMoveCatalogEntries:
         sys.path.insert(0, str(project_root))
 
         from webui.api.analysis import (
-            move_catalog_validation_entries,
             MoveCatalogEntriesRequest,
-            get_data_directory,
+            move_catalog_validation_entries,
         )
 
         # Create request to move blade entry
@@ -816,7 +813,7 @@ class TestMoveCatalogEntries:
         project_root = Path(__file__).parent.parent.parent.parent
         sys.path.insert(0, str(project_root))
 
-        from webui.api.analysis import move_catalog_validation_entries, MoveCatalogEntriesRequest
+        from webui.api.analysis import MoveCatalogEntriesRequest, move_catalog_validation_entries
 
         # Create request to move non-existent entry
         request = MoveCatalogEntriesRequest(

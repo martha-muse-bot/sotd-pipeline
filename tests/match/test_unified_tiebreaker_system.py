@@ -1,13 +1,15 @@
 """Test the unified tiebreaker system for blade pattern matching."""
 
-import pytest
-import tempfile
 import shutil
+import tempfile
+from pathlib import Path
+
+import pytest
 import yaml
+
 from sotd.match.blade_matcher import BladeMatcher
 from sotd.match.loaders import CatalogLoader
 from sotd.match.types import MatchType
-from pathlib import Path
 
 
 class TestUnifiedTiebreakerSystem:

@@ -7,8 +7,8 @@ and production catalog files.
 
 from unittest.mock import Mock
 
-from sotd.match.correct_matches import CorrectMatchesChecker
 from sotd.match.config import BrushMatcherConfig
+from sotd.match.correct_matches import CorrectMatchesChecker
 
 
 class TestRealDataIntegration:

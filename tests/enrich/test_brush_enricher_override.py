@@ -1,7 +1,5 @@
 """Unit tests for BrushEnricher override functionality."""
 
-from pathlib import Path
-from unittest.mock import MagicMock
 
 import pytest
 

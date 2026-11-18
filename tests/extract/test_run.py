@@ -1,7 +1,9 @@
 import json
 import tempfile
-import yaml
 from pathlib import Path
+
+import yaml
+
 from sotd.extract.run import run_extraction_for_month
 
 

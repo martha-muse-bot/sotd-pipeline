@@ -1,9 +1,9 @@
 """Tests for brush specialized aggregators."""
 
 from sotd.aggregate.aggregators.brush_specialized import (
+    aggregate_fibers,
     aggregate_handle_makers,
     aggregate_knot_makers,
-    aggregate_fibers,
     aggregate_knot_sizes,
 )
 

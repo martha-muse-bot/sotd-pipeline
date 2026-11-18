@@ -1,6 +1,8 @@
-import pytest
 import re
 from pathlib import Path
+
+import pytest
+
 from sotd.match.blade_matcher import BladeMatcher
 
 
@@ -218,7 +220,7 @@ class TestBladeFormatMatchingDebug:
         # Test the specific case from our data
         razor_format = "Shavette"  # This is what we get from the matched data
         target_format = blade_matcher._get_target_blade_format(razor_format)
-        print(f"\nOur case:")
+        print("\nOur case:")
         print(f"Razor format: '{razor_format}' -> Target blade format: '{target_format}'")
 
         # Check if this target format exists in the blade catalog
@@ -273,7 +275,7 @@ class TestBladeFormatMatchingDebug:
                 normalized_text=blade_text, razor_format=razor_format, original_text=blade_text
             )
 
-            print(f"\nBlade matching result:")
+            print("\nBlade matching result:")
             print(f"  Blade: {blade_text}")
             print(f"  Razor: {razor_format}")
             print(f"  Target format: {target_format}")
@@ -359,7 +361,7 @@ class TestBladeFormatMatchingDebug:
                 if match:
                     print(f"  ✓ MATCH at index {i}: {fmt} - {raw_pattern}")
                     print(f"    Brand: {brand}, Model: {model}")
-                    print(f"    This pattern wins and returns early!")
+                    print("    This pattern wins and returns early!")
                     break
                 else:
                     print(f"  ✗ NO MATCH at index {i}: {fmt} - {raw_pattern}")
@@ -396,7 +398,7 @@ class TestBladeFormatMatchingDebug:
                         f"  [DEBUG] Regex match found: {result['matched']['format']} - {result['matched']['model']}"
                     )
                 else:
-                    print(f"  [DEBUG] No regex match found")
+                    print("  [DEBUG] No regex match found")
                 return result
 
             def debug_build_fallback_formats(target_format):
@@ -451,11 +453,11 @@ class TestBladeFormatMatchingDebug:
 
             # Check if it exists in catalog
             if target_format in blade_matcher.catalog:
-                print(f"  ✓ Exists in catalog")
+                print("  ✓ Exists in catalog")
                 brands = list(blade_matcher.catalog[target_format].keys())
                 print(f"  Available brands: {brands}")
             else:
-                print(f"  ✗ Does NOT exist in catalog")
+                print("  ✗ Does NOT exist in catalog")
 
             # Build fallback formats
             fallback_formats = blade_matcher._build_fallback_formats(target_format)
@@ -471,7 +473,7 @@ class TestBladeFormatMatchingDebug:
                 print(f"  Shavette fallback formats: {shavette_fallbacks}")
 
         # Now let's trace through the actual fallback logic in match_with_context
-        print(f"\n=== Tracing Fallback Logic ===")
+        print("\n=== Tracing Fallback Logic ===")
 
         # Store original methods
         original_build_shavette = blade_matcher._build_shavette_fallback_formats
@@ -489,7 +491,7 @@ class TestBladeFormatMatchingDebug:
             blade_text = "Personna hair shaper"
             razor_format = "Shavette"
 
-            print(f"\nCalling match_with_context with enhanced debug...")
+            print("\nCalling match_with_context with enhanced debug...")
             print("=" * 60)
 
             result = blade_matcher.match_with_context(

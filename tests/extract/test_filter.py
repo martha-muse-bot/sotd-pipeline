@@ -6,8 +6,8 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
-import yaml
 import pytest
+import yaml
 
 from sotd.extract.filter import ExtractFilter, filter_extracted_data, should_skip_field
 

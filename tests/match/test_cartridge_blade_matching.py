@@ -5,8 +5,6 @@ When a razor has format "Cartridge/Disposable", the blade should automatically
 be matched to the Cartridge/Disposable blade entry regardless of the blade text.
 """
 
-import pytest
-from pathlib import Path
 from unittest.mock import Mock
 
 from sotd.match.run import match_record

@@ -1,6 +1,7 @@
 """Test BrushMatcher bypass functionality."""
 
 from pathlib import Path
+
 from sotd.match.brush_matcher import BrushMatcher
 
 

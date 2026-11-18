@@ -1,9 +1,6 @@
 """Integration tests for enrichment override system."""
 
-import json
-from pathlib import Path
 
-import pytest
 
 from sotd.enrich.enrich import enrich_comments, setup_enrichers
 from sotd.enrich.override_manager import EnrichmentOverrideManager

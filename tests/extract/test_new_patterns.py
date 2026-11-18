@@ -4,9 +4,9 @@ Unit tests for new extraction patterns: checkmark format and emoji bold format.
 """
 
 import pytest
-from sotd.extract.fields import get_patterns
+
 from sotd.extract.comment import parse_comment
-from sotd.extract.fields import extract_field
+from sotd.extract.fields import extract_field, get_patterns
 
 
 class TestCheckmarkFormat:

@@ -506,8 +506,8 @@ def test_brand_match_with_by_connector_case_insensitive(soap_matcher_with_mock):
 
 def test_countable_flag_preserved_in_pattern_compilation(tmp_path):
     """Test that countable flag is preserved in pattern compilation."""
+
     import yaml
-    from pathlib import Path
 
     mock_catalog = {
         "Test Brand": {

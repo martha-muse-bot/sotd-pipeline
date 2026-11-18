@@ -1,7 +1,7 @@
 """Integration tests for the complete tier-based delta calculation system."""
 
-from sotd.report.delta_calculator import DeltaCalculator
 from sotd.report.annual_delta_calculator import AnnualDeltaCalculator
+from sotd.report.delta_calculator import DeltaCalculator
 
 
 class TestTierBasedDeltaSystem:

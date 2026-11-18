@@ -1,7 +1,8 @@
 """Tests for Top Shavers table generation using the universal TableGenerator."""
 
-from sotd.report.table_generators.table_generator import TableGenerator
 import pytest
+
+from sotd.report.table_generators.table_generator import TableGenerator
 
 
 class TestTopShaversTableGenerator:

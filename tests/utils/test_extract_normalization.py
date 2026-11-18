@@ -3,11 +3,11 @@
 
 from sotd.utils.extract_normalization import (
     normalize_for_matching,
-    strip_usage_count_patterns,
     strip_handle_indicators,
+    strip_link_markup,
     strip_soap_patterns,
     strip_trailing_periods,
-    strip_link_markup,
+    strip_usage_count_patterns,
 )
 
 

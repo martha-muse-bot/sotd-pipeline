@@ -1,7 +1,8 @@
-import pytest
-import tempfile
 import os
+import tempfile
 from pathlib import Path
+
+import pytest
 
 from sotd.match.blade_matcher import BladeMatcher
 

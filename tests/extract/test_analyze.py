@@ -1,8 +1,8 @@
 import json
 import tempfile
 from pathlib import Path
-from sotd.extract.analyze import analyze_skipped_patterns
-from sotd.extract.analyze import analyze_common_prefixes
+
+from sotd.extract.analyze import analyze_common_prefixes, analyze_skipped_patterns
 from sotd.utils.aliases import FIELD_ALIASES
 
 

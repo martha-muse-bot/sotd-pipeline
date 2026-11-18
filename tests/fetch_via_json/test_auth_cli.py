@@ -56,7 +56,7 @@ def main() -> int:
         json_data = get_reddit_json(
             "https://www.reddit.com/r/wetshaving/about.json", cookies=cookies
         )
-        print(f"[INFO] ✅ Successfully fetched JSON data")
+        print("[INFO] ✅ Successfully fetched JSON data")
     except Exception as e:
         print(f"[ERROR] Failed to fetch JSON: {e}")
         return 1

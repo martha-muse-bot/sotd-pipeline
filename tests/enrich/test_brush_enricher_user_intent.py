@@ -1,8 +1,10 @@
 """Tests for user intent detection in BrushEnricher."""
 
 import re
-import pytest
 from unittest.mock import patch
+
+import pytest
+
 from sotd.enrich.brush_enricher import BrushEnricher
 
 

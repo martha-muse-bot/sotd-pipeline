@@ -1,6 +1,5 @@
 """Tests for WSDB lookup utility with slug support."""
 
-from pathlib import Path
 
 import pytest
 import yaml

@@ -1,22 +1,23 @@
 """Unit tests for brush splits data structures and validation logic."""
 
 import json
-import pytest
-import yaml
 from datetime import datetime
 from unittest.mock import patch
+
+import pytest
+import yaml
 
 from webui.api.brush_splits import (
     BrushSplit,
     BrushSplitOccurrence,
-    BrushSplitValidator,
     BrushSplitStatistics,
-    StatisticsCalculator,
-    normalize_brush_string,
+    BrushSplitValidator,
     ConfidenceLevel,
     DataCorruptionError,
     FileNotFoundError,
     ProcessingError,
+    StatisticsCalculator,
+    normalize_brush_string,
 )
 
 

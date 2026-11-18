@@ -1,10 +1,9 @@
 """Tests for scoring engine handle/knot score modifiers using actual matcher scores."""
 
 from unittest.mock import Mock
-import pytest
 
-from sotd.match.brush.scoring.engine import ScoringEngine
 from sotd.match.brush.config import BrushScoringConfig
+from sotd.match.brush.scoring.engine import ScoringEngine
 from sotd.match.types import MatchResult
 
 

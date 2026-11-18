@@ -3,8 +3,6 @@
 import json
 from pathlib import Path
 
-import pytest
-
 from webui.api.queue_manager import QueueManager
 
 

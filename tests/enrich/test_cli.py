@@ -2,8 +2,9 @@
 Tests for the enrich phase CLI module.
 """
 
-import pytest
 from pathlib import Path
+
+import pytest
 
 from sotd.enrich.cli import get_parser
 

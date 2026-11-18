@@ -2,12 +2,12 @@
 import pytest
 
 from sotd.match.brush.knot_matcher import KnotMatcher
-from sotd.match.brush.strategies.known.known_knot_strategy import KnownKnotMatchingStrategy
-from sotd.match.brush.strategies.other_knot_strategy import OtherKnotMatchingStrategy
 from sotd.match.brush.strategies.fallback.fiber_fallback_strategy import FiberFallbackStrategy
 from sotd.match.brush.strategies.fallback.knot_size_fallback_strategy import (
     KnotSizeFallbackStrategy,
 )
+from sotd.match.brush.strategies.known.known_knot_strategy import KnownKnotMatchingStrategy
+from sotd.match.brush.strategies.other_knot_strategy import OtherKnotMatchingStrategy
 
 
 @pytest.fixture

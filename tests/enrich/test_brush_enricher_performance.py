@@ -134,8 +134,9 @@ class TestBrushEnricherPerformance:
 
     def test_memory_usage_validation(self, brush_enricher):
         """Test that memory usage remains reasonable."""
-        import psutil
         import os
+
+        import psutil
 
         # Get initial memory usage
         process = psutil.Process(os.getpid())

@@ -1,6 +1,5 @@
 """Tests for unified MatchResult class and related utilities."""
 
-import pytest
 from sotd.match.types import MatchResult, create_match_result
 
 

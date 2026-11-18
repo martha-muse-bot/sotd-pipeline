@@ -1,6 +1,5 @@
 """Tests for StrategyAnalyzer."""
 
-from pathlib import Path
 from unittest.mock import Mock, patch
 
 from sotd.optimization.strategy_analyzer import StrategyAnalyzer

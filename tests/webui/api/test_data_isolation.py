@@ -6,8 +6,9 @@ for isolated testing that doesn't depend on changing production data.
 """
 
 from pathlib import Path
-import yaml
 from unittest.mock import patch
+
+import yaml
 from fastapi.testclient import TestClient
 
 from webui.api.main import app

@@ -3,7 +3,7 @@
 
 import sys
 from pathlib import Path
-from unittest.mock import patch, MagicMock, Mock
+from unittest.mock import MagicMock, patch
 
 # Add the webui directory to the Python path
 webui_dir = Path(__file__).parent.parent

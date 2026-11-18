@@ -1,12 +1,10 @@
-import pytest
-from unittest.mock import Mock, patch
-from pathlib import Path
 import tempfile
+from pathlib import Path
+
 import yaml
-from typing import Dict, Any, List, Optional
 
 # Import the base validator class (will be created)
-from webui.api.validators.base_validator import BaseValidator, ValidationResult
+from webui.api.validators.base_validator import BaseValidator
 
 
 class TestBaseValidator:

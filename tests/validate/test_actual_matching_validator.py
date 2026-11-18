@@ -4,9 +4,10 @@ Tests for ActualMatchingValidator.
 This module tests the actual matching validation functionality for all field types.
 """
 
-import pytest
 from pathlib import Path
 from unittest.mock import Mock, patch
+
+import pytest
 
 from sotd.validate.actual_matching_validator import (
     ActualMatchingValidator,

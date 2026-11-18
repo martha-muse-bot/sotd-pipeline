@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Tests for UserPostingAnalyzer class."""
 
-import pytest
 from datetime import date
 from unittest.mock import Mock, patch
+
+import pytest
 
 from sotd.aggregate.aggregators.users.user_posting_analyzer import UserPostingAnalyzer
 

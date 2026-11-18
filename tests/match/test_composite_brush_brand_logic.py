@@ -4,8 +4,8 @@ This module tests the business rule that when handle and knot have the same bran
 that brand should be automatically set at the top level of the brush result.
 """
 
-from sotd.match.brush_matcher import BrushMatcher
 from sotd.match.base_matcher import MatchResult
+from sotd.match.brush_matcher import BrushMatcher
 
 
 class TestCompositeBrushBrandLogic:

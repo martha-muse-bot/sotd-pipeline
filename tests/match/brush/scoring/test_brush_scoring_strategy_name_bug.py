@@ -1,9 +1,11 @@
 """Test to expose bug where strategy results have None strategy names."""
 
-import pytest
 from unittest.mock import Mock
-from sotd.match.brush.scoring.engine import ScoringEngine
+
+import pytest
+
 from sotd.match.brush.config import BrushScoringConfig
+from sotd.match.brush.scoring.engine import ScoringEngine
 
 
 class TestStrategyNameBug:

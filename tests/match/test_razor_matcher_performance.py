@@ -5,11 +5,12 @@ This test demonstrates the O(1) vs O(n) performance difference and ensures
 the case-insensitive lookup optimization is working correctly.
 """
 
-import pytest
 import tempfile
 import time
-import yaml
 from pathlib import Path
+
+import pytest
+import yaml
 
 from sotd.match.razor_matcher import RazorMatcher
 

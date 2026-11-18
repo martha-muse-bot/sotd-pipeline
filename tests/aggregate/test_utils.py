@@ -2,13 +2,13 @@
 
 from sotd.aggregate.utils.metrics import (
     calculate_metadata,
-    calculate_unique_soaps,
-    calculate_unique_brands,
     calculate_total_samples,
-    calculate_unique_sample_soaps,
-    calculate_unique_razors,
     calculate_unique_blades,
+    calculate_unique_brands,
     calculate_unique_brushes,
+    calculate_unique_razors,
+    calculate_unique_sample_soaps,
+    calculate_unique_soaps,
 )
 
 

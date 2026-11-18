@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 """Tests for Product Usage API endpoints."""
 
-import json
 import sys
 from pathlib import Path
 from unittest.mock import Mock, patch
-import pytest
 
 # Add the project root to the path
 project_root = Path(__file__).parent.parent.parent.parent
@@ -13,6 +11,7 @@ sys.path.insert(0, str(project_root))
 
 from fastapi import FastAPI  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
+
 from webui.api.product_usage import router  # noqa: E402
 
 # Create test client

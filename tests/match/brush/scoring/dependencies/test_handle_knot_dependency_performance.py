@@ -6,13 +6,14 @@ within automated split strategies.
 """
 
 import time
+
 import pytest
 
-from sotd.match.brush_matcher import BrushMatcher
 from sotd.match.brush.scoring.dependencies.strategy_dependency_manager import (
-    StrategyDependency,
     DependencyType,
+    StrategyDependency,
 )
+from sotd.match.brush_matcher import BrushMatcher
 
 # Wall-clock threshold asserts are load-sensitive; excluded in CI via `-m "not perf"`.
 pytestmark = pytest.mark.perf

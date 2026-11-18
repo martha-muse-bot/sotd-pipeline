@@ -2,8 +2,8 @@
 
 import pytest
 
-from sotd.match.brush.splitter import BrushSplitter
 from sotd.match.brush.handle_matcher import HandleMatcher
+from sotd.match.brush.splitter import BrushSplitter
 
 
 class TestBrushSplitterDelimiterClassification:

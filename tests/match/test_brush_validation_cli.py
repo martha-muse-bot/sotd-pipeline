@@ -1,15 +1,18 @@
 """Test brush CLI validation interface."""
 
-import pytest
-import tempfile
+import io
 import shutil
+import tempfile
 from pathlib import Path
 from unittest.mock import Mock, patch
-import io
+
+import pytest
 
 from sotd.match.brush.validation.cli import (
     BrushValidationCLI,
     setup_validation_cli,
+)
+from sotd.match.brush.validation.cli import (
     main as cli_main,
 )
 from sotd.match.brush.validation.user_actions import BrushUserActionsManager

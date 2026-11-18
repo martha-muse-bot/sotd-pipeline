@@ -1,9 +1,9 @@
 from datetime import date
 from unittest.mock import patch
 
+import sotd.fetch.run as run_mod
 from sotd.fetch.reddit import filter_valid_threads
 from sotd.fetch.run import _calc_missing
-import sotd.fetch.run as run_mod
 
 
 # --------------------------------------------------------------------------- #

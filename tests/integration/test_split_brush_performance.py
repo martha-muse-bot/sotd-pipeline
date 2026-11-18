@@ -5,16 +5,15 @@ This module tests the performance characteristics of split brush functionality
 to ensure efficient component lookup and acceptable performance.
 """
 
-import pytest
 import time
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Any, Dict, List
+
+import pytest
+from rich.console import Console
 
 from sotd.match.tools.analyzers.mismatch_analyzer import MismatchAnalyzer
 from sotd.match.tools.managers.correct_matches_manager import CorrectMatchesManager
-from sotd.match.brush_matcher import BrushMatcher
-from sotd.match.config import BrushMatcherConfig
-from rich.console import Console
 
 
 class TestSplitBrushPerformance:
@@ -171,8 +170,9 @@ class TestSplitBrushPerformance:
     def test_memory_usage(self, large_split_brush_dataset, temp_correct_matches_file):
         """Test memory usage with large datasets."""
 
-        import psutil
         import os
+
+        import psutil
 
         # Get initial memory usage
         process = psutil.Process(os.getpid())

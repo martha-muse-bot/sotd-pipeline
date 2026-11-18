@@ -1,7 +1,8 @@
 """Test CorrectMatchesManager with new brand/model hierarchy structure."""
 
-import pytest
 from unittest.mock import Mock
+
+import pytest
 
 from sotd.match.tools.managers.correct_matches_manager import CorrectMatchesManager
 

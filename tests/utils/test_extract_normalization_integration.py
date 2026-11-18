@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Integration tests for @ symbol normalization in the complete pipeline."""
 
-import pytest
 from sotd.utils.extract_normalization import normalize_for_matching
 
 

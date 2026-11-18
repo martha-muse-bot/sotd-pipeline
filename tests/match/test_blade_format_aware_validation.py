@@ -2,6 +2,7 @@
 """Tests for format-aware blade validation in correct_matches.yaml validation."""
 
 import yaml
+
 from sotd.match.tools.managers.validate_correct_matches import ValidateCorrectMatches
 
 

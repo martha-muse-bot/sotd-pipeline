@@ -23,7 +23,7 @@ from pathlib import Path
 
 import pytest
 
-from sotd.report.tools.aggregate_query import KEY_FIELD_PRIORITY, _CATEGORY_RANKING, main
+from sotd.report.tools.aggregate_query import _CATEGORY_RANKING, KEY_FIELD_PRIORITY, main
 
 DATA_DIR = Path(__file__).resolve().parents[2] / "data"
 

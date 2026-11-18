@@ -1,9 +1,10 @@
 """Tests for brush splits loader."""
 
-import pytest
 from pathlib import Path
 
-from sotd.match.brush.comparison.splits_loader import BrushSplitsLoader, BrushSplit
+import pytest
+
+from sotd.match.brush.comparison.splits_loader import BrushSplit, BrushSplitsLoader
 
 
 class TestBrushSplitsLoader:

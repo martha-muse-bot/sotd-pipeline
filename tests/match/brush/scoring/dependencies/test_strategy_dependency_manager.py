@@ -4,13 +4,14 @@ Unit tests for StrategyDependencyManager component.
 Tests strategy dependency management functionality for the brush scoring system.
 """
 
+from unittest.mock import Mock
+
 import pytest
-from unittest.mock import Mock, MagicMock
 
 from sotd.match.brush.scoring.dependencies.strategy_dependency_manager import (
-    StrategyDependencyManager,
-    StrategyDependency,
     DependencyType,
+    StrategyDependency,
+    StrategyDependencyManager,
 )
 
 

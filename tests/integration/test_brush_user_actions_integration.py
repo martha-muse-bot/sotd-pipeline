@@ -1,9 +1,10 @@
 """Integration tests for brush user actions with existing workflows."""
 
-import tempfile
 import shutil
-from pathlib import Path
+import tempfile
 from datetime import datetime
+from pathlib import Path
+
 import yaml
 
 from sotd.match.brush.validation.user_actions import BrushUserActionsManager

@@ -5,10 +5,7 @@ Unit tests for logging configuration.
 import logging
 import os
 import time
-from pathlib import Path
 from unittest.mock import patch
-
-import pytest
 
 from sotd.utils.logging_config import (
     cleanup_old_logs,

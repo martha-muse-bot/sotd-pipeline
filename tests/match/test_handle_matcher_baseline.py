@@ -1,7 +1,7 @@
 """Test baseline for current handle matching functionality before restructuring."""
 
+
 import pytest
-from unittest.mock import Mock, patch
 
 from sotd.match.brush.handle_matcher import HandleMatcher
 

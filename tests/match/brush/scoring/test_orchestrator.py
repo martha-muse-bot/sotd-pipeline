@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Tests for StrategyOrchestrator."""
 
+from unittest.mock import Mock
+
 import pytest
-from unittest.mock import Mock, MagicMock
 
 from sotd.match.brush.scoring.orchestrator import StrategyOrchestrator
 from sotd.match.brush.strategies.base_brush_matching_strategy import (

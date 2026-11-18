@@ -1,5 +1,6 @@
 from pathlib import Path
 from unittest.mock import patch
+
 from sotd.match.brush.validation.cli import BrushValidationCLI
 
 

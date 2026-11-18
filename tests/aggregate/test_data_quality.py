@@ -4,9 +4,9 @@ import pytest
 
 from sotd.aggregate.processor import (
     aggregate_all,
-    validate_records,
-    normalize_fields,
     check_data_quality,
+    normalize_fields,
+    validate_records,
 )
 from sotd.aggregate.utils.metrics import calculate_metadata
 

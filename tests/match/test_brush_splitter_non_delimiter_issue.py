@@ -5,11 +5,12 @@ This test demonstrates how the current non-delimiter logic prevents legitimate
 delimiter detection when non-delimiter tokens are present in the text.
 """
 
-import pytest
 from pathlib import Path
 
-from sotd.match.brush.splitter import BrushSplitter
+import pytest
+
 from sotd.match.brush.handle_matcher import HandleMatcher
+from sotd.match.brush.splitter import BrushSplitter
 
 
 class TestBrushSplitterNonDelimiterIssue:
@@ -195,7 +196,7 @@ class TestBrushSplitterNonDelimiterIssue:
 
             # Document that " & " is unreliable
             if " & " in text:
-                print(f"  Note: ' & ' is present but unreliable as delimiter")
+                print("  Note: ' & ' is present but unreliable as delimiter")
 
     def test_correct_behavior_definition(self, brush_splitter):
         """

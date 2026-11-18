@@ -11,8 +11,9 @@ class TestComponentScoringIntegration:
         # This test should FAIL if the double weight application bug returns
         # It validates that modifier functions return raw scores, not weighted scores
 
+        from unittest.mock import MagicMock, Mock
+
         from sotd.match.brush.scoring.engine import ScoringEngine
-        from unittest.mock import Mock, MagicMock
 
         # Arrange - Create a mock config with known values for testing
         mock_config = MagicMock()

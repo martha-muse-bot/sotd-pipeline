@@ -4,11 +4,11 @@ Tests for brush matching exception types.
 
 from sotd.match.exceptions import (
     BrushMatchingError,
+    CacheError,
     CatalogLoadError,
     ConfigurationError,
     InvalidMatchDataError,
     ValidationError,
-    CacheError,
 )
 
 

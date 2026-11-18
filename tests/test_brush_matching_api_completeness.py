@@ -9,16 +9,17 @@ This test validates that the API response includes:
 5. All scoring breakdown information
 """
 
-import pytest
-from pathlib import Path
 import sys
+from pathlib import Path
+
+import pytest
 
 # Add project root to path for imports
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 # Import after path setup
-from webui.api.brush_matching import BrushMatchResult, BrushAnalysisResponse
+from webui.api.brush_matching import BrushAnalysisResponse, BrushMatchResult
 
 
 class TestBrushMatchingAPICompleteness:

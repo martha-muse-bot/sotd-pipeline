@@ -1,13 +1,12 @@
-import pytest
-from pathlib import Path
 import tempfile
+from pathlib import Path
+
 import yaml
-from typing import Dict, Any
 
 from webui.api.validators.brush_split_validator import (
-    BrushSplitValidator,
     BrushSplit,
     BrushSplitOccurrence,
+    BrushSplitValidator,
     ConfidenceLevel,
 )
 

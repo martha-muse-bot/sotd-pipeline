@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Tests for DataFieldLimiter."""
 
-import pytest
 
 from sotd.report.data_field_limiter import DataFieldLimiter
 

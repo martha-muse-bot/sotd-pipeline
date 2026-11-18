@@ -1,8 +1,9 @@
 """Integration tests for report generation."""
 
-from sotd.report.process import generate_report_content
-from sotd.report.monthly_generator import MonthlyReportGenerator
 import pytest
+
+from sotd.report.monthly_generator import MonthlyReportGenerator
+from sotd.report.process import generate_report_content
 
 
 class TestReportIntegration:

@@ -6,11 +6,11 @@ the pipeline processes the correct number of months for historical comparison.
 """
 
 import sys
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pytest
-from unittest.mock import patch, MagicMock
 
 # Add the project root to the path
 sys.path.insert(0, str(Path(__file__).parent.parent))

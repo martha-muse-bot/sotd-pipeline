@@ -1,5 +1,6 @@
-from sotd.match.brush.strategies.known.known_knot_strategy import KnownKnotMatchingStrategy
 import pytest
+
+from sotd.match.brush.strategies.known.known_knot_strategy import KnownKnotMatchingStrategy
 
 
 class TestKnownKnotMatchingStrategy:

@@ -182,7 +182,6 @@ class TestWSDBParameterIntegration:
 
     def test_wsdb_parameter_end_to_end(self, tmp_path, monkeypatch):
         """Test that wsdb:true parameter works end-to-end through template processing."""
-        import json
 
         # Create directory structure
         table_generators_dir = tmp_path / "sotd" / "report" / "table_generators"
@@ -280,7 +279,6 @@ class TestWSDBParameterIntegration:
 
     def test_wsdb_parameter_with_other_parameters(self, tmp_path, monkeypatch):
         """Test that wsdb parameter works with other parameters like shaves and deltas."""
-        import json
 
         # Create directory structure
         table_generators_dir = tmp_path / "sotd" / "report" / "table_generators"

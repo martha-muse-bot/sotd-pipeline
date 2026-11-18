@@ -5,12 +5,12 @@ This module tests the configuration update workflow that applies ChatGPT suggest
 to the brush scoring configuration with validation and rollback capabilities.
 """
 
+import shutil
+import tempfile
+from pathlib import Path
+
 import pytest
 import yaml
-from pathlib import Path
-import tempfile
-import shutil
-from unittest.mock import patch
 
 from sotd.learning.brush_configuration_updater import BrushConfigurationUpdater
 

@@ -6,8 +6,9 @@ Tests that the mismatch analyzer correctly bolds the primary component
 based on user_intent in brush matches.
 """
 
-import pytest  # noqa: F401
 from unittest.mock import Mock  # noqa: F401
+
+import pytest  # noqa: F401
 
 from sotd.match.tools.analyzers.mismatch_analyzer import MismatchAnalyzer
 

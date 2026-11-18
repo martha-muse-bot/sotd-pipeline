@@ -1052,7 +1052,6 @@ class TestTableGenerator:
 
     def test_wsdb_unicode_normalization(self, tmp_path, monkeypatch):
         """Test that Unicode normalization works in slug lookup."""
-        import unicodedata
 
         # Create directory structure
         table_generators_dir = tmp_path / "sotd" / "report" / "table_generators"

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Tests for EnhancedTableGenerator."""
 
+from unittest.mock import patch
+
 import pytest
-from unittest.mock import Mock, patch
 
 from sotd.report.enhanced_table_generator import EnhancedTableGenerator
 

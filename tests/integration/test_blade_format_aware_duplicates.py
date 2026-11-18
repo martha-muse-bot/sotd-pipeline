@@ -1,4 +1,5 @@
 import yaml
+
 from sotd.match.tools.managers.validate_correct_matches import ValidateCorrectMatches
 
 

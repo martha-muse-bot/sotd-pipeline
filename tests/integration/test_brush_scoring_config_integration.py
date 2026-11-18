@@ -4,10 +4,11 @@ Integration tests for BrushScoringConfig.
 Tests the configuration system with real YAML files and pipeline integration.
 """
 
-import pytest
 import tempfile
-import yaml
 from pathlib import Path
+
+import pytest
+import yaml
 
 from sotd.match.brush.config import BrushScoringConfig
 
@@ -99,8 +100,9 @@ class TestBrushScoringConfigIntegration:
 
         # Create temporary config file for testing
         import tempfile
-        import yaml
         from pathlib import Path
+
+        import yaml
 
         temp_config_file = tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False)
         yaml.dump(test_config, temp_config_file)

@@ -5,9 +5,10 @@ Tests the CLI interface for the aggregate phase, including argument parsing,
 validation, and integration with the aggregation logic.
 """
 
-import pytest
 from pathlib import Path
 from unittest.mock import patch
+
+import pytest
 
 from sotd.aggregate.cli import get_parser, main
 from sotd.aggregate.run import run

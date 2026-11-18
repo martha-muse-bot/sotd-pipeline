@@ -2,8 +2,8 @@
 
 import pytest
 
-from sotd.enrich.registry import EnricherRegistry
 from sotd.enrich.razor_format_enricher import RazorFormatEnricher
+from sotd.enrich.registry import EnricherRegistry
 
 
 @pytest.fixture

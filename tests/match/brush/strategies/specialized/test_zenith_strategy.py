@@ -1,4 +1,5 @@
 import pytest
+
 from sotd.match.brush.strategies.specialized.zenith_strategy import ZenithBrushMatchingStrategy
 
 

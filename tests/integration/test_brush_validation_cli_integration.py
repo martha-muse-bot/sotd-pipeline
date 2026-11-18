@@ -1,11 +1,12 @@
 """Integration tests for brush CLI validation interface."""
 
-import tempfile
-import shutil
-from pathlib import Path
-import yaml
 import json
+import shutil
+import tempfile
+from pathlib import Path
 from unittest.mock import Mock
+
+import yaml
 
 from sotd.match.brush.validation.cli import BrushValidationCLI
 

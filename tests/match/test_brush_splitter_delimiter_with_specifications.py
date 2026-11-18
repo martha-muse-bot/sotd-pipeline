@@ -5,11 +5,12 @@ This test suite validates that legitimate delimiters work correctly even when
 specification tokens like " x " are present in the text.
 """
 
-import pytest
 from pathlib import Path
 
-from sotd.match.brush.splitter import BrushSplitter
+import pytest
+
 from sotd.match.brush.handle_matcher import HandleMatcher
+from sotd.match.brush.splitter import BrushSplitter
 
 
 class TestBrushSplitterDelimiterWithSpecifications:

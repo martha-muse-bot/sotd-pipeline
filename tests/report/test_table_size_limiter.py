@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Tests for TableSizeLimiter."""
 
-import pytest
 
 from sotd.report.table_size_limiter import TableSizeLimiter
 

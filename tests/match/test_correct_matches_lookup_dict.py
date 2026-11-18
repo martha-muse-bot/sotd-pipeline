@@ -5,7 +5,6 @@ Tests the O(1) lookup optimization and memory efficiency features.
 """
 
 import time
-from unittest.mock import Mock
 
 from sotd.match.correct_matches import CorrectMatchesChecker
 

@@ -5,11 +5,12 @@ This test covers edge cases where specification tokens might interfere
 with legitimate delimiter detection.
 """
 
-import pytest
 from pathlib import Path
 
-from sotd.match.brush.splitter import BrushSplitter
+import pytest
+
 from sotd.match.brush.handle_matcher import HandleMatcher
+from sotd.match.brush.splitter import BrushSplitter
 from sotd.match.brush_matcher import BrushMatcher
 
 

@@ -5,9 +5,10 @@ This module tests the brush learning report generator with real data
 and validates integration with the actual brush scoring system.
 """
 
-import pytest
-from pathlib import Path
 import json
+from pathlib import Path
+
+import pytest
 
 from sotd.learning.brush_learning_report_generator import BrushLearningReportGenerator
 

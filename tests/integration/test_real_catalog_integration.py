@@ -5,13 +5,14 @@ Integration tests using real YAML catalog files.
 These tests validate that changes to production YAML files don't break parsing.
 """
 
-import pytest
 from pathlib import Path
 
-from sotd.match.brush_matcher import BrushMatcher
-from sotd.match.soap_matcher import SoapMatcher
-from sotd.match.razor_matcher import RazorMatcher
+import pytest
+
 from sotd.match.blade_matcher import BladeMatcher
+from sotd.match.brush_matcher import BrushMatcher
+from sotd.match.razor_matcher import RazorMatcher
+from sotd.match.soap_matcher import SoapMatcher
 
 
 @pytest.fixture(scope="session")

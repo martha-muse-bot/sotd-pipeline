@@ -5,14 +5,15 @@ This module tests the configuration update workflow with real configuration file
 and validates the complete workflow from ChatGPT suggestions to applied changes.
 """
 
-import yaml
-import tempfile
 import shutil
+import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
-from sotd.learning.brush_configuration_updater import BrushConfigurationUpdater
+import yaml
+
 from sotd.learning.brush_chatgpt_analyzer import BrushChatGPTAnalyzer
+from sotd.learning.brush_configuration_updater import BrushConfigurationUpdater
 from sotd.learning.brush_learning_report_generator import BrushLearningReportGenerator
 
 
@@ -254,8 +255,9 @@ class TestBrushConfigurationUpdaterIntegration:
 
         # Create temporary config file for testing
         import tempfile
-        import yaml
         from pathlib import Path
+
+        import yaml
 
         temp_config_file = tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False)
         yaml.dump(test_config, temp_config_file)

@@ -1,11 +1,8 @@
 """Unit tests for ResultConflictResolver component."""
 
-import pytest
-from typing import List, Dict, Any
 from sotd.match.brush.scoring.resolver import (
-    ResultConflictResolver,
     ConflictType,
-    ConflictResolution,
+    ResultConflictResolver,
 )
 from sotd.match.types import MatchResult
 

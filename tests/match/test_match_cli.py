@@ -1,7 +1,8 @@
 """Integration tests for match CLI functionality."""
 
-import pytest
 from unittest.mock import patch
+
+import pytest
 
 from sotd.match.cli import get_parser
 from sotd.match.run import main

@@ -5,8 +5,9 @@ Tests the CLI interface for the report phase, including argument parsing,
 validation, and integration with the report generation logic.
 """
 
-import pytest
 from unittest.mock import patch
+
+import pytest
 
 from sotd.report.cli import get_parser
 from sotd.report.run import main
@@ -129,8 +130,9 @@ class TestReportCLIUtilities:
 
     def test_get_default_month_current_month(self):
         """Test default month is current month."""
-        from sotd.report.cli import get_default_month
         import datetime
+
+        from sotd.report.cli import get_default_month
 
         month = get_default_month()
         current_month = datetime.datetime.now().strftime("%Y-%m")

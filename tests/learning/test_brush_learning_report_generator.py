@@ -5,8 +5,9 @@ This module tests the brush learning report generation system that analyzes
 brush validation data and generates structured reports for ChatGPT analysis.
 """
 
-import pytest
 from pathlib import Path
+
+import pytest
 
 from sotd.learning.brush_learning_report_generator import BrushLearningReportGenerator
 

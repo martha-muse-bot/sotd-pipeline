@@ -1,8 +1,9 @@
 # pylint: disable=redefined-outer-name
 
-import pytest
 from pathlib import Path
 from unittest.mock import patch
+
+import pytest
 
 from sotd.match.blade_matcher import BladeMatcher
 
@@ -48,8 +49,8 @@ Half DE:
         - perma.*sharp
 """
     # Create a temporary file for the session
-    import tempfile
     import os
+    import tempfile
 
     temp_file = tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False)
     temp_file.write(yaml_content)
@@ -361,8 +362,8 @@ FHS:
       patterns:
         - fhs
 """
-    import tempfile
     import os
+    import tempfile
 
     temp_file = tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False)
     temp_file.write(yaml_content)
@@ -431,8 +432,8 @@ AC:
       patterns:
         - feather.*pro
 """
-    import tempfile
     import os
+    import tempfile
 
     temp_file = tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False)
     temp_file.write(yaml_content)
@@ -477,8 +478,8 @@ DE:
       patterns:
         - feather
 """
-    import tempfile
     import os
+    import tempfile
 
     temp_file = tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False)
     temp_file.write(yaml_content)
@@ -530,8 +531,8 @@ Half DE:
       patterns:
         - perma.*sharp
 """
-    import tempfile
     import os
+    import tempfile
 
     temp_file = tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False)
     temp_file.write(yaml_content)
@@ -583,8 +584,8 @@ GEM:
       patterns:
         - ptfe
 """
-    import tempfile
     import os
+    import tempfile
 
     temp_file = tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False)
     temp_file.write(yaml_content)

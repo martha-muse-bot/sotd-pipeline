@@ -1,7 +1,9 @@
 """Tests for HandleMatcher with unified MatchResult support."""
 
-import pytest
 from unittest.mock import patch
+
+import pytest
+
 from sotd.match.brush.handle_matcher import HandleMatcher
 from sotd.match.types import MatchResult
 

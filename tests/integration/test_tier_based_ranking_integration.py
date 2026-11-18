@@ -5,15 +5,16 @@ This test suite validates the complete workflow from aggregation to delta calcul
 with real SOTD data to ensure the tier-based ranking system works correctly in production.
 """
 
-import pytest
-import tempfile
 import shutil
+import tempfile
+
+import pytest
 
 from sotd.aggregate.aggregators.core.brush_aggregator import BrushAggregator
-from sotd.aggregate.aggregators.core.soap_sample_brand_aggregator import SoapSampleBrandAggregator
 from sotd.aggregate.aggregators.core.razor_aggregator import RazorAggregator
-from sotd.report.delta_calculator import DeltaCalculator
+from sotd.aggregate.aggregators.core.soap_sample_brand_aggregator import SoapSampleBrandAggregator
 from sotd.report.annual_delta_calculator import AnnualDeltaCalculator
+from sotd.report.delta_calculator import DeltaCalculator
 from sotd.report.utils.tier_identifier import TierIdentifier
 
 

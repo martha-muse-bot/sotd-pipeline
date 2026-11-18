@@ -1,11 +1,11 @@
 """Tests for manufacturer and format aggregators."""
 
+from sotd.aggregate.aggregators.formats import aggregate_razor_formats
 from sotd.aggregate.aggregators.manufacturers import (
-    aggregate_razor_manufacturers,
     aggregate_blade_manufacturers,
+    aggregate_razor_manufacturers,
     aggregate_soap_makers,
 )
-from sotd.aggregate.aggregators.formats import aggregate_razor_formats
 
 
 def test_aggregate_razor_manufacturers():

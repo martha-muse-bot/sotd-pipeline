@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """Tests for ParameterValidator."""
 
-import pytest
 
-from sotd.report.parameter_validator import ParameterValidator, ValidationResult
+from sotd.report.parameter_validator import ParameterValidator
 
 
 class TestParameterValidator:

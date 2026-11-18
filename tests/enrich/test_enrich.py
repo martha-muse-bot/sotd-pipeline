@@ -1,9 +1,9 @@
 """Tests for the enrich phase CLI and main functionality."""
 
+import argparse
 import json
 from pathlib import Path
 from unittest.mock import patch
-import argparse
 
 import pytest
 

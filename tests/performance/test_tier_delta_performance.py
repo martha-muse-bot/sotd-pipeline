@@ -1,12 +1,12 @@
 """Performance tests for tier-based delta calculation system."""
 
-import time
 import statistics
+import time
 
 import pytest
 
-from sotd.report.delta_calculator import DeltaCalculator
 from sotd.report.annual_delta_calculator import AnnualDeltaCalculator
+from sotd.report.delta_calculator import DeltaCalculator
 
 # Wall-clock threshold asserts are load-sensitive; excluded in CI via `-m "not perf"`.
 pytestmark = pytest.mark.perf
@@ -113,8 +113,9 @@ class TestTierDeltaPerformance:
 
     def test_memory_usage_optimization(self):
         """Test memory usage characteristics."""
-        import psutil
         import os
+
+        import psutil
 
         # Get current process
         process = psutil.Process(os.getpid())

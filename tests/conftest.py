@@ -1,7 +1,8 @@
 """Pytest configuration and fixtures for SOTD Pipeline tests."""
 
-import pytest
 from pathlib import Path
+
+import pytest
 
 
 @pytest.fixture(scope="session")

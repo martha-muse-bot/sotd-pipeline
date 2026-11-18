@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """Tests for the MismatchAnalyzer class."""
 
+import io
+import re
+import shutil
 import tempfile
 from pathlib import Path
 from unittest.mock import Mock, patch
-import shutil
-import io
+
 from rich.console import Console
-import re
 
 from sotd.match.tools.analyzers.mismatch_analyzer import MismatchAnalyzer
 

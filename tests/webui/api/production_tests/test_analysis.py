@@ -4,8 +4,6 @@
 import sys
 from pathlib import Path
 
-import pytest
-
 # Add the webui directory to the Python path
 webui_dir = Path(__file__).parent.parent
 if str(webui_dir) not in sys.path:

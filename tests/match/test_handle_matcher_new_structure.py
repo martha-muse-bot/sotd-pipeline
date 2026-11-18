@@ -1,7 +1,8 @@
 """Test handle matcher with new brand/model hierarchy structure."""
 
-import pytest
 from pathlib import Path
+
+import pytest
 
 from sotd.match.brush.handle_matcher import HandleMatcher
 

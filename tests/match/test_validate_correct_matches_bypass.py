@@ -1,7 +1,9 @@
 """Test ValidateCorrectMatches bypass functionality."""
 
-import pytest
 from pathlib import Path
+
+import pytest
+
 from sotd.match.tools.managers.validate_correct_matches import ValidateCorrectMatches
 
 
@@ -78,7 +80,7 @@ class TestValidateCorrectMatchesBypass:
         validator = ValidateCorrectMatches(correct_matches_path=data_dir / "correct_matches")
         validator._data_dir = data_dir
 
-        print(f"🔍 DEBUG: Starting validate_field for brush")
+        print("🔍 DEBUG: Starting validate_field for brush")
 
         # Validate the brush field
         issues, expected_structure = validator.validate_field("brush")
@@ -112,13 +114,13 @@ class TestValidateCorrectMatchesBypass:
         print(
             f"🔍 DEBUG: Testing BrushMatcher constructor with brush_scoring_config_path: {brush_scoring_config_path}"
         )
-        print(f"🔍 DEBUG: Testing that bypass_correct_matches is no longer a constructor parameter")
+        print("🔍 DEBUG: Testing that bypass_correct_matches is no longer a constructor parameter")
 
         try:
             # This should work - test the constructor signature without bypass_correct_matches
             matcher = BrushMatcher(brush_scoring_config_path=brush_scoring_config_path)
 
-            print(f"🔍 DEBUG: Successfully created BrushMatcher")
+            print("🔍 DEBUG: Successfully created BrushMatcher")
             print(
                 f"🔍 DEBUG: bypass_correct_matches attribute: {getattr(matcher, 'bypass_correct_matches', 'NOT_FOUND')}"
             )
@@ -140,7 +142,7 @@ class TestValidateCorrectMatchesBypass:
         project_root = Path(__file__).parent.parent.parent
         data_dir = project_root / "data"
 
-        print(f"🔍 DEBUG: Testing ValidateCorrectMatches initialization")
+        print("🔍 DEBUG: Testing ValidateCorrectMatches initialization")
         print(f"🔍 DEBUG: Data directory: {data_dir}")
 
         try:
@@ -149,7 +151,7 @@ class TestValidateCorrectMatchesBypass:
             )
             validator._data_dir = data_dir
 
-            print(f"🔍 DEBUG: Successfully created validator")
+            print("🔍 DEBUG: Successfully created validator")
             print(f"🔍 DEBUG: Validator data_dir: {validator._data_dir}")
 
             # Should have data_dir set correctly

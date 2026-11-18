@@ -1,6 +1,7 @@
 """Tests for analyze unmatched razors functionality."""
 
 import json
+
 from sotd.match.tools.analyzers.unmatched_analyzer import UnmatchedAnalyzer
 
 

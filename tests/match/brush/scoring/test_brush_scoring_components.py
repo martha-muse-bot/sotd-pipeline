@@ -7,7 +7,6 @@ Tests individual components with single responsibilities and improved architectu
 from unittest.mock import Mock
 
 from sotd.match.brush.scoring.engine import ScoringEngine
-
 from sotd.match.brush.scoring.matcher import CorrectMatchesMatcher
 from sotd.match.brush.scoring.orchestrator import StrategyOrchestrator
 from sotd.match.brush.scoring.performance.performance_monitor import PerformanceMonitor
@@ -725,7 +724,7 @@ class TestScoringEngine:
         score_handle = scored_handle[0].score
 
         # Debug: Let's see what modifiers are actually being calculated
-        print(f"Debug: Testing handle_brand_without_knot_brand modifier directly...")
+        print("Debug: Testing handle_brand_without_knot_brand modifier directly...")
         modifier_value = engine._modifier_handle_brand_without_knot_brand(
             "test", result_handle, "handle_only"
         )
@@ -737,12 +736,12 @@ class TestScoringEngine:
         print(f"  expected effect: {modifier_value * modifier_weight}")
 
         # Debug: Let's see what's happening in _calculate_modifiers
-        print(f"\nDebug: Testing _calculate_modifiers method...")
+        print("\nDebug: Testing _calculate_modifiers method...")
         modifier_score = engine._calculate_modifiers(result_handle, "test", "handle_only")
         print(f"  _calculate_modifiers returned: {modifier_score}")
 
         # Debug: Let's see what modifier functions are available
-        print(f"\nDebug: Available modifier functions:")
+        print("\nDebug: Available modifier functions:")
         for modifier_name in mock_config.get_all_modifier_names("handle_only"):
             modifier_function = getattr(engine, f"_modifier_{modifier_name}", None)
             print(f"  {modifier_name}: {modifier_function is not None}")
@@ -751,21 +750,21 @@ class TestScoringEngine:
                 print(f"    type: {type(modifier_function)}")
 
         # Debug: Let's see what strategy name is being extracted
-        print(f"\nDebug: Strategy name extraction:")
+        print("\nDebug: Strategy name extraction:")
         strategy_name = engine._get_strategy_name_from_result(result_handle)
         print(f"  _get_strategy_name_from_result returned: {strategy_name}")
         print(f"  result.strategy field: {result_handle.strategy}")
         print(f"  result.match_type field: {result_handle.match_type}")
 
         # Debug: Let's see what base score and modifiers are being used
-        print(f"\nDebug: Base score and modifiers:")
+        print("\nDebug: Base score and modifiers:")
         base_score = mock_config.get_base_strategy_score(strategy_name)
         print(f"  Base score for '{strategy_name}': {base_score}")
         modifier_names = mock_config.get_all_modifier_names(strategy_name)
         print(f"  Modifier names for '{strategy_name}': {modifier_names}")
 
         # Debug: Let's test each modifier individually
-        print(f"\nDebug: Testing individual modifiers:")
+        print("\nDebug: Testing individual modifiers:")
         input_text = "Farvour Turn Craft 26mm"
         for modifier_name in modifier_names:
             modifier_function = getattr(engine, f"_modifier_{modifier_name}", None)
@@ -797,11 +796,11 @@ class TestScoringEngine:
         score_knot = scored_knot[0].score
 
         # Debug: Let's see what's happening with knot_only strategy
-        print(f"\nDebug: knot_only strategy analysis:")
+        print("\nDebug: knot_only strategy analysis:")
         print(f"  Final score: {score_knot}")
 
         # Debug: Test each modifier individually for knot_only
-        print(f"\nDebug: Testing knot_only modifiers individually:")
+        print("\nDebug: Testing knot_only modifiers individually:")
         input_text = "Farvour Turn Craft 26mm"
         for modifier_name in mock_config.get_all_modifier_names("knot_only"):
             modifier_function = getattr(engine, f"_modifier_{modifier_name}", None)
@@ -812,7 +811,7 @@ class TestScoringEngine:
                 print(f"  {modifier_name}: {modifier_value} × {modifier_weight} = {effect}")
 
         # Debug: Test the specific brand balance modifier
-        print(f"\nDebug: Testing handle_brand_without_knot_brand for knot_only:")
+        print("\nDebug: Testing handle_brand_without_knot_brand for knot_only:")
         brand_modifier_value = engine._modifier_handle_brand_without_knot_brand(
             input_text, result_knot, "knot_only"
         )
@@ -824,7 +823,7 @@ class TestScoringEngine:
         print(f"  expected effect: {brand_modifier_value * brand_modifier_weight}")
 
         # Debug: Check what the unified result contains
-        print(f"\nDebug: Unified result content:")
+        print("\nDebug: Unified result content:")
         unified_result = engine.cached_results.get("unified_result")
         if unified_result and hasattr(unified_result, "matched"):
             handle_data = unified_result.matched.get("handle", {})
@@ -844,7 +843,7 @@ class TestScoringEngine:
         ), f"knot_only score {score_knot} != expected {expected_knot}"
 
         # Test positive case: Handle strategy with handle indicators (should get rewarded)
-        print(f"\nDebug: Testing handle_only strategy with handle indicators (positive case)...")
+        print("\nDebug: Testing handle_only strategy with handle indicators (positive case)...")
         test_input_positive = "Farvour Turn Craft wood handle"
         result_positive = MatchResult(
             original=test_input_positive,
@@ -893,13 +892,13 @@ class TestScoringEngine:
         score_handle = scored_handle[0].score
 
         # Debug: Let's see what's happening in Scenario 2
-        print(f"\nDebug: Scenario 2 analysis:")
-        print(f"  Input text: Declaration B2")
-        print(f"  Expected score: 40.0 + 0.0 + 0.0 + 25.0 = 65.0")
+        print("\nDebug: Scenario 2 analysis:")
+        print("  Input text: Declaration B2")
+        print("  Expected score: 40.0 + 0.0 + 0.0 + 25.0 = 65.0")
         print(f"  Actual score: {score_handle}")
 
         # Debug: Test each modifier individually for Scenario 2
-        print(f"\nDebug: Testing Scenario 2 modifiers individually:")
+        print("\nDebug: Testing Scenario 2 modifiers individually:")
         input_text_scenario2 = "Declaration B2"
         for modifier_name in mock_config.get_all_modifier_names("handle_only"):
             modifier_function = getattr(engine, f"_modifier_{modifier_name}", None)

@@ -1,7 +1,9 @@
 """Integration tests for BrushEnricher user intent detection with real catalog data."""
 
-import pytest
 from pathlib import Path
+
+import pytest
+
 from sotd.enrich.brush_enricher import BrushEnricher
 
 

@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Tests for the delta calculator module."""
 
-import pytest
 from typing import Any, Dict, Tuple
+
+import pytest
+
 from sotd.report.delta_calculator import DeltaCalculator, calculate_deltas_for_period
 
 

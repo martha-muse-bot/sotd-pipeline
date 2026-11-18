@@ -264,14 +264,14 @@ class TestIndividualBrushStrategyIntegration:
         from sotd.match.brush.strategies.known.known_brush_strategy import (
             KnownBrushMatchingStrategy,
         )
+        from sotd.match.brush.strategies.other_brushes_strategy import (
+            OtherBrushMatchingStrategy,
+        )
         from sotd.match.brush.strategies.specialized.omega_semogue_strategy import (
             OmegaSemogueBrushMatchingStrategy,
         )
         from sotd.match.brush.strategies.specialized.zenith_strategy import (
             ZenithBrushMatchingStrategy,
-        )
-        from sotd.match.brush.strategies.other_brushes_strategy import (
-            OtherBrushMatchingStrategy,
         )
 
         # Create individual strategies

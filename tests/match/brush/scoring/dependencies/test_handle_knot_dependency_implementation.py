@@ -8,9 +8,9 @@ within automated split strategies while maintaining 100% alignment.
 import pytest
 
 from sotd.match.brush.scoring.dependencies.strategy_dependency_manager import (
-    StrategyDependencyManager,
-    StrategyDependency,
     DependencyType,
+    StrategyDependency,
+    StrategyDependencyManager,
 )
 from sotd.match.brush_matcher import BrushMatcher
 from sotd.match.types import create_match_result

@@ -5,8 +5,9 @@ This strategy wraps the legacy system's medium_priority_automated_split logic
 to integrate with the scoring system architecture.
 """
 
-import pytest
 from unittest.mock import Mock
+
+import pytest
 
 from sotd.match.brush.strategies.automated.medium_priority_automated_split_strategy import (
     MediumPriorityAutomatedSplitStrategy,

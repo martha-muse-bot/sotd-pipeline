@@ -11,12 +11,13 @@ The rehydrated structure should be IDENTICAL to the original regex match structu
 
 import json
 import tempfile
-import yaml
 from pathlib import Path
-import pytest
 
-from sotd.match.brush_matcher import BrushMatcher
+import pytest
+import yaml
+
 from sotd.match.brush.strategies.correct_matches_strategy import CorrectMatchesStrategy
+from sotd.match.brush_matcher import BrushMatcher
 
 
 class TestStructurePreservationTDD:

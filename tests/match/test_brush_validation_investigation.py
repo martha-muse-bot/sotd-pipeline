@@ -527,7 +527,7 @@ class TestBrushValidationInvestigation:
             print(f"   Field type determined: {field_type}")
 
             # Check what the method actually received
-            print(f"   Data structure analysis:")
+            print("   Data structure analysis:")
             print(f"     Has 'brand' key: {'brand' in user_choice_data}")
             print(f"     Has 'model' key: {'model' in user_choice_data}")
             print(f"     Brand value: {user_choice_data.get('brand')}")
@@ -538,7 +538,7 @@ class TestBrushValidationInvestigation:
             # The issue might be that the method is receiving the wrong level of data
             # Let me check what happens when we pass the 'result' part
             result_data = user_choice_data.get("result", {})
-            print(f"   Result data analysis:")
+            print("   Result data analysis:")
             print(f"     Has 'brand' key: {'brand' in result_data}")
             print(f"     Has 'model' key: {'model' in result_data}")
             print(f"     Brand value: {result_data.get('brand')}")
@@ -551,7 +551,7 @@ class TestBrushValidationInvestigation:
             print(f"   Field type with result data: {field_type_result}")
 
             # Now test the actual validation flow
-            print(f"\n📋 Testing actual validation flow:")
+            print("\n📋 Testing actual validation flow:")
             input_text = "Rad Dinosaur Creations - Jetson - 25mm Muhle STF"
             month = "2025-06"
             system_used = "scoring"
@@ -634,7 +634,7 @@ class TestBrushValidationInvestigation:
             print(f"   Field type determined: {field_type}")
 
             # Analyze the logic step by step
-            print(f"   Logic analysis:")
+            print("   Logic analysis:")
             print(f"     Has 'brand' key: {'brand' in production_matched_data}")
             print(f"     Has 'model' key: {'model' in production_matched_data}")
             print(f"     Brand value: {production_matched_data.get('brand')}")
@@ -653,7 +653,7 @@ class TestBrushValidationInvestigation:
             print(f"       model is None: {model is None}")
 
             # Now test the actual validation flow with production data
-            print(f"\n📋 Testing validation flow with production data:")
+            print("\n📋 Testing validation flow with production data:")
             input_text = "Rad Dinosaur Creations - Jetson - 25mm Muhle STF"
             month = "2025-06"
             system_used = "scoring"

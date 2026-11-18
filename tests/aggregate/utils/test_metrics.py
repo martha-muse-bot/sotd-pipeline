@@ -2,23 +2,23 @@
 """Tests for metrics utility functions."""
 
 from sotd.aggregate.utils.metrics import (
-    calculate_avg_shaves_per_user,
-    calculate_median_shaves_per_user,
-    calculate_shaves,
-    calculate_unique_users,
-    calculate_unique_soaps,
-    calculate_unique_brands,
-    calculate_total_samples,
-    calculate_sample_users,
-    calculate_sample_brands,
-    calculate_unique_sample_soaps,
-    calculate_total_mashup_shaves,
-    calculate_mashup_users,
-    calculate_unique_razors,
-    calculate_unique_blades,
-    calculate_unique_brushes,
     add_rank_field,
+    calculate_avg_shaves_per_user,
+    calculate_mashup_users,
+    calculate_median_shaves_per_user,
     calculate_metadata,
+    calculate_sample_brands,
+    calculate_sample_users,
+    calculate_shaves,
+    calculate_total_mashup_shaves,
+    calculate_total_samples,
+    calculate_unique_blades,
+    calculate_unique_brands,
+    calculate_unique_brushes,
+    calculate_unique_razors,
+    calculate_unique_sample_soaps,
+    calculate_unique_soaps,
+    calculate_unique_users,
 )
 
 

@@ -7,12 +7,10 @@ This test file validates that all strategies follow the same external scoring pa
 3. No ComponentScoreCalculator usage in strategies
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock
 from pathlib import Path
 
-from sotd.match.brush.scoring.engine import ScoringEngine
 from sotd.match.brush.config import BrushScoringConfig
+from sotd.match.brush.scoring.engine import ScoringEngine
 from sotd.match.types import MatchResult
 
 

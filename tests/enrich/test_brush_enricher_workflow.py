@@ -1,7 +1,9 @@
 """Integration tests for complete BrushEnricher workflow with user intent detection."""
 
-import pytest
 from pathlib import Path
+
+import pytest
+
 from sotd.enrich.brush_enricher import BrushEnricher
 
 

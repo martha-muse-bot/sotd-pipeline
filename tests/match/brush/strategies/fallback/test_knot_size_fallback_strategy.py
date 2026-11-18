@@ -1,6 +1,7 @@
 # pylint: disable=redefined-outer-name
-import pytest
 from unittest.mock import patch
+
+import pytest
 
 from sotd.match.brush.strategies.fallback.knot_size_fallback_strategy import (
     KnotSizeFallbackStrategy,

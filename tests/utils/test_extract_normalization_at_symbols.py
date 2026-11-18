@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Tests for @ symbol normalization in extract_normalization.py"""
 
-import pytest
 from sotd.utils.extract_normalization import strip_social_media_handles
 
 

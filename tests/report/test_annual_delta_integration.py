@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """Integration tests for annual delta calculation in report generation."""
 
-from pathlib import Path
-from sotd.report.annual_generator import LegacyAnnualReportGenerator
-from sotd.report.annual_delta_calculator import AnnualDeltaCalculator
-from sotd.report.annual_comparison_loader import AnnualComparisonLoader
-import tempfile
 import json
+import tempfile
+from pathlib import Path
+
+from sotd.report.annual_comparison_loader import AnnualComparisonLoader
+from sotd.report.annual_delta_calculator import AnnualDeltaCalculator
+from sotd.report.annual_generator import LegacyAnnualReportGenerator
 
 
 class TestAnnualDeltaIntegration:

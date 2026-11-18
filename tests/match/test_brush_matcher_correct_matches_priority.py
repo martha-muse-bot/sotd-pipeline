@@ -6,11 +6,12 @@ and return immediately, while other strategies only run when correct matches
 find nothing.
 """
 
+import shutil
+import tempfile
+from pathlib import Path
+
 import pytest
 import yaml
-from pathlib import Path
-import tempfile
-import shutil
 
 from sotd.match.brush_matcher import BrushMatcher
 

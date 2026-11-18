@@ -5,8 +5,9 @@ This module tests the ChatGPT integration system for brush learning analysis
 that generates structured prompts and processes ChatGPT responses for suggestions.
 """
 
-import pytest
 from unittest.mock import patch
+
+import pytest
 
 from sotd.learning.brush_chatgpt_analyzer import BrushChatGPTAnalyzer
 

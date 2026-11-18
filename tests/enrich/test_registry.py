@@ -1,8 +1,8 @@
 import pytest
 
+from sotd.enrich.blade_enricher import BladeCountEnricher
 from sotd.enrich.enricher import BaseEnricher
 from sotd.enrich.registry import EnricherRegistry
-from sotd.enrich.blade_enricher import BladeCountEnricher
 from sotd.enrich.straight_razor_enricher import StraightRazorEnricher
 
 

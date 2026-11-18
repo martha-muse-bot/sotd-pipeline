@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Tests for the annual comparison data loader module."""
 
-import tempfile
 import json
+import tempfile
 from pathlib import Path
+
 from sotd.report.annual_comparison_loader import AnnualComparisonLoader
 
 

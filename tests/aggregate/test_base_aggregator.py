@@ -1,6 +1,7 @@
 """Tests for base aggregator functionality."""
 
 import pytest
+
 from sotd.aggregate.aggregators.base_aggregator import BaseAggregator
 
 

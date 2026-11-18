@@ -6,15 +6,16 @@ information shown in the CLI output, including component details, split informat
 and detailed modifier descriptions.
 """
 
-import pytest
-from pathlib import Path
 import sys
+from pathlib import Path
+
+import pytest
 
 # Add project root to path for imports
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from webui.api.brush_matching import analyze_brush, BrushAnalysisRequest
+from webui.api.brush_matching import BrushAnalysisRequest, analyze_brush
 
 
 @pytest.mark.asyncio
@@ -224,7 +225,7 @@ class TestBrushMatchingAPIIntegration:
         response = await analyze_brush(request)
 
         # Debug: Print response structure
-        print(f"\n=== Response Debug ===")
+        print("\n=== Response Debug ===")
         print(f"Response type: {type(response)}")
         print(f"Response attributes: {dir(response)}")
         print(f"Has enrichedData: {hasattr(response, 'enrichedData')}")

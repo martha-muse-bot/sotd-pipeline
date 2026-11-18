@@ -6,7 +6,6 @@ in real-world scenarios across different pipeline phases.
 """
 
 import time
-from unittest.mock import patch
 
 from sotd.utils.performance import PerformanceMonitor
 

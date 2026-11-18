@@ -1,4 +1,5 @@
 import pytest
+
 from sotd.match.types import MatchResult
 
 

@@ -4,8 +4,6 @@
 import json
 from pathlib import Path
 
-import pytest
-
 from sotd.aggregate.aggregators.core import aggregate_razors
 from sotd.aggregate.load import dedupe_records_by_id, load_enriched_data
 from sotd.aggregate.utils.metrics import calculate_metadata, calculate_shaves

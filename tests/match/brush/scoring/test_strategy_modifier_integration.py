@@ -7,8 +7,8 @@ that can adjust scores based on input characteristics.
 
 from unittest.mock import Mock
 
-from sotd.match.brush.scoring.engine import ScoringEngine
 from sotd.match.brush.config import BrushScoringConfig
+from sotd.match.brush.scoring.engine import ScoringEngine
 from sotd.match.types import MatchResult
 
 
@@ -352,10 +352,12 @@ class TestModifierConfiguration:
         }
 
         # Create config from test data
-        from sotd.match.brush.config import BrushScoringConfig
         import tempfile
-        import yaml
         from pathlib import Path
+
+        import yaml
+
+        from sotd.match.brush.config import BrushScoringConfig
 
         # Create temporary file
         temp_config_file = tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False)
@@ -434,10 +436,12 @@ class TestModifierConfiguration:
         }
 
         # Create config from test data
-        from sotd.match.brush.config import BrushScoringConfig
         import tempfile
-        import yaml
         from pathlib import Path
+
+        import yaml
+
+        from sotd.match.brush.config import BrushScoringConfig
 
         # Create temporary file
         temp_config_file = tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False)
@@ -477,8 +481,9 @@ class TestModifierIntegrationWithScoringEngine:
         """Set up test fixtures."""
         # Create a temporary config file for testing
         import tempfile
-        import yaml
         from pathlib import Path
+
+        import yaml
 
         # Create minimal test config
         test_config = {
@@ -640,7 +645,7 @@ class TestModifierIntegrationWithScoringEngine:
         # Debug output
         assert result.strategy is not None
         strategy_name = result.strategy
-        print(f"\n=== Debug Output ===")
+        print("\n=== Debug Output ===")
         print(f"Strategy: {strategy_name}")
         print(f"Base score: {self.config.get_base_strategy_score(strategy_name)}")
         print(
@@ -659,7 +664,7 @@ class TestModifierIntegrationWithScoringEngine:
         print(
             f"Expected modifier score: {modifier_value * self.config.get_strategy_modifier(strategy_name, 'multiple_brands')}"
         )
-        print(f"=== End Debug ===\n")
+        print("=== End Debug ===\n")
 
         # Should have base score (60) plus modifier (25) for multiple brands
         # Base score: 60 (from brush_scoring_config.yaml)

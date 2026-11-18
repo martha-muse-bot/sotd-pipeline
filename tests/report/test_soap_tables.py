@@ -1,7 +1,5 @@
 """Tests for soap table generators."""
 
-import json
-from pathlib import Path
 
 import pytest
 

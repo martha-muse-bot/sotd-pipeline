@@ -1,12 +1,13 @@
 """Tests for filtered entries integration in match phase."""
 
-import pytest
-import tempfile
 import shutil
+import tempfile
 from pathlib import Path
+
+import pytest
 import yaml
 
-from sotd.match.run import match_record, _get_filtered_entries_manager
+from sotd.match.run import _get_filtered_entries_manager, match_record
 
 
 @pytest.fixture

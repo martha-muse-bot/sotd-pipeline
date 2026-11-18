@@ -1,12 +1,13 @@
 """Integration tests for annual range processing in report phase."""
 
 import json
-import pytest
 from pathlib import Path
 from unittest.mock import Mock, patch
 
+import pytest
+
 from sotd.report.cli import get_parser, validate_args
-from sotd.report.run import run_annual_report, main
+from sotd.report.run import main, run_annual_report
 
 
 class TestAnnualRangeIntegration:

@@ -5,11 +5,12 @@ This module tests the ChatGPT integration system with real learning reports
 and validates the complete workflow from report generation to ChatGPT analysis.
 """
 
-import yaml
 from unittest.mock import patch
 
-from sotd.learning.brush_learning_report_generator import BrushLearningReportGenerator
+import yaml
+
 from sotd.learning.brush_chatgpt_analyzer import BrushChatGPTAnalyzer
+from sotd.learning.brush_learning_report_generator import BrushLearningReportGenerator
 
 
 class TestBrushChatGPTAnalyzerIntegration:

@@ -9,8 +9,8 @@ import pytest
 from sotd.report.annual_generator import (
     AnnualReportGenerator,
     create_annual_report_generator,
-    generate_annual_report_content,
     generate_annual_report,
+    generate_annual_report_content,
 )
 
 

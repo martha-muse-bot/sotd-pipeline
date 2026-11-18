@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Tests for base brush matching strategy classes."""
 
-import pytest
 from abc import ABC
+
+import pytest
 
 from sotd.match.brush.strategies.base_brush_matching_strategy import (
     BaseBrushMatchingStrategy,

@@ -1,7 +1,8 @@
 """Tests for the template processor utility."""
 
-import pytest
 from pathlib import Path
+
+import pytest
 
 from sotd.utils.template_processor import TemplateProcessor
 
