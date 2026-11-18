@@ -554,6 +554,11 @@ known_brushes:
       knot_size_mm: 24
       patterns:
         - omega.*10029
+    "10051":
+      knot_size_mm: 23
+      knot_loft_mm: 51
+      patterns:
+        - omega.*10051
     "10065":
       knot_size_mm: 23
       patterns:
@@ -1850,6 +1855,10 @@ known_knot_based_brushes:
       fiber: Badger
       patterns:
         - boti.*enlightener
+    Foregoer:
+      fiber: Badger
+      patterns:
+        - boti.*foregoer
     Knight:
       fiber: Synthetic
       patterns:

@@ -140,6 +140,10 @@ known_knots:
       fiber: Badger
       patterns:
         - boti.*enlightener
+    Foregoer:
+      fiber: Badger
+      patterns:
+        - boti.*foregoer
     Knight:
       fiber: Synthetic
       patterns:

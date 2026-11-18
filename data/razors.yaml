@@ -462,6 +462,7 @@ Cartridge/Disposable:
       - m[uü]hle.*fusion
       - sc?hick intuition
       - billie
+      - alshabab.*disposable
 Case:
   Ability:
     format: Straight
@@ -1350,7 +1351,7 @@ Hadoson (Matsukura):
     format: Straight
     patterns:
       - (hadoson|matsukura)(?:.*\d{1,2}/(8|16))?
-Haircut and Shave Company:
+Haircut & Shave Company:
   NO75:
     patterns:
       - haircut.*75
@@ -1358,6 +1359,9 @@ Haircut and Shave Company:
   Ti Efficient:
     patterns:
       - haircut.*shave.*efficient
+  P076:
+    patterns:
+      - haircut.*shave.*p076
 Handlebar:
   Shaving Company Dali:
     patterns:
@@ -1483,6 +1487,14 @@ iKon:
   X3:
     patterns:
       - ikon.*x3
+Imperial Razor:
+  format: Straight
+  Straight:
+    patterns:
+      - imperial.*razor.*(straight|\d{1,2}/(8|16)|hollow|ground)
+  Warranted:
+    patterns:
+      - imperial.*razor.*warranted
 Iwasaki:
   Straight:
     format: Straight
@@ -1581,6 +1593,10 @@ Kai:
     patterns:
       - kai.*excelia
 Kampfe:
+  Traditional Safety Razor:
+    patterns:
+      - kampfe.*(\bde\b|safety|traditional)
+Kampfe Bros.:
   Star Lather Catcher 1902:
     format: Other
     patterns:
@@ -1948,10 +1964,13 @@ New England Razor Co.:
     patterns:
       - new.*england.*(straight|\d{1,2}/(8|16)|hollow|ground)
 Nobel:
+  format: Straight
   Kamisori:
-    format: Straight
     patterns:
       - nobel.*kamisori(?# PAD FOR PRIORITY LENGTH xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx)
+  Straight:
+    patterns:
+      - nobel.*(straight|\d{1,2}/(8|16)|hollow|ground)
 Noble Otter:
   DE:
     patterns:
@@ -2944,7 +2963,7 @@ T. Noonan & Sons:
   Straight:
     format: Straight
     patterns:
-      - t\. noonan
+      - t\.? noonan.*(sons?)?
 TRC:
   DE:
     patterns:

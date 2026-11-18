@@ -118,6 +118,17 @@ Dubl Duck M3 boar:
   - file: 2026-05.json
     comment_ids:
     - omevesv
+Farvor Turncraft Ocean Blue Omega Pro 49 Boar:
+  handle: Farvor Turncraft Ocean Blue
+  knot: Omega Pro 49 Boar
+  match_type: null
+  corrected: false
+  validated_at: null
+  should_not_split: false
+  occurrences:
+  - file: 2026-11.json
+    comment_ids:
+    - 19sgavcmfmygz
 Grizzly Bay - v24 Fanchurian 26mm badger:
   handle: null
   knot: null

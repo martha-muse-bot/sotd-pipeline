@@ -167,6 +167,7 @@ AC:
     - schick p-30
     - schick p-30 proline artist club (se)
     - schick p30
+    - schick pro line p-30
     - schick proline
     - schick proline (ac)
     - schick proline ac
@@ -338,6 +339,8 @@ DE:
     Super Stainless (Green):
     - 7 o'clock
     - 7 o'clock - super stainless (green)
+    - 7 o'clock black - super stainless
+    - 7 o'clock black super stainless
     - 7 o'clock green
     - 7 o'clock ss
     - gilette 7 o' clock super stainless (green)
@@ -414,6 +417,7 @@ DE:
     - assured for men
   Astra:
     Superior Platinum (Green):
+    - 2010 astra superior platinum russia
     - astra
     - astra - green
     - astra - platinum
@@ -451,6 +455,8 @@ DE:
     - astra super platinum (greens)
     - astra superior platinum
     - astra superior platinum (green)
+    - astra superior platinum (green) - 1st 2 pass shave
+    - astra superior platinum (green) - 2nd 2 pass shave
     - astra superior platinum (in)
     - astra superior platinum (unknown number of uses)
     - astra superior platinum - 1st shave with it
@@ -540,6 +546,7 @@ DE:
     - bic cp
     - bic platinum
     - bic platinum chrome
+    - feather , bic chrome
   Big Ben:
     Platinum:
     - big ben platinum (egypt) - 1st 2 pass shave
@@ -647,6 +654,7 @@ DE:
     - dorco st-300 blue
     - dorco st-300 platinum
     - dorco st300
+    - dorco st300 1/2 de
     - dorco st300 blue
     - dorco st300 in each razor
     - dorco stainless
@@ -929,6 +937,9 @@ DE:
     - gillette silve blue
     - gillette silver blue
     - gillette silver blue (?)
+    - gillette silver blue (gsb) - 1st 2 pass shave
+    - gillette silver blue (gsb) - 2nd 2 pass shave
+    - gillette silver blue (gsb) - 3rd and final pass shave
     - gillette silver blue - 1st 2 pass shave
     - gillette silver blue - 1st shave
     - gillette silver blue - 3rd 2 pass shave
@@ -1366,6 +1377,7 @@ DE:
     - personna
     Viking's Sword:
     - personna - vikings sword
+    - viking sword
     - vikings sword
   Polsilver:
     Super Iridium:
@@ -1565,6 +1577,7 @@ DE:
     - super-max platinum
     - supermax platinum plus
     - vidyut super max platinum
+    - vidyut super-max platinum - 1st 2 pass shave
     Stainless (Red):
     - super max - stainless
     - super max stainless
@@ -2079,6 +2092,7 @@ Injector:
     - personna - 74 - injector
     Injector:
     - accutec - se injector blade
+    - accutec injector
     - hills (personna) chrome injector
     - persona injector
     - personna - ptfe - ss injector blade

@@ -202,6 +202,7 @@ Art Razor:
 Ascender:
   Skyline:
   - ascender razors skyline r1
+  - ascender skyline r1
 Assured for Men:
   Safety Razor:
   - assured for men - saftey razor
@@ -480,6 +481,7 @@ Blackland:
   - blackland razors batch 003 "alumibird"
   - blackland razors blackbird
   - blackland razors blackbird (lite)
+  - blackland razors blackbird (stainless)
   - blackland razors blackbird brass
   - blackland razors blackbird in brass
   - blackland razors blackbird lite
@@ -600,6 +602,7 @@ Blackland:
   - blackland vector (lite)
   - blackland vector (oc)
   - blackland vector - lite
+  - blackland vector - machined / safety bar
   - blackland vector lite
   - blackland vector lite (oc)
   - blackland vector oc
@@ -811,6 +814,7 @@ Carl Rader:
 Cartridge/Disposable:
   ? ''
   : - (part 1 challenge razor) bic 3 blade disposable
+    - alshabaab disposable open comb
     - atra handle
     - bic - metal disposable single blade
     - bic - sensitive
@@ -892,8 +896,8 @@ Cartridge/Disposable:
     - walgreens 1 blade disposable razor
 Case:
   Ability:
-  - case ability razor
   - case ability 6/8 hollow ground square point
+  - case ability razor
   Temperite:
   - case temperite 5/8 hollow ground square point
 Caveem:
@@ -1033,6 +1037,11 @@ CJB:
 Classic:
   King Cobra:
   - classic shaving - king cobra
+Clauss:
+  Straight:
+  - clauss - 6/8
+  - clauss 6/8 full hollow round point
+  - clauss barbers special 5/8
 Clix:
   E-Z Flo:
   - clix e-z flo
@@ -1504,6 +1513,7 @@ Feather:
   - feather shavette ss kami
   - feather shavette ss kamisori
   - feather ss
+  - feather ss - kamisori
   - feather ss ac kamisori shavette
   - feather ss kami
   - feather ss kamisori
@@ -1970,6 +1980,7 @@ Gillette:
   - gillette fatboy adjustable (e3-1959)
   - gillette fatboy e2
   - gillette fatboy e4
+  - 'gillette fatboy e4 (setting: 5)'
   - 'gillette fatboy e4 (setting: 6)'
   - gillette fatboy e4 - rhodium revamp by razor emporium
   - gillette fatboy executive
@@ -2252,6 +2263,7 @@ Gillette:
   - gillette slim adjustable tto (i2 - 1963 q2)
   - gillette slim adjustable, i2 date code, rhodium plated
   - gillette slim aristocrat h4
+  - 'gillette slim aristocrat h4 (setting: 5)'
   - 'gillette slim aristocrat h4 (setting: 7)'
   - gillette slim g4
   - gillette slim g4 set 4 and 3
@@ -2483,6 +2495,7 @@ Gillette:
   - gillette super speed tto
   - gillette super speed tto - red tip (e1 - 1959 q1)
   - gillette super speed y-4
+  - gillette super speed y4
   - gillette superspeed
   - gillette superspeed "baseball razor"
   - gillette superspeed (1950)
@@ -2567,6 +2580,7 @@ Gillette:
   - gillette - tech (flat bottom)
   - gillette - tech (pre-war)
   - gillette - tech (triangle slots)
+  - gillette - tech (wwii black bakelite)
   - gillette - tech - maggard ss handle
   - gillette - tech - no date code, oblong slots (1946-1950)
   - gillette - tech 1964 solid handle
@@ -2818,9 +2832,11 @@ Hadoson (Matsukura):
   - hadoson matsukura 60 7/8, frameback square point
   - hadoson matsukura 7/8 frameback
   - hadoson matsukura frameback 7/8
-Haircut and Shave Company:
+Haircut & Shave Company:
   NO75:
   - 0.75 aluminium plate @haircutandshaveco
+  P076:
+  - haircut & shave co p076 ti
   Ti Efficient:
   - haircut & shave co. ti efficient
 Haryali:
@@ -2931,6 +2947,8 @@ Henson:
   - henson al13+ mild
   - henson al13+ mild w/stainless steel han
   - henson al13+ red canada edition aluminum
+  - henson al13+ silver aluminum
+  - henson al13+ silver aluminum (new! first shave)
   - henson al13+ w/alpha stainless handle
   - henson al13++
   - henson al13++ medium
@@ -2969,6 +2987,7 @@ Henson:
   - henson ti22 +++, polished, tattooed ("dark mechanicus razor")
   - henson ti22 +++, polished, tattooed ("omnisynod shaver")
   - henson ti22 +++, polished, tattooed ("opus machina razor")
+  - henson ti22 aggressive - gray
   - henson ti22 med
   - henson ti22 medium
   - henson ti22 mild
@@ -3038,6 +3057,10 @@ iKon:
   - ikon x3
   - ikon x3 slant
   - ikon x3 slant w/ bulldog aluminium handle
+Imperial Razor:
+  Warranted:
+  - imperial razor "warranted"
+  - imperial razor - warranted
 Iwasaki:
   Straight:
   - iwasaki 13/16" full hollow square point tamahagane
@@ -3233,6 +3256,9 @@ Kai:
   - kai captain kamisori
   - kai captain kamisori cap-exj
 Kampfe:
+  Traditional Safety Razor:
+  - kampfe men's traditional safety razor
+Kampfe Bros.:
   Star Lather Catcher 1902:
   - gem star lathercatcher
   - kampfe bros star
@@ -3289,6 +3315,7 @@ Karve:
   - karve - christopher bradley copper
   - karve - christopher bradley stainless (sb b plate)
   - karve - the christopher bradley - brass
+  - karve - the christopher bradley safety razor - brass
   - karve a plate
   - karve alum sb-d
   - karve aluminum d plate
@@ -3393,6 +3420,7 @@ Karve:
   - karve christopher bradley sb-c
   - karve christopher bradley sb-d
   - karve christopher bradley, brass
+  - karve christopher bradley, brass, c-plate open comb
   - karve cristopher bradley
   - karve d plate
   - karve every day aluminum
@@ -3424,6 +3452,7 @@ Karve:
   - karve ss 3.25" c sb
   - karve ss c plate
   - karve ss plate c w/nacet -
+  - karve ss with sb c plate
   - karve stainless steel (b)
   - karve stainless steel (c plate)
   - karve w/ d oc plate
@@ -3635,6 +3664,7 @@ Leaf:
 Lee Mfg Co.:
   Straight:
   - lee manufacturing - lee's warranted
+  - lee manufacturing co - lee's warranted
   - lee manufacturing co. - lee's warranted
   - lee warranted/pipe razor/j rodgers
   - lee's warranted
@@ -3690,6 +3720,7 @@ Maggard:
   - maggard razors - slant + ufo
   - maggard razors slant head with mr14 matte gray
   - maggard slant
+  - maggard slant on an mr14 handle
   - maggards slant on a mr14 handle
   - maggards slant on an mr14 handle
   SS70:
@@ -4004,6 +4035,11 @@ Nobel:
   - nobel folding kamisori
   - 'nobel folding kamisori (straight shave #143)'
   - 'nobel folding kamisori (straight shave #144)'
+  Straight:
+  - nobel 5/8 straight
+  - nobel japanese straight
+  - nobel japanese straight 5/8
+  - nobel japanese straight 5/8"
 Noble Otter:
   DE:
   - noble otter no1c
@@ -4176,9 +4212,6 @@ Other Straight Razor:
     - celebrated razor - sheffield
     - celebrated wedge - no maker indicated
     - chas r coates & sons trade mark - extra hollow - square point - 6/8
-    - clauss - 6/8
-    - clauss 6/8 full hollow round point
-    - clauss barbers special 5/8
     - coma - the barber - half hollow - round point - 13/16
     - coma the barber - half hollow - french point - 13/16
     - coma the barber - half hollow - round point - 13/16
@@ -4222,7 +4255,6 @@ Other Straight Razor:
     - hunter & son sheffield hand forged (yeoss custom)
     - ic vincent garanti - half hollow - square point - 6/8
     - imperial razor
-    - imperial razor "warranted"
     - imperial razor camel (yeoss custom)
     - jernbolaget n° 11 5/8
     - john h. albright "hanover"
@@ -4238,8 +4270,6 @@ Other Straight Razor:
     - minerva razor - purple scales
     - mtb 6/8 hollow ground square point
     - n & r dodge - sheffield
-    - nobel 5/8 straight
-    - nobel japanese straight 5/8
     - perfection - germany
     - perfection razor
     - perfection razor - germany
@@ -4943,6 +4973,7 @@ Red Imp:
   Straight:
   - red imp - 5/8 wedge
   - red imp 5/8 wedge
+  - red imp 5/8" near wedge
   - 'red imp wedge (straight shave #153)'
   - red imp wedge 5/8
   - 'red imp wedge 5/8 (straight shave #142)'
@@ -5037,7 +5068,6 @@ Rockwell:
   6C:
   - rockwell - 6c
   - rockwell - 6c (r3 plate)
-  - rockwell - setpoint (black aluminum)
   - rockwell 6c
   - 'rockwell 6c #4'
   - rockwell 6c (3 plate)
@@ -5123,6 +5153,7 @@ Rockwell:
   - 'rockwell 6s: 6'
   - rockwell 6s:6
   Setpoint:
+  - rockwell - setpoint (black aluminum)
   - rockwell setpoint
   T2:
   - gunmetal rockwell t2 set 2 1/2, 1 3/4
@@ -5470,6 +5501,7 @@ Steer & Webster:
 Stirling:
   Aggressive:
   - stirling aggressive
+  - stirling aggressive & yaqi mellon
   - stirling aggressive (face) yaqi zephyr (back of neck)
   - stirling aggressive razor head with maggard m1 handle
   - stirling aggressive razor head with short fat handle
@@ -5493,6 +5525,7 @@ Sun Moon:
   Straight:
   - sun & moon "green goblin"
   - sun & moon "green goblin" 14/15
+  - sun & moon - green goblin
   - sun & moon - green goblin - 11/16
   - sun & moon green goblin
   - sun moon "green goblin"
@@ -5510,6 +5543,9 @@ Supply:
   Single Edge Max:
   - supply adjustable
   - supply se adjustable
+T. Noonan & Sons:
+  Straight:
+  - t noonan & sons - mecca straight
 Tanifuji:
   Kintaka:
   - kintaka made by tanifuji
@@ -5763,6 +5799,7 @@ Timeless:
   - timeless - aluminum slant
   - timeless - razor (aluminum slant)
   - timeless - slant razor
+  - timeless al slant
   - timeless aluminum slant
   - timeless aluminum slant .86
   - timeless slant al
@@ -6050,6 +6087,7 @@ Weck:
   Sextoblade:
   - weck - hair shaper
   - weck - sextoblade
+  - weck - sextoblade - glitter scales
   - weck - sextoblade - orderly (u.s. navy medical corps model)
   - weck - sextoblade - red scales
   - weck - weck junior
@@ -6112,12 +6150,12 @@ Werner Breidenbach:
   - werner breidenbach monte rosa 14 15/16 full hollow square point
 Wester Bros:
   Straight:
+  - wester bros "anchor brand" "manganese" steel 11/16 full hollow
   - wester bros - no. 34 de-fi
   - wester bros de-fi no. 34 straight
   - wester bros no. 34 - "de-fi"
-  - wester bros. little de-fi
-  - wester bros "anchor brand" "manganese" steel 11/16 full hollow
   - wester bros. 34 de-fi 5/8 fh
+  - wester bros. little de-fi
 Whityle:
   Glide Pro:
   - whityle 20t glide pro 4d razor
@@ -6368,6 +6406,7 @@ Yaqi:
     8/10
   Matte Black:
   - yaqi cobbed black matte
+  - yaqi cobbled black matte
   Open Comb:
   - yaqi - open comb
   - yaqi - open comb head

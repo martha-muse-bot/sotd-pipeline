@@ -203,7 +203,7 @@ artisan_handles:
   Farvour Turn Craft:
     Unspecified:
       patterns:
-        - farvour.*(?:turn).*(?:craft)
+        - farvou?r.*(?:turn).*(?:craft)
   Firehouse Potter:
     Unspecified:
       patterns:
@@ -959,6 +959,7 @@ other_handles:
         - \bmob\b
         - my handle
         - handcrafted
+        - handmade
         # - custom(?! color)
   Unknown:
     Unspecified:
