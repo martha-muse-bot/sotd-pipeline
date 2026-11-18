@@ -1,7 +1,6 @@
 """Unit and integration tests for pipeline container scripts."""
 
 import os
-from pathlib import Path
 from unittest.mock import patch
 
 
@@ -16,11 +15,6 @@ class TestRunPipelineScript:
 
         # Create lock file
         lock_file.touch()
-
-        # Mock the script execution
-        script_path = (
-            Path(__file__).parent.parent.parent / "docker" / "pipeline" / "run-pipeline.sh"
-        )
 
         # Set up environment
         env = os.environ.copy()

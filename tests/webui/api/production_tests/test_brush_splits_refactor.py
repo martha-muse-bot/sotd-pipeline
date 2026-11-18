@@ -35,9 +35,6 @@ class TestBrushSplitsYAMLRefactor:
                 }
             }
 
-            # Mock file context manager
-            mock_file = mock_open.return_value.__enter__.return_value
-
             validator = BrushSplitValidator()
             validator.yaml_path = yaml_file
 
@@ -78,9 +75,6 @@ class TestBrushSplitsYAMLRefactor:
 
             # Mock file exists check
             mock_exists.return_value = True
-
-            # Mock file context manager
-            mock_file = mock_open.return_value.__enter__.return_value
 
             validator = BrushSplitValidator()
             validator.yaml_path = yaml_file
@@ -125,7 +119,7 @@ class TestBrushSplitsYAMLRefactor:
         # Mock the file operations to avoid touching filesystem
         with (
             patch("pathlib.Path.exists") as mock_exists,
-            patch("builtins.open") as mock_open,
+            patch("builtins.open"),
             patch("yaml.safe_load") as mock_yaml_load,
         ):
             # Mock file exists

@@ -112,7 +112,6 @@ class TestBrushSplit:
             "knot": "Declaration B15",
             "validated_at": "2025-01-27T14:30:00Z",
             "corrected": False,
-            "validated_at": "2025-01-27T14:30:00Z",
             "occurrences": [{"file": "test.json", "comment_ids": ["123"]}],
         }
         split = BrushSplit.from_dict(data)

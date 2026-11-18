@@ -180,7 +180,7 @@ class TestBrushLearningReportGenerator:
         with pytest.raises(AttributeError):
             # This will fail initially - we need to implement it
             # Type ignore for test - we're testing that the method doesn't exist
-            report = generator.generate_comprehensive_report()  # type: ignore
+            generator.generate_comprehensive_report()  # type: ignore
 
     def test_system_identification_in_reports(self):
         """Test that system identification is included in all reports."""

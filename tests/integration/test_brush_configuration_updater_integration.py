@@ -419,7 +419,7 @@ class TestBrushConfigurationUpdaterIntegration:
 
         for malformed in malformed_suggestions:
             # Should handle gracefully and return False
-            result = updater.apply_chatgpt_suggestions(malformed)
+            updater.apply_chatgpt_suggestions(malformed)
             # Implementation should handle errors gracefully
             # Exact behavior depends on implementation choices
 

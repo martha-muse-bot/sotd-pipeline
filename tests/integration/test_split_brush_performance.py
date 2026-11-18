@@ -194,7 +194,7 @@ class TestSplitBrushPerformance:
         args = MockArgs()
 
         # Process data
-        mismatches = analyzer.identify_mismatches(data, "brush", args)
+        analyzer.identify_mismatches(data, "brush", args)
 
         # Get final memory usage
         final_memory = process.memory_info().rss / 1024 / 1024  # MB

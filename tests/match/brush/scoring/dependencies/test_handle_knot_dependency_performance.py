@@ -235,9 +235,7 @@ class TestHandleKnotDependencyPerformance:
                     test_case
                 )
             )
-            executable_results = scoring_matcher_with_dependencies._apply_dependency_constraints(
-                strategy_results
-            )
+            scoring_matcher_with_dependencies._apply_dependency_constraints(strategy_results)
         scalability_time = time.time() - start_time
 
         print(f"\nScalability Test (with {len(dependency_manager.dependencies)} dependencies):")

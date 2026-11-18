@@ -319,8 +319,8 @@ class TestBrushChatGPTAnalyzerIntegration:
         # Generate reports using the learning report generator
         generator = BrushLearningReportGenerator(validation_data)
         strategy_report = generator.generate_strategy_analysis_report()
-        modifier_report = generator.generate_modifier_performance_report()
-        pattern_report = generator.generate_pattern_discovery_report()
+        generator.generate_modifier_performance_report()
+        generator.generate_pattern_discovery_report()
 
         # Test ChatGPT analyzer with real reports
         analyzer = BrushChatGPTAnalyzer("test-api-key")

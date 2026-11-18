@@ -178,12 +178,12 @@ def test_brush_matcher_initialization_performance():
     """Test that BrushMatcher initialization benefits from pattern caching."""
     # First BrushMatcher - should compile all patterns
     first_start = time.time()
-    brush_matcher1 = BrushMatcher()
+    BrushMatcher()
     first_time = time.time() - first_start
 
     # Second BrushMatcher - should use cached patterns
     second_start = time.time()
-    brush_matcher2 = BrushMatcher()
+    BrushMatcher()
     second_time = time.time() - second_start
 
     # Verify second is faster (cache hit)

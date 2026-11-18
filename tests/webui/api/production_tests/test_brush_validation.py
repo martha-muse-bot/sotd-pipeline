@@ -1,4 +1,5 @@
 """Tests for brush validation API endpoints."""
+# ruff: noqa: E402  # module imports depend on the sys.path setup below
 
 import shutil
 import sys

@@ -1,4 +1,5 @@
 """Test that AutomatedSplitStrategy correctly identifies Black Eagle HT2 for the full input text."""
+# ruff: noqa: E402  # module imports depend on the sys.path setup below
 
 import re
 import sys

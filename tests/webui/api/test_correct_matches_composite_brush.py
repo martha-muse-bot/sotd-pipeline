@@ -192,9 +192,6 @@ class TestCorrectMatchesCompositeBrush:
         self, mock_yaml_load, mock_open, mock_project_root
     ):
         """Test that empty sections are handled gracefully."""
-        # Mock project root
-        mock_project_root = Path("/fake/project/root")
-
         # Mock YAML data with empty sections
         mock_yaml_data = {"brush": {}, "handle": {}, "knot": {}}
 

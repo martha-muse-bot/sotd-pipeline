@@ -159,13 +159,13 @@ class TestRazorMatcherPerformance:
         # Test case-sensitive lookup (exact match)
         start_time = time.time()
         for _ in range(100):
-            result = matcher._check_correct_matches("gillette superspeed")  # Exact case
+            matcher._check_correct_matches("gillette superspeed")  # Exact case
         case_sensitive_time = time.time() - start_time
 
         # Test case-insensitive lookup (different case)
         start_time = time.time()
         for _ in range(100):
-            result = matcher._check_correct_matches("Gillette Superspeed")  # Different case
+            matcher._check_correct_matches("Gillette Superspeed")  # Different case
         case_insensitive_time = time.time() - start_time
 
         # Both should be fast, case-insensitive should not be significantly slower

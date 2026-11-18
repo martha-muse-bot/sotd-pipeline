@@ -53,7 +53,7 @@ def main() -> int:
     # Test JSON fetch
     print("\n[INFO] Testing JSON fetch...")
     try:
-        json_data = get_reddit_json(
+        get_reddit_json(
             "https://www.reddit.com/r/wetshaving/about.json", cookies=cookies
         )
         print("[INFO] ✅ Successfully fetched JSON data")

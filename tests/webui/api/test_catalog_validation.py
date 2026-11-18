@@ -514,12 +514,10 @@ class TestCatalogValidationIntegration:
                     assert "matched_model" in issue, "Mismatch should have matched_model"
 
         finally:
-            # Clean up
-            if "correct_matches_dir" in locals() and correct_matches_dir.exists():
-                import shutil
-
-                shutil.rmtree(correct_matches_dir)
-            elif "correct_matches_file" in locals() and correct_matches_file.exists():
+            # Clean up (this test creates a single correct_matches.yaml
+            # file via create_temp_yaml, never a correct_matches/ directory,
+            # so there is no directory branch to clean here)
+            if "correct_matches_file" in locals() and correct_matches_file.exists():
                 correct_matches_file.unlink()
 
 
@@ -655,7 +653,7 @@ class TestMoveCatalogEntries:
             "knot": {"Knot Brand": {"Knot Model": ["test brush pattern"]}},
         }
 
-        correct_matches_dir = self.create_temp_correct_matches_dir(initial_data, tmp_path)
+        self.create_temp_correct_matches_dir(initial_data, tmp_path)
 
         # Create correct_matches directory at tmp_path / "data" / "correct_matches"
         # (matching the structure expected by get_data_directory())
@@ -804,7 +802,7 @@ class TestMoveCatalogEntries:
         # Create empty correct_matches data
         initial_data = {"razor": {}}
 
-        correct_matches_dir = self.create_temp_correct_matches_dir(initial_data, tmp_path)
+        self.create_temp_correct_matches_dir(initial_data, tmp_path)
 
         # Import the move endpoint function
         import sys

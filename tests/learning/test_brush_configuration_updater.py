@@ -212,7 +212,7 @@ class TestBrushConfigurationUpdater:
         updater = BrushConfigurationUpdater(self.config_path)
 
         # Create backup
-        backup_path = updater.create_backup()
+        updater.create_backup()
 
         # Make changes
         adjustments = {"weight_adjustments": {"known_brush": 90.0}}

@@ -8,6 +8,7 @@ This test validates that the API response includes:
 4. Complete metadata for handle and knot components
 5. All scoring breakdown information
 """
+# ruff: noqa: E402  # module imports depend on the sys.path setup below
 
 import sys
 from pathlib import Path
