@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Optional
 import yaml
 
 from sotd.match.utils.regex_error_utils import compile_regex_with_context, create_context_dict
+from sotd.utils.data_dir import get_data_dir
 
 
 class CatalogLoader:
@@ -21,12 +22,34 @@ class CatalogLoader:
     """
 
     def __init__(self, data_path: Optional[Path] = None):
-        self.data_path = data_path or Path("data")
+        # Default is the run's data dir (get_data_dir: SOTD_DATA_DIR env var
+        # > "data", relative values anchored at the repo root) — the same
+        # tree SoapMashupEnricher's get_default_soaps_path() resolves, so
+        # both enrichers registered by setup_enrichers() read one tree when
+        # no data_path is passed. (Previously the default was a bare
+        # CWD-relative Path("data"), so with SOTD_DATA_DIR set the mashup
+        # enricher read $SOTD_DATA_DIR/soaps.yaml while this loader read
+        # CWD-relative ./data/handles.yaml and ./data/knots.yaml.)
+        self.data_path = Path(data_path) if data_path is not None else get_data_dir()
         self._pattern_cache: Dict[str, List[str]] = {}
         self._compiled_pattern_cache: Dict[str, List[re.Pattern]] = {}
         self._handle_defaults_cache: Dict[str, Dict[str, Any]] = {}
         self._cache_hits = 0
         self._cache_misses = 0
+
+    def set_data_path(self, data_path: Path) -> None:
+        """Point the loader at a different data directory.
+
+        Cached patterns and handle defaults are dropped so the next load
+        reads from the new directory. A no-op when the path is unchanged
+        (compared resolved, so ``"./data"`` vs ``"data"`` does not clear
+        the cache, and the same relative value from a different CWD does).
+        """
+        data_path = Path(data_path)
+        if data_path.resolve() == self.data_path.resolve():
+            return
+        self.data_path = data_path
+        self.clear_pattern_cache()
 
     def load_handle_patterns(self, brand: str, model: str) -> List[str]:
         """
@@ -315,7 +338,9 @@ class CatalogLoader:
         for pattern in patterns:
             # Create context for enhanced error reporting
             context = create_context_dict(
-                file_path=f"data/{catalog_type}.yaml", brand=brand, model=model
+                file_path=str(self.data_path / f"{catalog_type}.yaml"),
+                brand=brand,
+                model=model,
             )
             compiled_pattern = compile_regex_with_context(pattern, context)
             compiled_patterns.append(compiled_pattern)

@@ -994,8 +994,7 @@ def test_search_threads_broad_query_omits_full_month_name():
     # Complete month so the completeness check finds no missing days and
     # runs no day-specific queries (which would pollute the query capture).
     complete_month = [
-        MockSubmission(f"s{day:02d}", f"SOTD Thread Aug {day:02d}, 2025")
-        for day in range(1, 32)
+        MockSubmission(f"s{day:02d}", f"SOTD Thread Aug {day:02d}, 2025") for day in range(1, 32)
     ]
 
     class QueryCaptureSubreddit(MockSubreddit):
@@ -1102,8 +1101,7 @@ def test_search_threads_complete_month_runs_no_day_queries():
     """
     queries: list[str] = []
     all_threads = [
-        MockSubmission(f"s{day:02d}", f"SOTD Thread May {day:02d}, 2025")
-        for day in range(1, 32)
+        MockSubmission(f"s{day:02d}", f"SOTD Thread May {day:02d}, 2025") for day in range(1, 32)
     ]
 
     class QueryCaptureSubreddit:
@@ -1991,7 +1989,7 @@ class TestThreadOverrides:
                 MockSubmission("search2", "Tuesday SOTD Thread - Jun 02, 2025"),
             ]
 
-        def fake_process_thread_overrides(month, reddit, debug=False):
+        def fake_process_thread_overrides(month, reddit, debug=False, override_path=None):
             return [MockSubmission("override1", "Wednesday SOTD 25 June")]
 
         monkeypatch.setattr(
@@ -2021,7 +2019,7 @@ class TestThreadOverrides:
                 MockSubmission("unique", "Thursday SOTD Thread - Jun 26, 2025"),
             ]
 
-        def fake_process_thread_overrides(month, reddit, debug=False):
+        def fake_process_thread_overrides(month, reddit, debug=False, override_path=None):
             return [
                 MockSubmission("duplicate", "Wednesday SOTD 25 June"),
                 MockSubmission("override_unique", "Friday SOTD 27 June"),
@@ -2105,7 +2103,7 @@ class TestThreadOverrides:
         )
         monkeypatch.setattr(
             "sotd.fetch.reddit.process_thread_overrides",
-            lambda month, reddit, debug=False: [],
+            lambda month, reddit, debug=False, override_path=None: [],
         )
         monkeypatch.setattr(
             "sotd.fetch.overrides.load_thread_exclude_ids",
@@ -2127,7 +2125,7 @@ class TestThreadOverrides:
         )
         monkeypatch.setattr(
             "sotd.fetch.reddit.process_thread_overrides",
-            lambda month, reddit, debug=False: [
+            lambda month, reddit, debug=False, override_path=None: [
                 MockSubmission("1ttrafo", "Joke Thread - Jun 1, 2025")
             ],
         )
