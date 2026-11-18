@@ -76,7 +76,7 @@ def aggregate_blade_usage_distribution(records: List[Dict[str, Any]]) -> List[Di
 
     # Convert to list of dictionaries
     result = []
-    for row in grouped.to_dict(orient="records"):  # type: ignore[reportCallIssue]  # pandas-stubs lack the "records" overload; runtime yields plain dicts
+    for row in grouped.to_dict(orient="records"):
         result.append(
             {
                 "rank": int(row["rank"]),

@@ -64,7 +64,7 @@ class SoapMashupUserAggregator(BaseAggregator):
         grouped = grouped.sort_values(["shaves", "unique_users"], ascending=[False, False])
         grouped = grouped.reset_index(drop=True).assign(position=lambda d: range(1, len(d) + 1))
         result = []
-        for row in grouped.to_dict(orient="records"):  # type: ignore[reportCallIssue]  # pandas-stubs lack the "records" overload; runtime yields plain dicts
+        for row in grouped.to_dict(orient="records"):
             result.append(
                 {
                     "rank": int(row["position"]),

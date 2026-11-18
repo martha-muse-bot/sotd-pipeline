@@ -85,7 +85,7 @@ def aggregate_brand_diversity(
 
     # Convert to list of dictionaries
     result = []
-    for row in df.to_dict(orient="records"):  # type: ignore[reportCallIssue]  # pandas-stubs lack the "records" overload; runtime yields plain dicts
+    for row in df.to_dict(orient="records"):
         result.append(
             {
                 "rank": int(row["rank"]),

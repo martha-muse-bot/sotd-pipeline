@@ -88,7 +88,7 @@ class RazorFormatUserAggregator(BaseAggregator):
         current_format = None
         current_position = 1
 
-        for row in grouped.to_dict(orient="records"):  # type: ignore[reportCallIssue]  # pandas-stubs lack the "records" overload; runtime yields plain dicts
+        for row in grouped.to_dict(orient="records"):
             format_type = str(row["format"])
 
             # Reset position counter for new format

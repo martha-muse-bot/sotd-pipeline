@@ -4,6 +4,7 @@
     "pythonVersion": "3.14",
     "typeCheckingMode": "standard",
     "reportMissingModuleSource": false,
+    "reportUnnecessaryTypeIgnore": true,
     "include": [
         "sotd",
         "tests"

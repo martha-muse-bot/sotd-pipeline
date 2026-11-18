@@ -143,7 +143,7 @@ class SoapSampleUserAggregator(BaseAggregator):
 
         # Convert to list of dictionaries
         result = []
-        for row in grouped.to_dict(orient="records"):  # type: ignore[reportCallIssue]  # pandas-stubs lack the "records" overload; runtime yields plain dicts
+        for row in grouped.to_dict(orient="records"):
             item = {
                 "rank": int(row["position"]),
                 "user": row["author"],  # Keep clean, add "u/" in report
