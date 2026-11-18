@@ -11,7 +11,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence, cast
 
 import pandas as pd
 from tqdm import tqdm
@@ -142,7 +142,10 @@ class AnnualAggregationEngine:
             median_values = self._calculate_medians_for_category("razors", df, "name", "name")
             df["median_shaves_per_user"] = median_values.fillna(0.0)
             # Update result with recalculated values
-            for idx, row in df.iterrows():
+            # zip(df.index, to_dict) instead of iterrows: rows become plain dicts
+            # (dict[str, Any]), so scalar conversions type-check without fighting
+            # the pandas-stub Series union that iterrows' row values carry
+            for idx, row in zip(df.index, df.to_dict(orient="records")):
                 idx_int = int(idx) if isinstance(idx, (int, float)) else 0
                 if idx_int < len(result):
                     result[idx_int]["unique_users"] = int(row["unique_users"])
@@ -178,7 +181,10 @@ class AnnualAggregationEngine:
             median_values = self._calculate_medians_for_category("blades", df, "name", "name")
             df["median_shaves_per_user"] = median_values.fillna(0.0)
             # Update result with recalculated values
-            for idx, row in df.iterrows():
+            # zip(df.index, to_dict) instead of iterrows: rows become plain dicts
+            # (dict[str, Any]), so scalar conversions type-check without fighting
+            # the pandas-stub Series union that iterrows' row values carry
+            for idx, row in zip(df.index, df.to_dict(orient="records")):
                 idx_int = int(idx) if isinstance(idx, (int, float)) else 0
                 if idx_int < len(result):
                     result[idx_int]["unique_users"] = int(row["unique_users"])
@@ -214,7 +220,10 @@ class AnnualAggregationEngine:
             median_values = self._calculate_medians_for_category("brushes", df, "name", "name")
             df["median_shaves_per_user"] = median_values.fillna(0.0)
             # Update result with recalculated values
-            for idx, row in df.iterrows():
+            # zip(df.index, to_dict) instead of iterrows: rows become plain dicts
+            # (dict[str, Any]), so scalar conversions type-check without fighting
+            # the pandas-stub Series union that iterrows' row values carry
+            for idx, row in zip(df.index, df.to_dict(orient="records")):
                 idx_int = int(idx) if isinstance(idx, (int, float)) else 0
                 if idx_int < len(result):
                     result[idx_int]["unique_users"] = int(row["unique_users"])
@@ -250,7 +259,10 @@ class AnnualAggregationEngine:
             median_values = self._calculate_medians_for_category("soaps", df, "name", "name")
             df["median_shaves_per_user"] = median_values.fillna(0.0)
             # Update result with recalculated values
-            for idx, row in df.iterrows():
+            # zip(df.index, to_dict) instead of iterrows: rows become plain dicts
+            # (dict[str, Any]), so scalar conversions type-check without fighting
+            # the pandas-stub Series union that iterrows' row values carry
+            for idx, row in zip(df.index, df.to_dict(orient="records")):
                 idx_int = int(idx) if isinstance(idx, (int, float)) else 0
                 if idx_int < len(result):
                     result[idx_int]["unique_users"] = int(row["unique_users"])
@@ -330,7 +342,10 @@ class AnnualAggregationEngine:
             )
             df["median_shaves_per_user"] = median_values.fillna(0.0)
             # Update result with recalculated values
-            for idx, row in df.iterrows():
+            # zip(df.index, to_dict) instead of iterrows: rows become plain dicts
+            # (dict[str, Any]), so scalar conversions type-check without fighting
+            # the pandas-stub Series union that iterrows' row values carry
+            for idx, row in zip(df.index, df.to_dict(orient="records")):
                 idx_int = int(idx) if isinstance(idx, (int, float)) else 0
                 if idx_int < len(result):
                     result[idx_int]["unique_users"] = int(row["unique_users"])
@@ -368,10 +383,17 @@ class AnnualAggregationEngine:
 
         # Group by blade, format, and user, and take the maximum uses
         # This handles cases where the same blade+format+user appears in multiple months
-        max_uses = df.groupby(["blade", "format", "user"])["uses"].max().reset_index()
+        # (as_index=False replaces the chained .reset_index(): same runtime columns,
+        # and the annotation pins the pandas-stub union to a DataFrame for pyright)
+        max_uses = cast(
+            pd.DataFrame,
+            df.groupby(["blade", "format", "user"], as_index=False)["uses"].max(),
+        )
 
         # Sort by uses descending
-        max_uses = max_uses.sort_values("uses", ascending=False).reset_index(drop=True)
+        max_uses = cast(
+            pd.DataFrame, max_uses.sort_values("uses", ascending=False).reset_index(drop=True)
+        )
 
         # Add competition ranking
         max_uses["rank"] = max_uses["uses"].rank(method="min", ascending=False).astype(int)
@@ -381,7 +403,7 @@ class AnnualAggregationEngine:
         max_uses = max_uses[cols]
 
         # Convert back to list of dicts
-        return max_uses.to_dict("records")
+        return max_uses.to_dict(orient="records")  # type: ignore[reportCallIssue]  # pandas-stubs lack the "records" overload; runtime returns list[dict]
 
     def _aggregate_specialized_brush_category(
         self, monthly_data: Dict[str, Dict], category: str
@@ -519,7 +541,7 @@ class AnnualAggregationEngine:
                 grouped["median_shaves_per_user"] = pd.Series(median_col).fillna(0.0)
 
         # Convert back to list of dicts
-        return grouped.to_dict("records")
+        return grouped.to_dict(orient="records")  # type: ignore[reportCallIssue]  # pandas-stubs lack the "records" overload; runtime returns list[dict]
 
     def _aggregate_specialized_category(
         self, monthly_data: Dict[str, Dict], category: str, identifier_field: str
@@ -640,12 +662,14 @@ class AnnualAggregationEngine:
 
         # Fill NaN for unique_users and avg_shaves_per_user
         if "unique_users" in grouped.columns:
-            grouped["unique_users"] = grouped["unique_users"].fillna(0).astype(int)
+            grouped["unique_users"] = cast(pd.Series, grouped["unique_users"]).fillna(0).astype(int)
         if "avg_shaves_per_user" in grouped.columns:
-            grouped["avg_shaves_per_user"] = grouped["avg_shaves_per_user"].fillna(0.0)
+            grouped["avg_shaves_per_user"] = cast(pd.Series, grouped["avg_shaves_per_user"]).fillna(
+                0.0
+            )
 
         # Convert back to list of dicts
-        result = grouped.to_dict("records")
+        result = grouped.to_dict(orient="records")  # type: ignore[reportCallIssue]  # pandas-stubs lack the "records" overload; runtime returns list[dict]
 
         return result
 
@@ -777,9 +801,8 @@ class AnnualAggregationEngine:
         except (ValueError, TypeError):
             # If conversion fails, just convert to string (for non-numeric identifiers)
             identifier_series = identifier_series.astype(str)
-        median_series = identifier_series.map(identifier_to_median).fillna(0.0)
-
-        return median_series
+        median_series = identifier_series.map(identifier_to_median)  # type: ignore[reportArgumentType]  # pandas stubs lack Series.map's dict overload
+        return cast(pd.Series, median_series.fillna(0.0))
 
     def _calculate_unique_users_for_category(
         self,
@@ -859,11 +882,10 @@ class AnnualAggregationEngine:
         except (ValueError, TypeError):
             # If conversion fails, just convert to string (for non-numeric identifiers)
             identifier_series = identifier_series.astype(str)
-        unique_users_series = (
-            identifier_series.map(identifier_to_unique_users).fillna(0).astype(int)
+        unique_users_series = identifier_series.map(
+            identifier_to_unique_users  # type: ignore[reportArgumentType]  # pandas stubs lack Series.map's dict overload
         )
-
-        return unique_users_series
+        return cast(pd.Series, unique_users_series.fillna(0).astype(int))
 
     def _get_aggregator_class_for_category(self, category: str):
         """Get the appropriate aggregator class for a category.
@@ -1091,7 +1113,7 @@ class AnnualAggregationEngine:
         grouped = grouped[["rank", "user", "shaves", "missed_days"]]
 
         # Convert back to list of dicts
-        result = grouped.to_dict("records")
+        result = grouped.to_dict(orient="records")  # type: ignore[reportCallIssue]  # pandas-stubs lack the "records" overload; runtime returns list[dict]
 
         return result
 
@@ -1125,7 +1147,7 @@ class AnnualAggregationEngine:
         df = pd.DataFrame(all_user_records)
 
         # Group by user and sum shaves across all months
-        user_shaves = df.groupby("user")["shaves"].sum().reset_index()
+        user_shaves = cast(pd.DataFrame, df.groupby("user", as_index=False)["shaves"].sum())
 
         # Get list of shave counts
         shave_counts = user_shaves["shaves"].tolist()
@@ -1250,8 +1272,9 @@ class AnnualAggregationEngine:
             else:
                 # Fallback if no enriched records available - use summed values (less accurate)
                 # This should rarely happen, but provides a fallback
-                unique_combinations_sum = (
-                    df.groupby("user")["unique_combinations"].sum().reset_index()
+                unique_combinations_sum = cast(
+                    pd.DataFrame,
+                    df.groupby("user", as_index=False)["unique_combinations"].sum(),
                 )
                 grouped = grouped.merge(
                     unique_combinations_sum[["user", "unique_combinations"]], on="user", how="left"
@@ -1269,7 +1292,10 @@ class AnnualAggregationEngine:
             grouped.loc[grouped["unique_combinations"] == 0, "avg_shaves_per_combination"] = 0.0
         except Exception:
             # Fallback if recalculation fails for any reason - use summed values (less accurate)
-            unique_combinations_sum = df.groupby("user")["unique_combinations"].sum().reset_index()
+            unique_combinations_sum = cast(
+                pd.DataFrame,
+                df.groupby("user", as_index=False)["unique_combinations"].sum(),
+            )
             grouped = grouped.merge(
                 unique_combinations_sum[["user", "unique_combinations"]], on="user", how="left"
             )
@@ -1303,7 +1329,7 @@ class AnnualAggregationEngine:
         ]
 
         # Convert back to list of dicts
-        result = grouped.to_dict("records")
+        result = grouped.to_dict(orient="records")  # type: ignore[reportCallIssue]  # pandas-stubs lack the "records" overload; runtime returns list[dict]
 
         return result
 
@@ -1393,7 +1419,9 @@ class AnnualAggregationEngine:
             import pandas as pd
 
             df = pd.DataFrame(all_enriched_records)
-            total_unique_shavers = int(df["author"].nunique()) if "author" in df.columns else 0
+            total_unique_shavers = (
+                cast(int, df["author"].nunique()) if "author" in df.columns else 0
+            )
         else:
             total_unique_shavers = 0
 
