@@ -117,9 +117,7 @@ def _get_field_patterns(field: str) -> _FieldPatterns:
     return cached
 
 
-def _aliases_present(
-    alias_lowers: list[tuple[str, str]], normalized_line: str
-) -> set[str]:
+def _aliases_present(alias_lowers: list[tuple[str, str]], normalized_line: str) -> set[str]:
     """Aliases whose literal text occurs on this line (case-insensitive).
 
     Every extraction pattern for an alias contains that alias literally,

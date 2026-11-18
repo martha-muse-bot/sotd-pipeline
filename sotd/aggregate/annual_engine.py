@@ -1673,9 +1673,7 @@ def process_annual(year: str, data_dir: Path, debug: bool = False, force: bool =
         # an empty year is not an aggregation, and the file would be
         # mistaken for a complete year by skip-if-exists on later runs.
         if not included_months:
-            logger.warning(
-                f"No monthly data available for {year}; skipping annual aggregation"
-            )
+            logger.warning(f"No monthly data available for {year}; skipping annual aggregation")
             return False
 
         # Aggregate monthly data (will handle empty data gracefully)
