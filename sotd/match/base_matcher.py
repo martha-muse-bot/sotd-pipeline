@@ -1,8 +1,8 @@
 import re
-
-import yaml
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+import yaml
 
 from sotd.utils.catalog_validator import validate_patterns_format
 from sotd.utils.data_dir import get_default_correct_matches_path
@@ -226,11 +226,21 @@ class BaseMatcher:
         return None
 
     def _get_format_from_catalog(self, brand: str, model: str) -> str:
-        """Get format from catalog for a brand/model combination."""
+        """Get format from catalog for a brand/model combination.
+
+        Prefers model-level format, then brand-level default, then DE.
+        """
         try:
             brand_data = self.catalog.get(brand, {})
+            if not isinstance(brand_data, dict):
+                return "DE"
+            brand_default = brand_data.get("format")
+            if not isinstance(brand_default, str):
+                brand_default = None
             model_data = brand_data.get(model, {})
-            return model_data.get("format", "DE")  # Default to DE for razors/blades
+            if isinstance(model_data, dict):
+                return model_data.get("format", brand_default or "DE")
+            return brand_default or "DE"
         except Exception:
             return "DE"
 

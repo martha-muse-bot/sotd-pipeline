@@ -1,7 +1,8 @@
 # pylint: disable=redefined-outer-name
 
-import pytest
 from unittest.mock import patch
+
+import pytest
 
 from sotd.match.razor_matcher import RazorMatcher
 from sotd.match.types import MatchResult
@@ -212,3 +213,90 @@ razor: {}
     assert result.matched["brand"] == "Koraat"
     assert result.matched["model"] == "Moarteen"
     assert result.match_type == "regex"
+
+
+def test_brand_level_format_inherits_to_models(tmp_path):
+    """Brand-level format (like brush fiber defaults) applies to models without format."""
+    catalog_content = """
+Imperial Razor:
+  format: Straight
+  Straight:
+    patterns:
+      - imperial.*razor.*(straight|hollow)
+  Warranted:
+    patterns:
+      - imperial.*razor.*warranted
+"""
+    catalog_file = tmp_path / "razors.yaml"
+    catalog_file.write_text(catalog_content)
+    correct_matches_file = tmp_path / "correct_matches.yaml"
+    correct_matches_file.write_text("razor: {}\n")
+
+    matcher = RazorMatcher(catalog_path=catalog_file, correct_matches_path=correct_matches_file)
+
+    straight = matcher.match("Imperial Razor 6/8 full hollow")
+    assert straight.matched is not None
+    assert straight.matched["brand"] == "Imperial Razor"
+    assert straight.matched["model"] == "Straight"
+    assert straight.matched["format"] == "Straight"
+
+    warranted = matcher.match("Imperial Razor Warranted")
+    assert warranted.matched is not None
+    assert warranted.matched["brand"] == "Imperial Razor"
+    assert warranted.matched["model"] == "Warranted"
+    assert warranted.matched["format"] == "Straight"
+
+
+def test_model_level_format_overrides_brand_level(tmp_path):
+    """Model-level format wins over brand-level default."""
+    catalog_content = """
+Acme:
+  format: Straight
+  Classic:
+    patterns:
+      - acme.*classic
+  Shavette:
+    format: Shavette
+    patterns:
+      - acme.*shavette
+"""
+    catalog_file = tmp_path / "razors.yaml"
+    catalog_file.write_text(catalog_content)
+    correct_matches_file = tmp_path / "correct_matches.yaml"
+    correct_matches_file.write_text("razor: {}\n")
+
+    matcher = RazorMatcher(catalog_path=catalog_file, correct_matches_path=correct_matches_file)
+
+    classic = matcher.match("Acme Classic")
+    assert classic.matched is not None
+    assert classic.matched["format"] == "Straight"
+
+    shavette = matcher.match("Acme Shavette")
+    assert shavette.matched is not None
+    assert shavette.matched["format"] == "Shavette"
+
+
+def test_brand_level_format_used_for_correct_matches(tmp_path):
+    """Correct-matches lookup resolves format from brand-level catalog default."""
+    catalog_content = """
+Imperial Razor:
+  format: Straight
+  Warranted:
+    patterns:
+      - imperial.*razor.*warranted
+"""
+    catalog_file = tmp_path / "razors.yaml"
+    catalog_file.write_text(catalog_content)
+    correct_matches_file = tmp_path / "correct_matches.yaml"
+    correct_matches_file.write_text("""
+razor:
+  Imperial Razor:
+    Warranted:
+      - "imperial razor warranted"
+""")
+
+    matcher = RazorMatcher(catalog_path=catalog_file, correct_matches_path=correct_matches_file)
+    result = matcher.match("imperial razor warranted")
+    assert result.matched is not None
+    assert result.match_type == "exact"
+    assert result.matched["format"] == "Straight"

@@ -67,24 +67,14 @@ class RazorMatcher(BaseMatcher):
                         # Simple string list format
                         for entry in entries:
                             key = entry.lower()
-                            # Get format from catalog entry
-                            fmt = "DE"  # Default format
-                            if brand in self.catalog and model in self.catalog[brand]:
-                                model_data = self.catalog[brand][model]
-                                if isinstance(model_data, dict):
-                                    fmt = model_data.get("format", "DE")
+                            fmt = self._resolve_format(brand, model)
                             lookup[key] = {"brand": brand, "model": model, "format": fmt}
                     elif isinstance(entries, dict):
                         # Nested format with additional data
                         strings = entries.get("strings", [])
                         for entry in strings:
                             key = entry.lower()
-                            # Get format from catalog entry
-                            fmt = "DE"  # Default format
-                            if brand in self.catalog and model in self.catalog[brand]:
-                                model_data = self.catalog[brand][model]
-                                if isinstance(model_data, dict):
-                                    fmt = model_data.get("format", "DE")
+                            fmt = self._resolve_format(brand, model)
                             matched_data = {"brand": brand, "model": model, "format": fmt}
                             # Copy additional fields from the entry
                             for key_field, val in entries.items():
@@ -95,23 +85,51 @@ class RazorMatcher(BaseMatcher):
         self._case_insensitive_lookup = lookup
         return lookup
 
+    def _resolve_format(self, brand: str, model: str) -> str:
+        """Resolve format with model-level override, then brand-level default, then DE.
+
+        Mirrors brush/knot brand-level defaults for fiber and knot_size_mm.
+        """
+        brand_data = self.catalog.get(brand, {})
+        if not isinstance(brand_data, dict):
+            return "DE"
+
+        brand_default = brand_data.get("format")
+        if not isinstance(brand_default, str):
+            brand_default = None
+
+        model_data = brand_data.get(model, {})
+        if isinstance(model_data, dict):
+            return model_data.get("format", brand_default or "DE")
+        return brand_default or "DE"
+
     def _compile_patterns(self):
         compiled = []
         for brand, models in self.catalog.items():
+            if not isinstance(models, dict):
+                continue
+
+            # Brand-level default (same pattern as brush fiber / knot_size_mm)
+            brand_default_format = models.get("format")
+            if not isinstance(brand_default_format, str):
+                brand_default_format = None
+
             for model, entry in models.items():
+                # Skip brand-level metadata keys (not models)
+                if model == "format":
+                    continue
+
                 # Validate that entry is a dictionary, not a string
                 if not isinstance(entry, dict):
                     raise ValueError(
                         f"Invalid YAML structure in razors.yaml: "
                         f"Brand '{brand}' -> Model '{model}' has value '{entry}' "
                         f"(type: {type(entry).__name__}), but expected a dictionary with "
-                        f"'patterns' and 'format' fields. This usually means 'format' is "
-                        f"placed at the brand level instead of the model level. "
-                        f"Fix: Move 'format: {entry}' inside the '{model}:' section."
+                        f"'patterns' (and optional 'format') fields."
                     )
 
                 patterns = entry.get("patterns", [])
-                fmt = entry.get("format", "DE")
+                fmt = entry.get("format", brand_default_format or "DE")
                 for pattern in patterns:
                     context = create_context_dict(
                         file_path=str(self.catalog_path), brand=brand, model=model, format=fmt
