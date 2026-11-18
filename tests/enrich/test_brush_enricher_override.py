@@ -1,6 +1,5 @@
 """Unit tests for BrushEnricher override functionality."""
 
-
 import pytest
 
 from sotd.enrich.brush_enricher import BrushEnricher

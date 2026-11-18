@@ -228,9 +228,7 @@ class TestAnnualAggregatorIntegration:
             mock_save.assert_not_called()
             assert result is False
 
-    def test_second_run_without_force_does_not_overwrite(
-        self, temp_data_dir, sample_monthly_data
-    ):
+    def test_second_run_without_force_does_not_overwrite(self, temp_data_dir, sample_monthly_data):
         """Second process_annual with force=False leaves the existing file alone."""
         for month, data in sample_monthly_data.items():
             month_file = temp_data_dir / f"{month}.json"
@@ -263,10 +261,7 @@ class TestAnnualAggregatorIntegration:
 
     def test_process_single_annual_returns_none_when_skipped(self, temp_data_dir):
         """Skipped years report None (not 'completed') to the parallel path."""
-        assert (
-            process_single_annual("2025", temp_data_dir.parent, debug=False, force=True)
-            is None
-        )
+        assert process_single_annual("2025", temp_data_dir.parent, debug=False, force=True) is None
 
     def test_component_interaction_and_data_flow(self, temp_data_dir, sample_monthly_data):
         """Test interaction between loader, engine, and saver components."""
@@ -321,9 +316,7 @@ class TestAnnualAggregatorIntegration:
             assert "Loaded 2 months of data" in log_output
             assert "Annual aggregation for 2024 completed" in log_output
 
-    def test_error_handling_across_components(
-        self, temp_data_dir, sample_monthly_data
-    ):
+    def test_error_handling_across_components(self, temp_data_dir, sample_monthly_data):
         """Test error handling across all components."""
         # Create corrupted monthly file
         corrupted_file = temp_data_dir / "2024-01.json"

@@ -1,6 +1,5 @@
 """Unit tests for EnrichmentOverrideManager."""
 
-
 import pytest
 
 from sotd.enrich.override_manager import EnrichmentOverrideManager

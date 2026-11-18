@@ -5,6 +5,7 @@ This test calls the actual API endpoint to ensure it returns all the detailed
 information shown in the CLI output, including component details, split information,
 and detailed modifier descriptions.
 """
+
 # ruff: noqa: E402  # module imports depend on the sys.path setup below
 
 import sys

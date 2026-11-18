@@ -1,7 +1,5 @@
 """Integration tests for enrichment override system."""
 
-
-
 from sotd.enrich.enrich import enrich_comments, setup_enrichers
 from sotd.enrich.override_manager import EnrichmentOverrideManager
 

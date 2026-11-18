@@ -117,23 +117,23 @@ class TestRealCatalogIntegration:
         for text, brand, model, fmt in abbreviation_cases:
             result = razor_matcher.match(text, bypass_correct_matches=True)
             assert result.matched is not None, f"No match for: {text}"
-            assert result.matched["brand"] == brand, (
-                f"{text}: expected brand {brand}, got {result.matched['brand']}"
-            )
-            assert result.matched["model"] == model, (
-                f"{text}: expected model {model}, got {result.matched['model']}"
-            )
-            assert result.matched["format"] == fmt, (
-                f"{text}: expected format {fmt}, got {result.matched['format']}"
-            )
+            assert (
+                result.matched["brand"] == brand
+            ), f"{text}: expected brand {brand}, got {result.matched['brand']}"
+            assert (
+                result.matched["model"] == model
+            ), f"{text}: expected model {model}, got {result.matched['model']}"
+            assert (
+                result.matched["format"] == fmt
+            ), f"{text}: expected format {fmt}, got {result.matched['format']}"
 
         # The word boundary must keep real first names out: a poster named
         # Josh/Josiah Elliot is not the 19th-century maker.
         for text in ("Josh Elliot 6/8 wedge", "Josiah Elliot 5/8"):
             result = razor_matcher.match(text, bypass_correct_matches=True)
-            assert result.matched is None or result.matched["brand"] != "Joseph Elliot", (
-                f"{text} must not resolve to Joseph Elliot, got {result.matched}"
-            )
+            assert (
+                result.matched is None or result.matched["brand"] != "Joseph Elliot"
+            ), f"{text} must not resolve to Joseph Elliot, got {result.matched}"
 
         # Real compound strings keep their resolutions: the widened pattern
         # sorts below the Frederick Reynolds / Wostenholm patterns.
@@ -150,9 +150,9 @@ class TestRealCatalogIntegration:
         for text, brand in compound_cases:
             result = razor_matcher.match(text, bypass_correct_matches=True)
             assert result.matched is not None, f"No match for: {text}"
-            assert result.matched["brand"] == brand, (
-                f"{text}: expected brand {brand}, got {result.matched['brand']}"
-            )
+            assert (
+                result.matched["brand"] == brand
+            ), f"{text}: expected brand {brand}, got {result.matched['brand']}"
 
     @pytest.mark.production
     def test_handle_knot_splitting_integration(self, brush_matcher):

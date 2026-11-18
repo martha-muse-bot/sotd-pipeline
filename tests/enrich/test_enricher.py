@@ -1,4 +1,3 @@
-
 from sotd.enrich.enricher import BaseEnricher
 
 

@@ -1,6 +1,5 @@
 """Tests for WSDB lookup utility with slug support."""
 
-
 import pytest
 import yaml
 

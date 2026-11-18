@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 """Tests for user analysis aggregator."""
 
-
-
 from sotd.aggregate.aggregators.user_analysis import aggregate_user_analysis
 
 

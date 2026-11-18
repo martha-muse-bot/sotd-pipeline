@@ -377,9 +377,7 @@ class TestOverrideManager:
         manager = OverrideManager(Path("test.yaml"))
         field_data = {"original": "Schick", "normalized": "Schick"}
 
-        result = manager.apply_override(
-            field_data, "Shick Injector, 2nd use", True, field="blade"
-        )
+        result = manager.apply_override(field_data, "Shick Injector, 2nd use", True, field="blade")
 
         assert result["original"] == "Schick"  # Preserved from parsed data
         assert "2nd use" not in result["normalized"]
@@ -390,9 +388,7 @@ class TestOverrideManager:
         """Same normalization on the create-new-field branch."""
         manager = OverrideManager(Path("test.yaml"))
 
-        result = manager.apply_override(
-            None, "Shick Injector, 2nd use", False, field="blade"
-        )
+        result = manager.apply_override(None, "Shick Injector, 2nd use", False, field="blade")
 
         assert result["original"] == "Shick Injector, 2nd use"  # Raw text kept
         assert result["normalized"] == "Shick Injector"
@@ -403,9 +399,7 @@ class TestOverrideManager:
         indicators stripped, like the parsed-field path)."""
         manager = OverrideManager(Path("test.yaml"))
 
-        result = manager.apply_override(
-            None, "Merkur 34C (ebony handle)", False, field="razor"
-        )
+        result = manager.apply_override(None, "Merkur 34C (ebony handle)", False, field="razor")
 
         from sotd.utils.extract_normalization import normalize_for_matching
 
@@ -413,9 +407,7 @@ class TestOverrideManager:
             "Merkur 34C (ebony handle)", field="razor"
         )
         # Handle indicator removed on the razor path, retained without a field
-        result_no_field = manager.apply_override(
-            None, "Merkur 34C (ebony handle)", False
-        )
+        result_no_field = manager.apply_override(None, "Merkur 34C (ebony handle)", False)
         assert result["normalized"] == "Merkur 34C"
         assert result_no_field["normalized"] != result["normalized"]
 

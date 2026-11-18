@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Tests for the annual delta calculator module."""
 
-
 import pytest
 
 from sotd.report.annual_delta_calculator import AnnualDeltaCalculator

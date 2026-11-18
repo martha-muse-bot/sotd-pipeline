@@ -1,6 +1,5 @@
 """Tests for soap table generators."""
 
-
 import pytest
 
 from sotd.report.table_generators.table_generator import TableGenerator

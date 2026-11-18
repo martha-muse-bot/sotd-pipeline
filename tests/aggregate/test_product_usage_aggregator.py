@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Tests for product usage aggregator."""
 
-
 from sotd.aggregate.aggregators.product_usage import aggregate_product_usage
 
 

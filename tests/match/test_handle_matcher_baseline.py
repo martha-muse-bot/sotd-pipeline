@@ -1,6 +1,5 @@
 """Test baseline for current handle matching functionality before restructuring."""
 
-
 import pytest
 
 from sotd.match.brush.handle_matcher import HandleMatcher
